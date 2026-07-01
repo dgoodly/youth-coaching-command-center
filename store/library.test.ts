@@ -1,5 +1,5 @@
 /**
- * Library loader/schema tests — prove the real 116-exercise library loads and validates,
+ * Library loader/schema tests — prove the real 121-exercise library loads and validates,
  * and that the two independent availability conditions (min_tier gate + 0-set convention)
  * behave per EXERCISE_LIBRARY.md §2A.6 / §3 step 1. Plumbing only — no selection logic here.
  */
@@ -14,8 +14,8 @@ import { TIERS } from '../engine/types.ts';
 const lib = await loadLibrary();
 const ex = lib.exercises;
 
-test('real library loads: 116 exercises, 8 slots, links resolve', () => {
-  assert.equal(ex.length, 116, '116 exercises');
+test('real library loads: 121 exercises, 8 slots, links resolve', () => {
+  assert.equal(ex.length, 121, '121 exercises');
   assert.equal(lib.slots.length, 8, '8 slots incl. trunk');
   assert.ok(lib.slots.includes('trunk'), 'trunk slot present');
   // validate() already ran in loadLibrary(); a throw would have failed the load.

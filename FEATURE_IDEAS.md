@@ -54,30 +54,27 @@ load upstream of the runs. Anchored to the reference program's real design:
 - v1 uses standing-height velocity between the two most recent entries only. Future enrichment
   (spec §7): sitting-height ratio, weight/shoe-size trend for sharper spurt detection.
 
-## Library coverage gaps — families needing C-tier members (HIGH PRIORITY)
+## Library coverage gaps — families needing C-tier members
 
 Found by running the assembler across every tier × day. When a day-template family pool has no
-member available at a tier, the assembler omits that slot (with a coach note). **Every gap below
-is C-only — each family already has a B member**, so these need C-tier regressions added
-(EXERCISE_LIBRARY.md §5 "expand families as the assembler needs"). Keep `min_tier=C`, low
-`difficulty` (1–2), set `variation_family` to the name below, and wire `progression_to` to the
-existing B member so it plugs into rotation.
+member available at a tier, the assembler omits that slot (with a coach note).
 
-| Family | Lowest member today | Where the gap bites | Add at C (suggestions) | Severity |
-|---|---|---|---|---|
-| `hamstring` | `l_buddy_curl` (B) | **Day 1 (Lower) lift — NO posterior-chain work at C.** Day 1's lift pool uses `hamstring`, not `hinge`, so the C `hinge` member does NOT cover it. Leaves the lower-strength day all knee-dominant (squat + split squat + lateral lunge). | glute bridge, single-leg glute bridge, slider/eccentric hamstring curl | **HIGH — missing movement category on a strength-emphasis day** |
-| `pull` | `l_pullup_volume` (B) | Day 2 (Upper) & Day 4 (Total) lift — C gets **no vertical/horizontal pull at all**. | inverted row, band row, ring row | **HIGH — no pulling for C athletes anywhere** |
-| `horizontal_jump_sl` | `j_sl_hops_fwd` (B) | Day 2 & Day 3 jump — C loses single-leg horizontal plyo (correct to gate SL, but leaves the block thin). | double-leg forward hop + stick (as SL bridge) | MED |
-| `lateral_jump` | `j_skater_bound` (B) | Day 2 & Day 4 jump — C's lateral day is pogo + hurdle only. | lateral step + stick, low lateral hop + stick | MED |
-| `rotational_jump` | `j_90_rotational` (B) | Day 4 jump — C gets no rotational plyo. | two-foot quarter-turn hop + stick | MED |
-
+- **✅ APPLIED — all five HIGH/MED gaps below now have a real C-tier member** (all `difficulty: 1`,
+  `min_tier: "C"`, 0-set at B/A/S, `progression_to` wired to the existing B member):
+  - `hamstring` → added `l_glute_bridge` (progresses to `l_buddy_curl`). Day 1's lift `hamstring`
+    fill now surfaces this directly, so the earlier `["hamstring","hinge"]` pool fallback to
+    `l_bw_hinge` is no longer needed to cover the gap (left in place — it's harmless and still adds
+    rotation variety across blocks for higher tiers).
+  - `pull` → added `l_band_row` (progresses to `l_pullup_volume`). C now gets pulling on Day 2 & 4.
+  - `horizontal_jump_sl` → added `j_hop_stick_fwd`, a bilateral hop+stick that bridges into the SL
+    family (progresses to `j_sl_hops_fwd`).
+  - `lateral_jump` → added `j_lat_step_stick` (progresses to `j_skater_bound`).
+  - `rotational_jump` → added `j_quarter_turn_hop` (progresses to `j_90_rotational`).
+  - Verified by assembling all 4 day templates at tier C: every previously-omitted slot now
+    populates, and the only remaining C-tier omission notes are `depth_contrast` (A/S only, by
+    design), `resisted_sprint`, `transition_sprint`, and `sled` (out of scope for this pass).
 - **`depth_contrast` is A/S only** — correct by design (depth drops demand elite landing control);
   C/B omit it intentionally, NOT a gap to fill.
-- **✅ APPLIED (Day-1 posterior-chain hole):** Day 1's lift `hamstring` fill was broadened to the
-  pool `["hamstring","hinge"]` in day-templates.json. C now falls back to the bodyweight hinge
-  (`l_bw_hinge`) on Day 1, giving the lower day a posterior movement; B/A/S still get the hamstring
-  curl at block 0. **Adding real C-tier `hamstring` members remains HIGH priority** (the fallback is
-  a stopgap, and this pool now also cycles hamstring↔hinge across blocks for higher tiers).
 
 ## Assembler behavior notes (v1 decisions to revisit)
 

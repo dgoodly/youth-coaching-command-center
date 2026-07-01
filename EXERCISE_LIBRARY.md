@@ -172,12 +172,12 @@ variant (now easy = a deload) or keep climbing.
 | warmup_base | 14 |
 | funnel_linear | 7 |
 | funnel_cod | 8 |
-| jump | 30 |
+| jump | 33 |
 | sprint | 14 |
-| lift | 27 |
+| lift | 29 |
 | trunk | 9 |
 | cooldown | 7 |
-| **Total** | **116** |
+| **Total** | **121** |
 
 31 variation families across the library. Every `progression_to` / `regression_to`
 reference resolves to a real exercise (validated at build).
