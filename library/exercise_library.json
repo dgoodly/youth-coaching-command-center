@@ -1,0 +1,4227 @@
+{
+  "schema_version": "1.0",
+  "difficulty_scale": {
+    "1-2": "Foundational \u2014 bodyweight/iso, double-leg, low amplitude/complexity",
+    "3-4": "Developing \u2014 light load or single-leg introduction, low contrast",
+    "5-6": "Proficient \u2014 single-leg plyo, loaded, max-velocity, full contrast chains",
+    "7-8": "Advanced \u2014 depth drops, high density, heavier load, reactive single-leg",
+    "9-10": "Elite reserve \u2014 beyond current youth scope (placeholder for older athletes)"
+  },
+  "slots": [
+    "warmup_base",
+    "funnel_linear",
+    "funnel_cod",
+    "jump",
+    "sprint",
+    "lift",
+    "trunk",
+    "cooldown"
+  ],
+  "tiers": [
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "notes": "min_tier is the SAFETY/competency gate (selection). difficulty is the inherent demand (1-10), used to balance session load and order progressions. They are related but distinct.",
+  "exercises": [
+    {
+      "id": "wb_high_knee_tuck",
+      "name": "High-Knee Tuck (walking)",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Step through, pull knee to chest",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_high_knee_run",
+      "name": "High-Knee Run",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Pump arms, knees up, chest tall, soft steps",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_hurdler_walk",
+      "name": "Hurdler Walk (quad stretch)",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Grab top of foot, push hips forward, pause",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_butt_kick_run",
+      "name": "Butt-Kick Run",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Fire hamstrings, heel to glute, soft quick steps",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_figure4_walk",
+      "name": "Figure-4 Walk",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Pull foot toward opposite hip, chest lifted",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_straight_leg_march",
+      "name": "Straight-Leg March",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Lift straight leg to opposite hand, abs lift",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_walking_lunge",
+      "name": "Walking Lunge",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Drop back knee low, mobilize the hip",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_reverse_lunge",
+      "name": "Reverse Lunge",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Balance and control, no stutter-step",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_lateral_lunge",
+      "name": "Lateral Lunge",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Push hips back, sink into foot, drive up",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_waiters_bow",
+      "name": "Dynamic Waiter's Bow",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Kick leg out, toes up, dive chest down",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_prisoner_squat",
+      "name": "Prisoner Squat",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Hands behind head, chest lifted, elbows wide",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_oh_toe_touch",
+      "name": "Overhead Toe Touch",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Reach overhead, sink hips back, touch opposite toe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_fire_hydrant",
+      "name": "Fire Hydrant",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Lift knee to hip height, open the hip",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "wb_hip_circle",
+      "name": "Hip Circle",
+      "slot": "warmup_base",
+      "pattern": "general_prep",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "warmup_base",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "~10 yd or 5\u201310 reps; one pass, trim for lower maturity"
+      },
+      "cue": "Extend leg behind, keep knee lifted high",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Base layer \u2014 runs every session, does not rotate."
+    },
+    {
+      "id": "fl_sl_foot_iso",
+      "name": "SL Foot Isolations (ground absorption)",
+      "slot": "funnel_linear",
+      "pattern": "ground_absorption",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "linear_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 5 each foot"
+      },
+      "cue": "Absorb the ground quietly, minimal bounce",
+      "progression_to": "fl_a_skip",
+      "regression_to": null,
+      "notes": "Opens the linear funnel."
+    },
+    {
+      "id": "fl_power_skip_height",
+      "name": "Power Skip for Height",
+      "slot": "funnel_linear",
+      "pattern": "vertical_skip",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "linear_funnel",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 10 yd"
+      },
+      "cue": "Punch the knee up, drive vertical, stay tall",
+      "progression_to": "fl_power_b_skip",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "fl_horizontal_skip",
+      "name": "Horizontal / Distance Skip",
+      "slot": "funnel_linear",
+      "pattern": "horizontal_skip",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "linear_funnel",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 20 yd"
+      },
+      "cue": "Push forward, cover ground",
+      "progression_to": "fl_straight_leg_bound",
+      "regression_to": "fl_power_skip_height",
+      "notes": ""
+    },
+    {
+      "id": "fl_a_skip",
+      "name": "A-Skip",
+      "slot": "funnel_linear",
+      "pattern": "sprint_mechanics",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "linear_funnel",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 yd"
+      },
+      "cue": "Tall torso, clean arms, foot lands under hip",
+      "progression_to": "fl_b_skip",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "fl_b_skip",
+      "name": "B-Skip",
+      "slot": "funnel_linear",
+      "pattern": "sprint_mechanics",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "linear_funnel",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 yd"
+      },
+      "cue": "Thigh ~90\u00b0, paw straight down, ankle flexed",
+      "progression_to": "fl_power_b_skip",
+      "regression_to": "fl_a_skip",
+      "notes": ""
+    },
+    {
+      "id": "fl_power_b_skip",
+      "name": "Power B-Skip",
+      "slot": "funnel_linear",
+      "pattern": "sprint_mechanics",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "linear_funnel",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "1 \u00d7 15 yd"
+      },
+      "cue": "More force through the down leg, bigger separation",
+      "progression_to": null,
+      "regression_to": "fl_b_skip",
+      "notes": ""
+    },
+    {
+      "id": "fl_straight_leg_bound",
+      "name": "Straight-Leg Bounds",
+      "slot": "funnel_linear",
+      "pattern": "bounding",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "linear_funnel",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 yd"
+      },
+      "cue": "Long stride, soft knee, claw the ground back",
+      "progression_to": null,
+      "regression_to": "fl_horizontal_skip",
+      "notes": ""
+    },
+    {
+      "id": "fc_bilat_shuffle",
+      "name": "Bilateral Lateral Shuffle",
+      "slot": "funnel_cod",
+      "pattern": "ground_lateral",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 10 yd ea way"
+      },
+      "cue": "Low stance, don't cross the feet",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "fc_sl_lateral",
+      "name": "Single-Leg Lateral Movement",
+      "slot": "funnel_cod",
+      "pattern": "ground_lateral",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 8 yd each"
+      },
+      "cue": "Balance on one leg, foot/ankle control",
+      "progression_to": "fc_lateral_power_shuffle",
+      "regression_to": "fc_bilat_shuffle",
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "fc_line_hops",
+      "name": "Line Hops (lateral + fwd/back)",
+      "slot": "funnel_cod",
+      "pattern": "reactive_hop",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 sec"
+      },
+      "cue": "Quick foot contacts, light and reactive",
+      "progression_to": "fc_lateral_power_shuffle",
+      "regression_to": null,
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "fc_lateral_power_shuffle",
+      "name": "Lateral Power Shuffle",
+      "slot": "funnel_cod",
+      "pattern": "lateral_power",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "3 \u00d7 each way"
+      },
+      "cue": "Sit into hips, push off OUTSIDE leg, wide + low",
+      "progression_to": "fc_karaoke_power",
+      "regression_to": "fc_bilat_shuffle",
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "fc_karaoke_power",
+      "name": "Karaoke \u2014 Power",
+      "slot": "funnel_cod",
+      "pattern": "rotational_locomotion",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 yd ea"
+      },
+      "cue": "Big bounds, full range, rotate through hips",
+      "progression_to": null,
+      "regression_to": "fc_karaoke_speed",
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "fc_karaoke_speed",
+      "name": "Karaoke \u2014 Speed",
+      "slot": "funnel_cod",
+      "pattern": "rotational_locomotion",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 yd ea"
+      },
+      "cue": "Quick high knees, torso upright",
+      "progression_to": "fc_karaoke_power",
+      "regression_to": null,
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "fc_backward_run",
+      "name": "Backward Run",
+      "slot": "funnel_cod",
+      "pattern": "reverse_locomotion",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 yd"
+      },
+      "cue": "Kinesthetic awareness, quick controlled steps",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "fc_backpedal",
+      "name": "Backpedal",
+      "slot": "funnel_cod",
+      "pattern": "reverse_locomotion",
+      "plane": "frontal",
+      "laterality": "mixed",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "cod_funnel",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "2 \u00d7 15 yd"
+      },
+      "cue": "Restore balance/symmetry, stay low",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "CoD funnel doubles as knee-tracking prep."
+    },
+    {
+      "id": "j_pogo_linear",
+      "name": "Linear Pogo",
+      "slot": "jump",
+      "pattern": "pogo",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "pogo",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": 10,
+          "rest_sec": 30
+        },
+        "B": {
+          "sets": 2,
+          "reps": 10,
+          "rest_sec": 30
+        },
+        "A": {
+          "sets": 2,
+          "reps": 10,
+          "rest_sec": 30
+        },
+        "S": {
+          "sets": 2,
+          "reps": 12,
+          "rest_sec": 30
+        }
+      },
+      "cue": "Stiff ankles, quick ground contact",
+      "progression_to": "j_pogo_sl",
+      "regression_to": null,
+      "notes": "Ground-up tendon prep; opens speed sessions."
+    },
+    {
+      "id": "j_pogo_lateral",
+      "name": "Lateral Pogo",
+      "slot": "jump",
+      "pattern": "pogo",
+      "plane": "frontal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "pogo",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": 10,
+          "rest_sec": 30
+        },
+        "B": {
+          "sets": 2,
+          "reps": 10,
+          "rest_sec": 30
+        },
+        "A": {
+          "sets": 2,
+          "reps": 10,
+          "rest_sec": 30
+        },
+        "S": {
+          "sets": 2,
+          "reps": 12,
+          "rest_sec": 30
+        }
+      },
+      "cue": "Quick, stiff, side to side",
+      "progression_to": "j_pogo_sl",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "j_pogo_sl",
+      "name": "Single-Leg Pogo",
+      "slot": "jump",
+      "pattern": "pogo",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "pogo",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": 6,
+          "rest_sec": 45
+        },
+        "B": {
+          "sets": 2,
+          "reps": 6,
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 45
+        }
+      },
+      "cue": "Stiff ankle, knee stacked over the toes",
+      "progression_to": null,
+      "regression_to": "j_pogo_linear",
+      "notes": ""
+    },
+    {
+      "id": "j_vertical_stick",
+      "name": "Vertical Jump + Stick",
+      "slot": "jump",
+      "pattern": "vertical_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "vertical_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 4,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 5,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Extend everything, land quiet, knees out",
+      "progression_to": "j_box_jump",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "j_box_jump",
+      "name": "Box Jump (2-leg, step down)",
+      "slot": "jump",
+      "pattern": "vertical_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "vertical_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 4,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 5,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Swing arms, soft landing, step down (don't jump down)",
+      "progression_to": "j_sl_stick_box",
+      "regression_to": "j_vertical_stick",
+      "notes": ""
+    },
+    {
+      "id": "j_seated_box",
+      "name": "Seated Box Jump",
+      "slot": "jump",
+      "pattern": "vertical_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "vertical_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 90
+        }
+      },
+      "cue": "From a dead stop \u2014 pure concentric power",
+      "progression_to": "j_sl_stick_box",
+      "regression_to": "j_box_jump",
+      "notes": "Removes stretch-shortening; teaches starting power."
+    },
+    {
+      "id": "j_sl_stick_box",
+      "name": "SL Stick Box Jump (2-leg jump, 1-leg land)",
+      "slot": "jump",
+      "pattern": "vertical_jump",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 5,
+      "variation_family": "vertical_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Stick silent, knee out over 2nd\u20133rd toe",
+      "progression_to": null,
+      "regression_to": "j_box_jump",
+      "notes": ""
+    },
+    {
+      "id": "j_broad_submax",
+      "name": "Broad Jump (submaximal, 70%)",
+      "slot": "jump",
+      "pattern": "horizontal_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "horizontal_jump_bilat",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Warm the pattern, land soft, knees out",
+      "progression_to": "j_broad_stick",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "j_broad_stick",
+      "name": "Broad Jump (non-consecutive, stick)",
+      "slot": "jump",
+      "pattern": "horizontal_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "horizontal_jump_bilat",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 75
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 4,
+          "reps": 3,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Jump far, land soft, knees out, freeze",
+      "progression_to": "j_broad_consec",
+      "regression_to": "j_broad_submax",
+      "notes": ""
+    },
+    {
+      "id": "j_mb_broad",
+      "name": "MB Broad Jump (non-consecutive)",
+      "slot": "jump",
+      "pattern": "horizontal_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "horizontal_jump_bilat",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "med_ball"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Drive the ball, jump out and up, stick the landing",
+      "progression_to": "j_approach_broad",
+      "regression_to": "j_broad_stick",
+      "notes": ""
+    },
+    {
+      "id": "j_broad_consec",
+      "name": "Broad Jumps (consecutive)",
+      "slot": "jump",
+      "pattern": "horizontal_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "horizontal_jump_bilat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 3,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Reactive \u2014 minimal ground time between jumps",
+      "progression_to": "j_approach_broad",
+      "regression_to": "j_broad_stick",
+      "notes": ""
+    },
+    {
+      "id": "j_approach_broad",
+      "name": "Approach Broad Jump (2-step)",
+      "slot": "jump",
+      "pattern": "horizontal_jump",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "horizontal_jump_bilat",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 4,
+          "reps": 3,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Convert speed into the jump, explode on the plant, stick",
+      "progression_to": null,
+      "regression_to": "j_broad_consec",
+      "notes": ""
+    },
+    {
+      "id": "j_sl_hops_fwd",
+      "name": "SL Hops (forward, non-consecutive, stick)",
+      "slot": "jump",
+      "pattern": "sl_horizontal_jump",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "horizontal_jump_sl",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Hop, stick, reset \u2014 knee out every landing",
+      "progression_to": "j_bounds_consec",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "j_sl_broad",
+      "name": "SL Broad Jump (non-consecutive)",
+      "slot": "jump",
+      "pattern": "sl_horizontal_jump",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 5,
+      "variation_family": "horizontal_jump_sl",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 3,
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        }
+      },
+      "cue": "Single-leg distance, stick and own it",
+      "progression_to": "j_sl_bounds_consec",
+      "regression_to": "j_sl_hops_fwd",
+      "notes": ""
+    },
+    {
+      "id": "j_bounds_consec",
+      "name": "Bounds (consecutive)",
+      "slot": "jump",
+      "pattern": "bounding",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "horizontal_jump_sl",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 4,
+          "reps": 5,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Big scissor, claw the ground behind you",
+      "progression_to": "j_sl_bounds_consec",
+      "regression_to": "j_sl_hops_fwd",
+      "notes": ""
+    },
+    {
+      "id": "j_sl_bounds_consec",
+      "name": "SL Bounds (consecutive)",
+      "slot": "jump",
+      "pattern": "bounding",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "horizontal_jump_sl",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 4,
+          "reps": 4,
+          "rest_sec": 75
+        }
+      },
+      "cue": "Same-leg repeated bounds \u2014 high force, controlled",
+      "progression_to": "j_rle_sl_bound",
+      "regression_to": "j_bounds_consec",
+      "notes": ""
+    },
+    {
+      "id": "j_rle_sl_bound",
+      "name": "RLE SL Bound",
+      "slot": "jump",
+      "pattern": "bounding",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "S",
+      "difficulty": 7,
+      "variation_family": "horizontal_jump_sl",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "S": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Rear foot elevated start \u2014 max single-leg force",
+      "progression_to": null,
+      "regression_to": "j_sl_bounds_consec",
+      "notes": ""
+    },
+    {
+      "id": "j_skater_bound",
+      "name": "Skater Bound (stick)",
+      "slot": "jump",
+      "pattern": "lateral_jump",
+      "plane": "frontal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "lateral_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Push wide off the outside foot, stick and hold",
+      "progression_to": "j_lateral_bound_stick",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "j_lateral_bound_stick",
+      "name": "Lateral Bound + Stick",
+      "slot": "jump",
+      "pattern": "lateral_jump",
+      "plane": "frontal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "lateral_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Push wide, stick and hold \u2014 no knee cave",
+      "progression_to": "j_lat_hurdle_box",
+      "regression_to": "j_skater_bound",
+      "notes": ""
+    },
+    {
+      "id": "j_lat_hurdle_consec",
+      "name": "Lateral Hurdle Hops (consecutive)",
+      "slot": "jump",
+      "pattern": "lateral_jump",
+      "plane": "frontal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "lateral_jump",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "hurdles"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Stay low, quick off the ground",
+      "progression_to": "j_lat_hurdle_box",
+      "regression_to": "j_lateral_bound_stick",
+      "notes": ""
+    },
+    {
+      "id": "j_lat_hurdle_box",
+      "name": "Lateral Hurdle Hop \u2192 Lateral Box Jump (contrast)",
+      "slot": "jump",
+      "pattern": "lateral_jump",
+      "plane": "frontal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "lateral_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "hurdles",
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": "3+1",
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 3,
+          "reps": "3+1",
+          "rest_sec": 75
+        }
+      },
+      "cue": "Quick sideways into one big lateral push",
+      "progression_to": null,
+      "regression_to": "j_lat_hurdle_consec",
+      "notes": "Contrast chain."
+    },
+    {
+      "id": "j_90_rotational",
+      "name": "90\u00b0 Rotational Hop + Stick",
+      "slot": "jump",
+      "pattern": "rotational_jump",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "rotational_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Turn in the air, land balanced and quiet",
+      "progression_to": "j_sl_multidir",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "j_sl_multidir",
+      "name": "SL Multidirectional Hops (clock, stick each)",
+      "slot": "jump",
+      "pattern": "rotational_jump",
+      "plane": "transverse",
+      "laterality": "unilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "rotational_jump",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 75
+        }
+      },
+      "cue": "Hop to each point, stick every landing, knee stacked",
+      "progression_to": null,
+      "regression_to": "j_90_rotational",
+      "notes": ""
+    },
+    {
+      "id": "j_hurdle_low",
+      "name": "Low Hurdle Hop (2-foot)",
+      "slot": "jump",
+      "pattern": "hurdle_hop",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "hurdle_hop",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "hurdles"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "B": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 5,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Get off the ground fast, soft knees",
+      "progression_to": "j_hurdle_consec",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "j_hurdle_consec",
+      "name": "Continuous Hurdle Hops (2-foot)",
+      "slot": "jump",
+      "pattern": "hurdle_hop",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "hurdle_hop",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "hurdles"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 5,
+          "rest_sec": 90
+        }
+      },
+      "cue": "No pause \u2014 minimize ground contact time",
+      "progression_to": "j_hurdle_box",
+      "regression_to": "j_hurdle_low",
+      "notes": ""
+    },
+    {
+      "id": "j_hurdle_box",
+      "name": "Hurdle Hop \u2192 Box Jump (contrast)",
+      "slot": "jump",
+      "pattern": "hurdle_hop",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "hurdle_hop",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "hurdles",
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": "3+1",
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 4,
+          "reps": "3+1",
+          "rest_sec": 75
+        }
+      },
+      "cue": "Low-quick hops into one big explosion",
+      "progression_to": "j_sl_hurdle_consec",
+      "regression_to": "j_hurdle_consec",
+      "notes": "Contrast chain."
+    },
+    {
+      "id": "j_sl_hurdle_consec",
+      "name": "SL Hurdle Hops (consecutive)",
+      "slot": "jump",
+      "pattern": "hurdle_hop",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "S",
+      "difficulty": 7,
+      "variation_family": "hurdle_hop",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "hurdles"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "S": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Single-leg, quick off the ground, controlled knee",
+      "progression_to": null,
+      "regression_to": "j_hurdle_consec",
+      "notes": ""
+    },
+    {
+      "id": "j_depth_drop_hold",
+      "name": "Depth Drop (stick + hold)",
+      "slot": "jump",
+      "pattern": "depth",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "depth_contrast",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Step off, land soft and silent, freeze 2s",
+      "progression_to": "j_depth_to_hurdle",
+      "regression_to": null,
+      "notes": "Teaches absorption before reactive depth work."
+    },
+    {
+      "id": "j_depth_to_hurdle",
+      "name": "Depth Drop (stick + hold) \u2192 Hurdle Hops",
+      "slot": "jump",
+      "pattern": "depth",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "S",
+      "difficulty": 7,
+      "variation_family": "depth_contrast",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "box",
+        "hurdles"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "S": {
+          "sets": 3,
+          "reps": "1+3",
+          "rest_sec": 90
+        }
+      },
+      "cue": "Absorb soft, then attack the hurdles",
+      "progression_to": "j_depth_to_sprint",
+      "regression_to": "j_depth_drop_hold",
+      "notes": "Contrast chain, S-tier reserve."
+    },
+    {
+      "id": "j_depth_to_sprint",
+      "name": "Depth Drop \u2192 10-yd Sprint",
+      "slot": "jump",
+      "pattern": "depth",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "S",
+      "difficulty": 8,
+      "variation_family": "depth_contrast",
+      "stick": true,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "S": {
+          "sets": 4,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Land, absorb, GO \u2014 instant transition to sprint",
+      "progression_to": null,
+      "regression_to": "j_depth_to_hurdle",
+      "notes": "Highest-demand reactive plyo; never downstream of other max plyo."
+    },
+    {
+      "id": "s_falling_start",
+      "name": "Falling Start \u2192 Sprint",
+      "slot": "sprint",
+      "pattern": "acceleration",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "accel_start",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 4,
+          "reps": "15yd",
+          "rest_sec": 120
+        },
+        "B": {
+          "sets": 4,
+          "reps": "15yd",
+          "rest_sec": 120
+        },
+        "A": {
+          "sets": 4,
+          "reps": "15yd",
+          "rest_sec": 150
+        },
+        "S": {
+          "sets": 5,
+          "reps": "15yd",
+          "rest_sec": 150
+        }
+      },
+      "cue": "Fall from the ankles, let gravity load the first step",
+      "progression_to": "s_half_kneel_start",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "s_half_kneel_start",
+      "name": "Half-Kneeling Start \u2192 Sprint",
+      "slot": "sprint",
+      "pattern": "acceleration",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "accel_start",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 4,
+          "reps": "12yd",
+          "rest_sec": 120
+        },
+        "B": {
+          "sets": 4,
+          "reps": "12yd",
+          "rest_sec": 120
+        },
+        "A": {
+          "sets": 4,
+          "reps": "12yd",
+          "rest_sec": 150
+        },
+        "S": {
+          "sets": 4,
+          "reps": "15yd",
+          "rest_sec": 150
+        }
+      },
+      "cue": "Knee in line with toe, fire out flat and low like diving",
+      "progression_to": "s_ground_start",
+      "regression_to": "s_falling_start",
+      "notes": ""
+    },
+    {
+      "id": "s_ground_start",
+      "name": "Ground Start (back / stomach) \u2192 Sprint",
+      "slot": "sprint",
+      "pattern": "acceleration",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "accel_start",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 4,
+          "reps": "10yd",
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 4,
+          "reps": "10yd",
+          "rest_sec": 120
+        },
+        "S": {
+          "sets": 5,
+          "reps": "10yd",
+          "rest_sec": 120
+        }
+      },
+      "cue": "Push the ground away, drive out hard",
+      "progression_to": "s_3point_start",
+      "regression_to": "s_half_kneel_start",
+      "notes": ""
+    },
+    {
+      "id": "s_3point_start",
+      "name": "3-Point Stance Start \u2192 Sprint",
+      "slot": "sprint",
+      "pattern": "acceleration",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "accel_start",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 4,
+          "reps": "15yd",
+          "rest_sec": 120
+        },
+        "A": {
+          "sets": 4,
+          "reps": "20yd",
+          "rest_sec": 120
+        },
+        "S": {
+          "sets": 5,
+          "reps": "20yd",
+          "rest_sec": 150
+        }
+      },
+      "cue": "Weight forward, aggressive low first step",
+      "progression_to": null,
+      "regression_to": "s_ground_start",
+      "notes": ""
+    },
+    {
+      "id": "s_resisted_heavy",
+      "name": "Resisted Sprint (heavy sled)",
+      "slot": "sprint",
+      "pattern": "resisted_accel",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "resisted_sprint",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "sled"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 4,
+          "reps": "10-20yd",
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 4,
+          "reps": "10-20yd",
+          "rest_sec": 120
+        },
+        "S": {
+          "sets": 5,
+          "reps": "10-20yd",
+          "rest_sec": 120
+        }
+      },
+      "cue": "Effort drill \u2014 stay low, punch the ground back",
+      "progression_to": "s_resisted_light",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "s_resisted_light",
+      "name": "Resisted Sprint (light sled)",
+      "slot": "sprint",
+      "pattern": "resisted_accel",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "resisted_sprint",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "sled"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "up to 35yd",
+          "rest_sec": 120
+        },
+        "A": {
+          "sets": 3,
+          "reps": "up to 35yd",
+          "rest_sec": 120
+        },
+        "S": {
+          "sets": 4,
+          "reps": "35yd",
+          "rest_sec": 120
+        }
+      },
+      "cue": "Lighter load, longer push \u2014 stay aggressive",
+      "progression_to": null,
+      "regression_to": "s_resisted_heavy",
+      "notes": ""
+    },
+    {
+      "id": "s_shuffle_to_sprint",
+      "name": "Lateral Shuffle \u2192 Sprint",
+      "slot": "sprint",
+      "pattern": "transition",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "transition_sprint",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "each way",
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 3,
+          "reps": "each way",
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 3,
+          "reps": "each way",
+          "rest_sec": 90
+        }
+      },
+      "cue": "Plant the outside foot, redirect, go",
+      "progression_to": "s_pogo_to_sprint",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "s_pogo_to_sprint",
+      "name": "Lateral Pogo \u2192 Sprint",
+      "slot": "sprint",
+      "pattern": "transition",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 5,
+      "variation_family": "transition_sprint",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "each way",
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 3,
+          "reps": "each way",
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 3,
+          "reps": "each way",
+          "rest_sec": 90
+        }
+      },
+      "cue": "Stiff lateral pogos into an explosive redirect",
+      "progression_to": null,
+      "regression_to": "s_shuffle_to_sprint",
+      "notes": ""
+    },
+    {
+      "id": "s_buildup",
+      "name": "Build-Ups (ramp to ~90%)",
+      "slot": "sprint",
+      "pattern": "max_velocity",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "max_velocity",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": "30yd",
+          "rest_sec": 90
+        },
+        "B": {
+          "sets": 3,
+          "reps": "30yd",
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 3,
+          "reps": "30yd",
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 3,
+          "reps": "40yd",
+          "rest_sec": 90
+        }
+      },
+      "cue": "Smooth acceleration, tall finish",
+      "progression_to": "s_flying_sprint",
+      "regression_to": null,
+      "notes": "MAX-V family: never downstream of a heavy plyo block."
+    },
+    {
+      "id": "s_flying_sprint",
+      "name": "Flying Sprint (build + fly zone)",
+      "slot": "sprint",
+      "pattern": "max_velocity",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 5,
+      "variation_family": "max_velocity",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 4,
+          "reps": "15 build/20 fly",
+          "rest_sec": 150
+        },
+        "A": {
+          "sets": 5,
+          "reps": "15/20",
+          "rest_sec": 180
+        },
+        "S": {
+          "sets": 6,
+          "reps": "15/25",
+          "rest_sec": 180
+        }
+      },
+      "cue": "Don't sprint the build-up \u2014 max effort through the fly zone, run tall",
+      "progression_to": "s_sprint_intent",
+      "regression_to": "s_buildup",
+      "notes": "MAX-V family."
+    },
+    {
+      "id": "s_sprint_intent",
+      "name": "Sprint With Intent (40\u201360+ yd)",
+      "slot": "sprint",
+      "pattern": "max_velocity",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "max_velocity",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": "40-50yd",
+          "rest_sec": 180
+        },
+        "S": {
+          "sets": 4,
+          "reps": "50-60yd",
+          "rest_sec": 180
+        }
+      },
+      "cue": "95\u2013100% effort. Progress by adding reps or distance, not chasing the clock",
+      "progression_to": null,
+      "regression_to": "s_flying_sprint",
+      "notes": "MAX-V family. Track/field time 1\u20133x/week."
+    },
+    {
+      "id": "s_mirror_drill",
+      "name": "Mirror Drill (reactive)",
+      "slot": "sprint",
+      "pattern": "cod_speed",
+      "plane": "frontal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 3,
+      "variation_family": "cod_speed",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 4,
+          "reps": "20s",
+          "rest_sec": 40
+        },
+        "B": {
+          "sets": 4,
+          "reps": "20s",
+          "rest_sec": 40
+        },
+        "A": {
+          "sets": 4,
+          "reps": "25s",
+          "rest_sec": 40
+        },
+        "S": {
+          "sets": 5,
+          "reps": "25s",
+          "rest_sec": 40
+        }
+      },
+      "cue": "Read the hips, react \u2014 first step fast",
+      "progression_to": "s_reactive_cuts",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "s_5105_shuttle",
+      "name": "5-10-5 Pro Agility Shuttle",
+      "slot": "sprint",
+      "pattern": "cod_speed",
+      "plane": "frontal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 5,
+      "variation_family": "cod_speed",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "cones"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "reps",
+          "rest_sec": 90
+        },
+        "A": {
+          "sets": 4,
+          "reps": "reps",
+          "rest_sec": 120
+        },
+        "S": {
+          "sets": 5,
+          "reps": "reps",
+          "rest_sec": 120
+        }
+      },
+      "cue": "Chop the feet, sit the hips, knee out on the plant",
+      "progression_to": "s_reactive_cuts",
+      "regression_to": "s_mirror_drill",
+      "notes": ""
+    },
+    {
+      "id": "s_reactive_cuts",
+      "name": "Reactive Cone Cuts (coach calls)",
+      "slot": "sprint",
+      "pattern": "cod_speed",
+      "plane": "frontal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 6,
+      "variation_family": "cod_speed",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "cones"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 4,
+          "reps": "reps",
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 5,
+          "reps": "reps",
+          "rest_sec": 60
+        }
+      },
+      "cue": "Don't guess \u2014 react. Sharp plant, knee out, explode out",
+      "progression_to": null,
+      "regression_to": "s_5105_shuttle",
+      "notes": ""
+    },
+    {
+      "id": "l_bw_squat",
+      "name": "Bodyweight Squat",
+      "slot": "lift",
+      "pattern": "squat",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 12,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Chest up, sit between knees, knees track over toes",
+      "progression_to": "l_box_squat",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "l_box_squat",
+      "name": "Box Squat (regression for knee drift)",
+      "slot": "lift",
+      "pattern": "squat",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Push hips back, touch the box, drive up",
+      "progression_to": "l_goblet_squat",
+      "regression_to": "l_bw_squat",
+      "notes": "Use if knees shoot forward on the squat."
+    },
+    {
+      "id": "l_goblet_squat",
+      "name": "Goblet Squat",
+      "slot": "lift",
+      "pattern": "squat",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "kettlebell",
+        "dumbbell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 4,
+          "reps": 10,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Front load = proud chest, knees track OUT",
+      "progression_to": "l_front_squat",
+      "regression_to": "l_box_squat",
+      "notes": ""
+    },
+    {
+      "id": "l_front_squat",
+      "name": "Light Barbell Front Squat",
+      "slot": "lift",
+      "pattern": "squat",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "barbell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 90
+        },
+        "S": {
+          "sets": 4,
+          "reps": 6,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Upright torso, elbows high, controlled",
+      "progression_to": null,
+      "regression_to": "l_goblet_squat",
+      "notes": ""
+    },
+    {
+      "id": "l_split_squat",
+      "name": "Split Squat (from lunge)",
+      "slot": "lift",
+      "pattern": "sl_squat",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "sl_squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Down the back knee, front knee tracks the toe",
+      "progression_to": "l_decel_stepup",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "l_decel_stepup",
+      "name": "Decel Step-Up",
+      "slot": "lift",
+      "pattern": "sl_squat",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "sl_squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Pockets straight down, kiss the heel \u2014 own the eccentric",
+      "progression_to": "l_rle_split_squat",
+      "regression_to": "l_split_squat",
+      "notes": "Eccentric emphasis \u2014 control the lowering."
+    },
+    {
+      "id": "l_rle_split_squat",
+      "name": "RLE Split Squat",
+      "slot": "lift",
+      "pattern": "sl_squat",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "sl_squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "box",
+        "dumbbell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Rear foot elevated, vertical shin, knee tracks toe",
+      "progression_to": "l_sl_squat_box",
+      "regression_to": "l_decel_stepup",
+      "notes": ""
+    },
+    {
+      "id": "l_sl_squat_box",
+      "name": "SL Squat to Box",
+      "slot": "lift",
+      "pattern": "sl_squat",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "sl_squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 75
+        }
+      },
+      "cue": "Control all the way down to the box, knee tracks toe",
+      "progression_to": "l_pistol",
+      "regression_to": "l_rle_split_squat",
+      "notes": ""
+    },
+    {
+      "id": "l_pistol",
+      "name": "Pistol Squat",
+      "slot": "lift",
+      "pattern": "sl_squat",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "S",
+      "difficulty": 7,
+      "variation_family": "sl_squat",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "S": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 75
+        }
+      },
+      "cue": "Full single-leg squat, controlled, knee over toe",
+      "progression_to": null,
+      "regression_to": "l_sl_squat_box",
+      "notes": ""
+    },
+    {
+      "id": "l_bw_hinge",
+      "name": "Bodyweight Hip Hinge",
+      "slot": "lift",
+      "pattern": "hinge",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "hinge",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Push hips back, flat back, feel the hamstrings",
+      "progression_to": "l_kb_rdl",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "l_kb_rdl",
+      "name": "KB / DB Romanian Deadlift",
+      "slot": "lift",
+      "pattern": "hinge",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "hinge",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "kettlebell",
+        "dumbbell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 4,
+          "reps": 10,
+          "rest_sec": 75
+        }
+      },
+      "cue": "Hips back, load close, flat back, drive to stand",
+      "progression_to": "l_sl_rdl",
+      "regression_to": "l_bw_hinge",
+      "notes": ""
+    },
+    {
+      "id": "l_sl_rdl",
+      "name": "Single-Leg RDL",
+      "slot": "lift",
+      "pattern": "hinge",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "hinge",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "dumbbell",
+        "kettlebell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 2,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Flat back, hips square, control the movement",
+      "progression_to": "l_kb_swing",
+      "regression_to": "l_kb_rdl",
+      "notes": ""
+    },
+    {
+      "id": "l_kb_swing",
+      "name": "KB Swing",
+      "slot": "lift",
+      "pattern": "hinge",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "hinge",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "kettlebell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Hips drive the swing \u2014 snap the hips, arms along for the ride",
+      "progression_to": null,
+      "regression_to": "l_sl_rdl",
+      "notes": ""
+    },
+    {
+      "id": "l_buddy_curl",
+      "name": "Buddy / Nordic Hamstring Curl (assisted)",
+      "slot": "lift",
+      "pattern": "hamstring",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "hamstring",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "partner"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 3,
+          "reps": 5,
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 75
+        }
+      },
+      "cue": "Control the way down \u2014 fight gravity the whole way",
+      "progression_to": "l_nordic_full",
+      "regression_to": null,
+      "notes": "Eccentric emphasis; start with the lowering only."
+    },
+    {
+      "id": "l_nordic_full",
+      "name": "Nordic Curl (full)",
+      "slot": "lift",
+      "pattern": "hamstring",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "S",
+      "difficulty": 7,
+      "variation_family": "hamstring",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "partner"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "S": {
+          "sets": 3,
+          "reps": 4,
+          "rest_sec": 90
+        }
+      },
+      "cue": "Lower fully under control, pull yourself back up",
+      "progression_to": null,
+      "regression_to": "l_buddy_curl",
+      "notes": ""
+    },
+    {
+      "id": "l_hr_pushup",
+      "name": "Hand-Release Push-Up",
+      "slot": "lift",
+      "pattern": "push",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "push",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 10,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 4,
+          "reps": 10,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Elbows in, chest to floor, hands off at the bottom",
+      "progression_to": "l_pushup_ecc",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "l_pushup_ecc",
+      "name": "Push-Up (4s eccentric)",
+      "slot": "lift",
+      "pattern": "push",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "push",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 4,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Slow down-phase, controlled, full range",
+      "progression_to": "l_db_press",
+      "regression_to": "l_hr_pushup",
+      "notes": "Eccentric emphasis."
+    },
+    {
+      "id": "l_db_press",
+      "name": "DB Floor / Bench Press",
+      "slot": "lift",
+      "pattern": "push",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "push",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Smooth and controlled both directions",
+      "progression_to": null,
+      "regression_to": "l_pushup_ecc",
+      "notes": ""
+    },
+    {
+      "id": "l_pullup_volume",
+      "name": "Neutral-Grip Pull-Up (volume)",
+      "slot": "lift",
+      "pattern": "pull",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "pull",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "pullup_bar"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": "4",
+          "reps": " ",
+          "rest_sec": "s"
+        },
+        "A": {
+          "sets": "4",
+          "reps": " ",
+          "rest_sec": "s"
+        },
+        "S": {
+          "sets": "4",
+          "reps": " ",
+          "rest_sec": "s"
+        }
+      },
+      "cue": "Dead hang to chin-over. Chase monthly total reps",
+      "progression_to": "l_pullup_iso",
+      "regression_to": null,
+      "notes": "Trained for volume; chase reps month over month."
+    },
+    {
+      "id": "l_pullup_iso",
+      "name": "Pull-Up ISO Hold (chin over bar)",
+      "slot": "lift",
+      "pattern": "pull",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 5,
+      "variation_family": "pull",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "pullup_bar"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": "3",
+          "reps": " ",
+          "rest_sec": "\u00d7"
+        },
+        "S": {
+          "sets": "3",
+          "reps": " ",
+          "rest_sec": "\u00d7"
+        }
+      },
+      "cue": "Hold chin over the bar, then lower slow",
+      "progression_to": null,
+      "regression_to": "l_pullup_volume",
+      "notes": "ISO + eccentric emphasis."
+    },
+    {
+      "id": "l_lateral_lunge",
+      "name": "Lateral Lunge",
+      "slot": "lift",
+      "pattern": "frontal_strength",
+      "plane": "frontal",
+      "laterality": "unilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "frontal_strength",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Push hips back, sink into the foot, knee tracks toe",
+      "progression_to": "l_cossack",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "l_cossack",
+      "name": "Cossack Squat",
+      "slot": "lift",
+      "pattern": "frontal_strength",
+      "plane": "frontal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "frontal_strength",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 3,
+          "reps": 6,
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 3,
+          "reps": 8,
+          "rest_sec": 60
+        }
+      },
+      "cue": "Sit into one hip, other leg long, knee tracks the toe",
+      "progression_to": null,
+      "regression_to": "l_lateral_lunge",
+      "notes": ""
+    },
+    {
+      "id": "l_sled_march",
+      "name": "Heavy Sled \u2014 High-Handle March",
+      "slot": "lift",
+      "pattern": "sled",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "sled",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "sled"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "20yd",
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 3,
+          "reps": "20-30yd",
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 3,
+          "reps": "30yd",
+          "rest_sec": 75
+        }
+      },
+      "cue": "Biggest step possible, drive and step through",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "l_sled_drag",
+      "name": "Heavy Sled \u2014 Backward Drag",
+      "slot": "lift",
+      "pattern": "sled",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 4,
+      "variation_family": "sled",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "sled"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 2,
+          "reps": "20yd",
+          "rest_sec": 75
+        },
+        "A": {
+          "sets": 2,
+          "reps": "20yd",
+          "rest_sec": 75
+        },
+        "S": {
+          "sets": 2,
+          "reps": "30yd",
+          "rest_sec": 75
+        }
+      },
+      "cue": "Sink the hips, lean back, pull",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": "Backward drag is quad/knee-friendly \u2014 good for knee health."
+    },
+    {
+      "id": "l_farmer_carry",
+      "name": "Farmer Carry",
+      "slot": "lift",
+      "pattern": "carry",
+      "plane": "frontal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "carry",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "dumbbell",
+        "kettlebell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": "20yd",
+          "rest_sec": 60
+        },
+        "B": {
+          "sets": 2,
+          "reps": "20yd",
+          "rest_sec": 60
+        },
+        "A": {
+          "sets": 2,
+          "reps": "25yd",
+          "rest_sec": 60
+        },
+        "S": {
+          "sets": 2,
+          "reps": "30yd",
+          "rest_sec": 60
+        }
+      },
+      "cue": "Stand tall, don't lean, walk with purpose",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "l_wall_sit",
+      "name": "Wall Sit",
+      "slot": "lift",
+      "pattern": "iso",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "iso",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "wall"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": "25s",
+          "rest_sec": 45
+        },
+        "B": {
+          "sets": 2,
+          "reps": "30s",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 2,
+          "reps": "35s",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 2,
+          "reps": "40s",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Thighs parallel, knees out, quiet and still",
+      "progression_to": "l_rle_lunge_iso",
+      "regression_to": null,
+      "notes": "Iso \u2014 low soreness cost, great for youth."
+    },
+    {
+      "id": "l_rle_lunge_iso",
+      "name": "RLE Lunge ISO Hold",
+      "slot": "lift",
+      "pattern": "iso",
+      "plane": "sagittal",
+      "laterality": "unilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "iso",
+      "stick": false,
+      "valgus_relevant": true,
+      "equipment": [
+        "box"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 2,
+          "reps": "20s ea",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 2,
+          "reps": "25s ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 2,
+          "reps": "25s ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Hold the bottom, knee tracks toe, own the position",
+      "progression_to": null,
+      "regression_to": "l_wall_sit",
+      "notes": ""
+    },
+    {
+      "id": "t_dead_bug",
+      "name": "Dead Bug",
+      "slot": "trunk",
+      "pattern": "anti_extension",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "anti_extension",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": "6 ea",
+          "rest_sec": 45
+        },
+        "B": {
+          "sets": 3,
+          "reps": "6 ea",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "6 ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Lower back glued to the floor",
+      "progression_to": "t_hollow_hold",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "t_hollow_hold",
+      "name": "Hollow Body Hold",
+      "slot": "trunk",
+      "pattern": "anti_extension",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "anti_extension",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "20s",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "25s",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": "25s",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Lower back pressed flat, hold without shaking",
+      "progression_to": null,
+      "regression_to": "t_dead_bug",
+      "notes": ""
+    },
+    {
+      "id": "t_plank",
+      "name": "Plank Hold",
+      "slot": "trunk",
+      "pattern": "anti_extension",
+      "plane": "sagittal",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "anti_extension",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": "20s",
+          "rest_sec": 30
+        },
+        "B": {
+          "sets": 3,
+          "reps": "25s",
+          "rest_sec": 30
+        },
+        "A": {
+          "sets": 3,
+          "reps": "30s",
+          "rest_sec": 30
+        },
+        "S": {
+          "sets": 3,
+          "reps": "35s",
+          "rest_sec": 30
+        }
+      },
+      "cue": "Straight line head to heels, breathe",
+      "progression_to": "t_plank_reach",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "t_plank_reach",
+      "name": "Plank \u2014 Alternating Arm Reach",
+      "slot": "trunk",
+      "pattern": "anti_rotation",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "anti_rotation",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "6 ea",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 4,
+          "reps": "6 ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Reach without letting the hips rotate",
+      "progression_to": null,
+      "regression_to": "t_plank",
+      "notes": ""
+    },
+    {
+      "id": "t_pallof",
+      "name": "Pallof Press (anti-rotation)",
+      "slot": "trunk",
+      "pattern": "anti_rotation",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "anti_rotation",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "band"
+      ],
+      "dose": {
+        "C": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        },
+        "B": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": "10 ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Resist the twist \u2014 brace, don't bend",
+      "progression_to": "t_tk_pallof",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "t_tk_pallof",
+      "name": "Tall-Kneeling Pallof Press",
+      "slot": "trunk",
+      "pattern": "anti_rotation",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "anti_rotation",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "band"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "10 ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": "10 ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "No leaning, brace hard, press straight out",
+      "progression_to": null,
+      "regression_to": "t_pallof",
+      "notes": ""
+    },
+    {
+      "id": "t_mb_throw",
+      "name": "MB Rotational Throw (wall)",
+      "slot": "trunk",
+      "pattern": "rotation",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "rotation",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "med_ball"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "6 ea",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "6 ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Power from the hips, turn through the ball",
+      "progression_to": "t_mb_slam",
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "t_mb_slam",
+      "name": "MB Rotational Slam",
+      "slot": "trunk",
+      "pattern": "rotation",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "A",
+      "difficulty": 4,
+      "variation_family": "rotation",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "med_ball"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "A": {
+          "sets": 3,
+          "reps": "6 ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": "8 ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Explosive \u2014 hips lead, finish through hard",
+      "progression_to": null,
+      "regression_to": "t_mb_throw",
+      "notes": ""
+    },
+    {
+      "id": "t_suitcase_carry",
+      "name": "Suitcase Carry (anti-lateral)",
+      "slot": "trunk",
+      "pattern": "anti_lateral",
+      "plane": "frontal",
+      "laterality": "unilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "anti_lateral",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "dumbbell",
+        "kettlebell"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": "20yd ea",
+          "rest_sec": 45
+        },
+        "B": {
+          "sets": 2,
+          "reps": "20yd ea",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 2,
+          "reps": "25yd ea",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 2,
+          "reps": "30yd ea",
+          "rest_sec": 45
+        }
+      },
+      "cue": "One side loaded \u2014 don't let the torso tip",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "cd_quad",
+      "name": "Standing Quad Stretch",
+      "slot": "cooldown",
+      "pattern": "recovery",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "cooldown",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "20s ea"
+      },
+      "cue": "Relax, decompress, breathe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "cd_hamstring",
+      "name": "Seated Hamstring Reach",
+      "slot": "cooldown",
+      "pattern": "recovery",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "cooldown",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "20s ea"
+      },
+      "cue": "Relax, decompress, breathe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "cd_hip_flexor",
+      "name": "Hip Flexor / Couch Stretch",
+      "slot": "cooldown",
+      "pattern": "recovery",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "cooldown",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "20s ea"
+      },
+      "cue": "Relax, decompress, breathe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "cd_calf",
+      "name": "Calf Stretch",
+      "slot": "cooldown",
+      "pattern": "recovery",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "cooldown",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "20s ea"
+      },
+      "cue": "Relax, decompress, breathe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "cd_tspine",
+      "name": "T-Spine Rotation",
+      "slot": "cooldown",
+      "pattern": "recovery",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "cooldown",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "8 ea"
+      },
+      "cue": "Relax, decompress, breathe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "cd_childs_pose",
+      "name": "Child's Pose",
+      "slot": "cooldown",
+      "pattern": "recovery",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "cooldown",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "30s"
+      },
+      "cue": "Relax, decompress, breathe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    },
+    {
+      "id": "cd_breathing",
+      "name": "Slow Breathing (4 in / 4 out)",
+      "slot": "cooldown",
+      "pattern": "recovery",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "cooldown",
+      "stick": false,
+      "valgus_relevant": false,
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "all": "5 breaths"
+      },
+      "cue": "Relax, decompress, breathe",
+      "progression_to": null,
+      "regression_to": null,
+      "notes": ""
+    }
+  ]
+}

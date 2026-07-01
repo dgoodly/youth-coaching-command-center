@@ -1,0 +1,12 @@
+{
+  "_comment": "Batch-ingest template. Run: npm run enter -- --json data/samples/assessment_form.example.json  (or copy this file per athlete). For an EXISTING athlete, set athleteId and drop displayName. Scores are 0-3 in fixed order. Set broadLandingFailed true if the broad-jump landing was uncontrolled (caps Test 5 at 1). paper.* is optional cross-check of what was hand-written. coachGutCall is the coach's independent tier for validation.",
+  "displayName": "Sample Athlete",
+  "date": "2026-06-30",
+  "tester": "Parent",
+  "scores": { "squat": 2, "dropStick": 3, "balance": 2, "pushup": 3, "broad": 2, "pogo": 2 },
+  "broadLandingFailed": false,
+  "coachGutCall": "A",
+  "heightCm": 145,
+  "notes": "",
+  "paper": { "rawTotal": 14, "finalTier": "A" }
+}

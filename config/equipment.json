@@ -1,0 +1,19 @@
+{
+  "_comment": "Single global equipment inventory (BUILD_BRIEF §2A / assembler §3 step 2). The assembler filters exercises to what is listed in `available`. v1 seeds ALL 14 library equipment types as on-hand; trim this list to match the coach's actual setup. 'none' is always implicitly available and need not be listed. See EXERCISE_LIBRARY.md for the equipment vocabulary.",
+  "available": [
+    "none",
+    "box",
+    "med_ball",
+    "hurdles",
+    "sled",
+    "cones",
+    "kettlebell",
+    "dumbbell",
+    "barbell",
+    "partner",
+    "bench",
+    "pullup_bar",
+    "wall",
+    "band"
+  ]
+}

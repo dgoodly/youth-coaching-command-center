@@ -1,0 +1,62 @@
+[
+  {
+    "day": 1,
+    "label": "Max Velocity + Lower Strength",
+    "emphasis": "linear-speed",
+    "funnel_mode": "full",
+    "sprint_emphasis": "max_velocity",
+    "jump_difficulty_ceiling": 5,
+    "_note": "Only max-velocity day → only day with a binding summed-jump-difficulty ceiling (protects the runs). Jumps prime only.",
+    "slots": {
+      "jump": [["pogo"], ["vertical_jump"]],
+      "sprint": [["max_velocity"]],
+      "lift": [["squat"], ["sl_squat"], ["hamstring", "hinge"], ["frontal_strength"]],
+      "trunk": [["anti_rotation", "anti_lateral", "anti_extension"]]
+    }
+  },
+  {
+    "day": 2,
+    "label": "Plyo Density / Single-Leg + Upper",
+    "emphasis": "linear-speed",
+    "funnel_mode": "short",
+    "sprint_emphasis": "acceleration",
+    "jump_difficulty_ceiling": null,
+    "_note": "High plyo density; NO max-velocity, so no jump ceiling needed. Short linear funnel (plyo block does the rest).",
+    "slots": {
+      "jump": [["pogo"], ["hurdle_hop"], ["horizontal_jump_sl"], ["lateral_jump"], ["depth_contrast"]],
+      "sprint": [["accel_start"], ["resisted_sprint"]],
+      "lift": [["pull"], ["push"]],
+      "trunk": [["rotation", "anti_extension"]]
+    }
+  },
+  {
+    "day": 3,
+    "label": "Acceleration / Multidirectional + Posterior",
+    "emphasis": "change-of-direction",
+    "funnel_mode": "full",
+    "sprint_emphasis": "acceleration+cod",
+    "jump_difficulty_ceiling": null,
+    "_note": "Moderate plyo; no max-velocity. Trunk-free (naturally posterior / heavy-sled day).",
+    "slots": {
+      "jump": [["pogo"], ["horizontal_jump_bilat"], ["lateral_jump"], ["horizontal_jump_sl"]],
+      "sprint": [["accel_start"], ["transition_sprint"], ["cod_speed"]],
+      "lift": [["squat"], ["hinge"], ["sled"], ["sl_squat"]],
+      "trunk": []
+    }
+  },
+  {
+    "day": 4,
+    "label": "Lateral & Rotational Power + Total",
+    "emphasis": "change-of-direction",
+    "funnel_mode": "full",
+    "sprint_emphasis": "reactive",
+    "jump_difficulty_ceiling": null,
+    "_note": "Frontal/transverse density; reactive sprint only (no max-velocity). Trunk = rotation (matches theme); anti-extension cycles in across blocks.",
+    "slots": {
+      "jump": [["pogo"], ["lateral_jump"], ["rotational_jump"]],
+      "sprint": [["cod_speed"]],
+      "lift": [["sl_squat"], ["push"], ["pull"], ["iso"]],
+      "trunk": [["rotation", "anti_extension"]]
+    }
+  }
+]

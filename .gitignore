@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+
+# Local athlete data is private — never commit real roster/assessment data.
+# Seed/sample data lives under /data/samples and IS tracked (see below).
+/data/*.json
+!/data/.gitkeep

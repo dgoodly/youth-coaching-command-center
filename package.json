@@ -1,0 +1,21 @@
+{
+  "name": "youth-coaching-command-center",
+  "version": "0.1.0",
+  "description": "Local single-coach command center: roster, movement-quality assessment, S/A/B/C tiering, tier-driven workout assembly, and a validation log. Durable core (data model + scoring engine + assembler) is built to transfer into a future app.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test --experimental-strip-types --no-warnings \"engine/**/*.test.ts\" \"store/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "enter": "node --experimental-strip-types --no-warnings cli/enter-assessment.ts",
+    "session": "node --experimental-strip-types --no-warnings cli/build-session.ts",
+    "dashboard": "node --experimental-strip-types --no-warnings dashboard/server.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
