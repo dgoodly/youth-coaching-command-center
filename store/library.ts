@@ -1,5 +1,5 @@
 /**
- * Exercise-library loader — reads `library/exercise_library.json` (the canonical 116-exercise
+ * Exercise-library loader — reads `library/exercise_library.json` (the canonical 121-exercise
  * library, root object with an `exercises` array) and the global equipment config, returning
  * validated, typed data for the assembler. Light validation so a hand-edited library fails
  * loudly rather than silently producing a broken session.

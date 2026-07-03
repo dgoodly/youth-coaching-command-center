@@ -12,7 +12,7 @@ reference program, and the field-form data contract — all in Markdown.
 4. **`4Day_Athletic_Split_Program.md`** — the A/S-tier reference session shape + library seed.
 5. **`Field_Form_Data_Contract.md`** — how a completed paper form maps into stored data.
 6. **`EXERCISE_LIBRARY.md`** — schema, difficulty model, assembler selection + rotation logic.
-7. **`exercise_library.json`** — the populated 116-exercise library (this IS `movements.json`).
+7. **`exercise_library.json`** — the populated 121-exercise library (this IS `movements.json`).
 
 ## What to build (summary)
 A local, single-coach tool: track athletes → run the assessment → assign a non-user-facing

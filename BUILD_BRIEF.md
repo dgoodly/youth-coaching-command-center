@@ -66,7 +66,7 @@ the repo and diffable. Read them before building:
 - **`Field_Form_Data_Contract.md`** — the data-entry contract derived from the paper
   capture form. Whatever the coach writes on paper must map 1:1 into the tool; this file
   defines those fields and the ingestion rules.
-- **`exercise_library.json`** — the populated movement library (116 exercises). **This
+- **`exercise_library.json`** — the populated movement library (121 exercises). **This
   IS the `/library/movements.json` referenced in §4 — do not create a second/empty one.**
   See the Library Update section below before using it.
 - **`EXERCISE_LIBRARY.md`** — schema, the difficulty model, the assembler selection
@@ -88,7 +88,7 @@ after this brief's first draft. It resolves and extends several things below. Tr
 points as binding:
 
 1. **It IS `movements.json`.** §4's architecture calls for `/library/movements.json`. That
-   file already exists as `exercise_library.json` — 116 exercises, populated and validated.
+   file already exists as `exercise_library.json` — 121 exercises, populated and validated.
    **Use it. Do not scaffold an empty or parallel movement library.** Rename/relocate into
    `/library/` if you like, but it's the same file.
 
