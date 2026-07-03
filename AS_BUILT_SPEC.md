@@ -48,9 +48,11 @@ transfers unchanged into a future app; the **surface** (CLIs, dashboard, JSON st
 | JSON persistence | `store/json-store.ts` | **Disposable** | types |
 | Library / template loaders | `store/library.ts` | **Disposable** | program, types |
 | Read queries | `store/query.ts` | **Disposable** | types + json-store |
+| Store doctor (gap scan) | `store/doctor.ts` | **Disposable** | types |
 | Athlete CRUD | `store/athletes.ts` | **Disposable** | types + json-store |
 | Data-entry CLI | `cli/enter-assessment.ts` | **Disposable** | ingest + athletes |
 | Session-builder CLI | `cli/build-session.ts` | **Disposable** | assembler + store |
+| Data-doctor CLI | `cli/doctor.ts` | **Disposable** | doctor + json-store |
 | Dashboard (HTTP + render) | `dashboard/*.ts` | **Disposable** | query + engine |
 
 **Rule enforced by imports:** engine code depends only on `engine/*`; it never imports `store/*`
@@ -174,8 +176,10 @@ difficulty chain (all links validated to resolve at load).
 
 **Loader/validation** (`store/library.ts`): light structural validation on load (unique ids, valid
 enums, difficulty 1–10, present variation_family + dose + equipment array, resolvable progression
-links) so a hand-edited library fails loudly. Cached after first read. Overridable via
-`CC_LIBRARY_FILE`, `CC_DAY_TEMPLATES_FILE`, `CC_EQUIPMENT_CONFIG` env vars.
+links) so a hand-edited library fails loudly; it also **warns** (not fails) on a
+`progression_to`/`regression_to` link that crosses a `variation_family` (which would silently break
+rotation stability). Not cached — a JSON edit takes effect on the next load, no restart. Overridable
+via `CC_LIBRARY_FILE`, `CC_DAY_TEMPLATES_FILE`, `CC_EQUIPMENT_CONFIG` env vars.
 
 **Dose rendering** (`doseLabel`) is robust to imperfect data: blank reps render "sub-max"
 (e.g. pull-up volume), non-numeric rest is dropped.
@@ -263,6 +267,20 @@ Plain JSON files under `/data`, one per collection, each an array — chosen for
 - `append` = read → push → write.
 - `DATA_DIR` overridable via `CC_DATA_DIR` (used by tests to isolate).
 
+**Atomicity across collections:** a single `writeCollection` is atomic (temp-file rename), but a
+multi-collection operation is not. `saveAssessment` appends the assessment and the height-log entry
+in two independent writes — a crash between them can leave an assessment with no matching height
+entry, silently under-feeding the maturity axis. This is **detectable and recoverable** rather than
+prevented: `npm run doctor` scans for assessments whose height never reached the height log, and
+`npm run doctor -- --fix` backfills them (`store/doctor.ts`).
+
+**Concurrency:** the store assumes a **single writer at a time** (one coach, one CLI/dashboard
+process). `append`/`writeCollection` do read-modify-write with no locking — concurrent writers can
+race and lose an update (they can't *corrupt* a file; the atomic rename still prevents torn writes).
+This is fine for v1's usage. App #2, if it introduces any second writer (a second device, a sync
+process, a web client with write endpoints), needs a real transactional datastore or an explicit
+locking/queueing layer before this assumption can be relied on.
+
 **Privacy:** `/data/*.json` is git-ignored (real roster data is private); only `/data/samples/`
 and `.gitkeep` are tracked. `data/samples/assessment_form.example.json` is the batch-ingest template.
 
@@ -286,6 +304,10 @@ dual-writes the height entry and prints the suggested re-assessment date (+5 wee
 - `--equip none,box` — override available equipment for the run.
 Printed shape resembles the reference program; tier is labeled coach-only.
 
+**`npm run doctor`** (`cli/doctor.ts`) — scan the store for data-integrity gaps (v1: assessments
+whose `heightCm` never reached the height log). Report-only by default; `-- --fix` backfills the
+missing height-log entries. Scan logic is pure (`store/doctor.ts`).
+
 ---
 
 ## 12. Dashboard (`dashboard/server.ts`, `dashboard/render.ts`)
@@ -307,19 +329,21 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **62 tests, all passing.** Coverage:
+via `--experimental-strip-types`. **78 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
-  4096 score combinations.
+  4096 score combinations (incl. the `S->A`-gate unreachability invariant).
 - **`engine/assembler.test.ts`** — sequencing rule across every tier × day, skeleton order, one
   funnel per emphasis, Day-1 jump-ceiling protection, valgus priority, band-floor entry, block
-  stability, rotation/progression, the misconfig throw.
+  stability, rotation/progression, the misconfig throw, and family-scoped variant selection.
 - **`engine/maturity.test.ts`** — velocity from the two most recent entries, PHV threshold, edge cases.
 - **`store/ingest.test.ts`** — recompute-as-source-of-truth, CAP rule, paper-mismatch surfacing,
   height dual-write, gut-call passthrough, validation errors, re-assessment date.
 - **`store/library.test.ts`** — the real library loads/validates (121 exercises, 8 slots, links
-  resolve), the two availability conditions, equipment filter, family grouping, and that every slot
-  is populatable at C.
+  resolve, no cross-family links), the two availability conditions, equipment filter, family
+  grouping, every slot populatable at C, the cross-family warning, and no-stale-cache re-reads.
+- **`store/doctor.test.ts`** — height-log gap detection, matching, null-height skip, backfill.
+- **`store/query.test.ts`** — `resolveAthleteIn` found/not_found/ambiguous resolution.
 
 ---
 
