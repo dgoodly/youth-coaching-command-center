@@ -75,8 +75,15 @@ async function main(): Promise<void> {
 
   const athleteArg = arg('athlete');
   if (athleteArg) {
-    const athlete = await resolveAthlete(athleteArg);
-    if (!athlete) return void line(`No unique athlete matched "${athleteArg}".`);
+    const resolution = await resolveAthlete(athleteArg);
+    if (resolution.status === 'not_found') return void line(`No athlete matched "${athleteArg}".`);
+    if (resolution.status === 'ambiguous') {
+      return void line(
+        `"${athleteArg}" matches multiple athletes: ${resolution.candidates.map((a) => a.displayName).join(', ')}. ` +
+          `Use --athlete <id> to disambiguate.`,
+      );
+    }
+    const athlete = resolution.athlete;
     athleteId = athlete.athleteId;
     athleteName = athlete.displayName;
     valgusWatch = athlete.valgusWatch;

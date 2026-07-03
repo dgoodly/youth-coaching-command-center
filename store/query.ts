@@ -28,16 +28,37 @@ export async function currentTier(athleteId: string): Promise<Tier | null> {
   return latest ? latest.finalTier : null;
 }
 
-/** Find an athlete by id or a case-insensitive display-name match. */
-export async function resolveAthlete(idOrName: string): Promise<AthleteProfile | null> {
-  const all = await readCollection('athletes');
+/**
+ * Result of resolving an id-or-name to an athlete. `ambiguous` is kept DISTINCT from
+ * `not_found` so the caller can tell the coach *which* athletes clashed (duplicate first names
+ * are likely on a youth roster) instead of a useless "no unique match".
+ */
+export type AthleteResolution =
+  | { status: 'found'; athlete: AthleteProfile }
+  | { status: 'not_found' }
+  | { status: 'ambiguous'; candidates: AthleteProfile[] };
+
+/**
+ * Resolve an id-or-name against a known athlete list (PURE, for testability). Tries exact id,
+ * then exact case-insensitive name, then substring name; a name step matching more than one
+ * athlete is `ambiguous` rather than silently dropped.
+ */
+export function resolveAthleteIn(all: AthleteProfile[], idOrName: string): AthleteResolution {
   const byId = all.find((a) => a.athleteId === idOrName);
-  if (byId) return byId;
+  if (byId) return { status: 'found', athlete: byId };
   const needle = idOrName.trim().toLowerCase();
   const byName = all.filter((a) => a.displayName.toLowerCase() === needle);
-  if (byName.length === 1) return byName[0]!;
+  if (byName.length === 1) return { status: 'found', athlete: byName[0]! };
+  if (byName.length > 1) return { status: 'ambiguous', candidates: byName };
   const partial = all.filter((a) => a.displayName.toLowerCase().includes(needle));
-  return partial.length === 1 ? partial[0]! : null;
+  if (partial.length === 1) return { status: 'found', athlete: partial[0]! };
+  if (partial.length > 1) return { status: 'ambiguous', candidates: partial };
+  return { status: 'not_found' };
+}
+
+/** Find an athlete by id or a case-insensitive display-name match (reads the store). */
+export async function resolveAthlete(idOrName: string): Promise<AthleteResolution> {
+  return resolveAthleteIn(await readCollection('athletes'), idOrName);
 }
 
 /** Height log for an athlete, oldest → newest. */
