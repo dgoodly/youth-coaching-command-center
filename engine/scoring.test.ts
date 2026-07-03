@@ -269,3 +269,20 @@ test('invariant: squat<2 OR dropStick<2 ⟹ finalTier === C (landing-integrity c
     if (r.gateFired === 'capC') assert.equal(r.finalTier, 'C');
   }
 });
+
+test('invariant: S->A gate is provably unreachable given Gate 1/2, for all 4096 (documents dead branch)', () => {
+  // Gate 3 (S requires a perfect stick) can only matter when tier is still S AND dropStick < 3.
+  // But Gate 1 (dropStick < 2) and Gate 2 (dropStick === 2) already fire for every dropStick < 3,
+  // dropping tier off S first — so gateFired can NEVER be 'S->A'. This pins that proof: if a
+  // future change to Gate 1/2 makes the branch reachable, this fails loudly and forces someone
+  // to verify the now-live branch behaves correctly (and update this test + scoring.ts's comment).
+  for (const sc of allScores()) {
+    const r = assignTier(sc);
+    assert.notEqual(
+      r.gateFired,
+      'S->A',
+      `S->A fired on ${JSON.stringify(sc)} — Gate 1/2 changed and the unreachability invariant broke. ` +
+        `If intentional, update this test AND the Gate 3 comment in scoring.ts.`,
+    );
+  }
+});

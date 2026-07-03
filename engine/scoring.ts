@@ -81,6 +81,16 @@ export function assignTier(scores: Scores): ScoringResult {
   }
 
   // Gate 3 — S requires a perfect stick: if still S but dropStick < 3, drop to A.
+  //
+  // NOTE (verified exhaustively over all 4096 score combinations): under the current Gate 1/2
+  // conditions this branch is structurally UNREACHABLE. Gate 1 (dropStick < 2) and Gate 2
+  // (dropStick === 2) both test dropStick directly and fire BEFORE this point whenever
+  // dropStick < 3 — so by the time Gate 3 runs, tier is no longer 'S' unless dropStick === 3
+  // already. This is intentional defense-in-depth: it mirrors spec §4's stated 3-step
+  // algorithm verbatim and stays correct if Gate 1/2 are ever loosened. It is NOT dead in a
+  // way that can silently rot — engine/scoring.test.ts asserts `gateFired === 'S->A'` never
+  // occurs, so any future change to Gate 1/2 that makes this branch reachable fails loudly and
+  // forces a re-verification that it still does the right thing.
   if (tier === 'S' && scores.dropStick < 3) {
     tier = 'A';
     gateFired = 'S->A';
