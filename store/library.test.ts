@@ -6,6 +6,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { loadLibrary, loadExercises, equipmentAvailable, byFamily, validate } from './library.ts';
 import { isAvailableAtTier, tierDose, isAllDose, SLOT_ORDER, type Exercise } from '../engine/program.ts';
@@ -119,4 +122,21 @@ test('validate warns (does not throw) on a cross-family progression link', () =>
     console.warn = orig;
   }
   assert.ok(warnings.some((w) => w.includes('crosses variation_family')), 'expected a cross-family warning');
+});
+
+test('loadLibrary reflects on-disk edits without a stale cache (#4)', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'cc-lib-'));
+  const file = join(dir, 'lib.json');
+  const write = (exercises: Exercise[]) => writeFile(file, JSON.stringify({ exercises }), 'utf8');
+  try {
+    await write([makeExercise({ id: 'x1' })]);
+    const first = await loadLibrary(file);
+    assert.equal(first.exercises.length, 1, 'first load');
+
+    await write([makeExercise({ id: 'x1' }), makeExercise({ id: 'x2' })]);
+    const second = await loadLibrary(file);
+    assert.equal(second.exercises.length, 2, 'second load reflects the edit — no stale cache');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });

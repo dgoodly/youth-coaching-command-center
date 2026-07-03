@@ -34,16 +34,18 @@ export const DAY_TEMPLATES_FILE = process.env.CC_DAY_TEMPLATES_FILE
 
 const VALID_SLOTS = new Set<Slot>(SLOT_ORDER);
 
-let cached: Library | null = null;
-
-/** Load + validate the library. Cached after first read (immutable data). */
-export async function loadLibrary(): Promise<Library> {
-  if (cached) return cached;
-  if (!existsSync(LIBRARY_FILE)) throw new Error(`Library not found: ${LIBRARY_FILE}`);
-  const lib = JSON.parse(await readFile(LIBRARY_FILE, 'utf8')) as Library;
+/**
+ * Load + validate the library from `file` (defaults to {@link LIBRARY_FILE}). NOT cached: a
+ * hand-edit to `exercise_library.json` takes effect on the next call, no restart needed — the
+ * whole file is a sub-millisecond parse at this size, and caching it (while day-templates.json
+ * is re-read every call) silently broke the coach's "edit any record" workflow. If profiling
+ * ever shows this matters, switch to an mtime-checked cache — do not reintroduce a blind one.
+ */
+export async function loadLibrary(file: string = LIBRARY_FILE): Promise<Library> {
+  if (!existsSync(file)) throw new Error(`Library not found: ${file}`);
+  const lib = JSON.parse(await readFile(file, 'utf8')) as Library;
   if (!Array.isArray(lib.exercises)) throw new Error('exercise_library.json: missing `exercises` array.');
   validate(lib.exercises);
-  cached = lib;
   return lib;
 }
 
@@ -149,9 +151,4 @@ export function byFamily(exercises: Exercise[]): Map<string, Exercise[]> {
     map.set(e.variation_family, list);
   }
   return map;
-}
-
-/** Test/reset hook for the module cache. */
-export function _resetCache(): void {
-  cached = null;
 }
