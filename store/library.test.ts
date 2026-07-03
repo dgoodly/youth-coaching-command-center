@@ -7,12 +7,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { loadLibrary, loadExercises, equipmentAvailable, byFamily } from './library.ts';
-import { isAvailableAtTier, tierDose, isAllDose, SLOT_ORDER } from '../engine/program.ts';
+import { loadLibrary, loadExercises, equipmentAvailable, byFamily, validate } from './library.ts';
+import { isAvailableAtTier, tierDose, isAllDose, SLOT_ORDER, type Exercise } from '../engine/program.ts';
 import { TIERS } from '../engine/types.ts';
 
 const lib = await loadLibrary();
 const ex = lib.exercises;
+
+/** Minimal valid Exercise for validator unit tests; override only what a case cares about. */
+function makeExercise(over: Partial<Exercise> & { id: string }): Exercise {
+  return {
+    name: over.id, slot: 'trunk', pattern: 'anti_extension', plane: 'sagittal',
+    laterality: 'bilateral', min_tier: 'C', difficulty: 1, variation_family: 'fam',
+    stick: false, valgus_relevant: false, equipment: ['none'], dose: { all: 'x' },
+    cue: '', progression_to: null, regression_to: null, notes: '', ...over,
+  };
+}
 
 test('real library loads: 121 exercises, 8 slots, links resolve', () => {
   assert.equal(ex.length, 121, '121 exercises');
@@ -77,4 +87,36 @@ test('variation families group multiple swappable members', () => {
   assert.ok(fams.size >= 30, 'about 31 families');
   const horiz = fams.get('horizontal_jump_bilat');
   assert.ok(horiz && horiz.length >= 4, 'horizontal_jump_bilat has a rotation ladder');
+});
+
+test('the real library has no cross-family progression/regression links', () => {
+  // Guards the #1 fix: a link that crosses variation_family silently breaks selectFill's
+  // block-stability check. This asserts the shipped data stays clean (validate() only warns).
+  const byId = new Map(ex.map((e) => [e.id, e]));
+  const crossing: string[] = [];
+  for (const e of ex) {
+    for (const key of ['progression_to', 'regression_to'] as const) {
+      const target = e[key] ? byId.get(e[key]!) : undefined;
+      if (target && target.variation_family !== e.variation_family) {
+        crossing.push(`${e.id}.${key} → ${e[key]} (${e.variation_family} → ${target.variation_family})`);
+      }
+    }
+  }
+  assert.deepEqual(crossing, [], `cross-family links present: ${crossing.join('; ')}`);
+});
+
+test('validate warns (does not throw) on a cross-family progression link', () => {
+  const exercises: Exercise[] = [
+    makeExercise({ id: 'a', variation_family: 'fam1', progression_to: 'b' }),
+    makeExercise({ id: 'b', variation_family: 'fam2' }),
+  ];
+  const warnings: string[] = [];
+  const orig = console.warn;
+  console.warn = (msg?: unknown) => void warnings.push(String(msg));
+  try {
+    assert.doesNotThrow(() => validate(exercises)); // only hard-fails on unresolvable links / bad enums
+  } finally {
+    console.warn = orig;
+  }
+  assert.ok(warnings.some((w) => w.includes('crosses variation_family')), 'expected a cross-family warning');
 });

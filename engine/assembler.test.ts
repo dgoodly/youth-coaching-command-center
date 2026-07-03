@@ -28,6 +28,16 @@ function block(s: AssembledSession, slot: string) {
   return s.blocks.find((b) => b.slot === slot);
 }
 
+/** Minimal valid Exercise for selectFill unit tests; override only what a case cares about. */
+function makeExercise(over: Partial<Exercise> & { id: string }): Exercise {
+  return {
+    name: over.id, slot: 'jump', pattern: 'horizontal_jump', plane: 'sagittal',
+    laterality: 'bilateral', min_tier: 'C', difficulty: 1, variation_family: 'fam',
+    stick: false, valgus_relevant: false, equipment: ['none'], dose: { all: 'x' },
+    cue: '', progression_to: null, regression_to: null, notes: '', ...over,
+  };
+}
+
 test('every tier × day assembles without violating the sequencing rule', () => {
   for (const tier of TIERS) {
     for (const t of templates) {
@@ -201,4 +211,18 @@ test('assertSequencingRule passes when no max-velocity is present regardless of 
   const s = assemble('S', 2).session; // high plyo, no max-V
   const t = templates.find((x) => x.day === 2)!;
   assert.doesNotThrow(() => assertSequencingRule(s, t));
+});
+
+test('a persisted variant from a different family than the pool selects is not silently kept', () => {
+  // Locks in the #1 fix at the assembler level: selectFill's block-stability check is
+  // family-scoped, so a variant that was advanced across a family boundary (the cross-family
+  // progression bug) is NOT kept — the pool-selected family wins. This keeps the correct
+  // behavior explicit so nobody "fixes" a future cross-family link by loosening this check.
+  const wrongFamily = makeExercise({ id: 'wrong', variation_family: 'famB', difficulty: 3 });
+  const rightFamilyMember = makeExercise({ id: 'right', variation_family: 'famA', difficulty: 3 });
+  const result = selectFill([wrongFamily, rightFamilyMember], ['famA'], {
+    tier: 'B', blockIndex: 0, valgusWatch: false, equipment: new Set(['*']),
+    bandFloor: 1, preferBandFloor: true, existingId: 'wrong',
+  });
+  assert.equal(result.exercise?.id, 'right'); // not 'wrong' — family scoping wins
 });

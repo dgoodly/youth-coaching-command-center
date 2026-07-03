@@ -3805,7 +3805,7 @@
         }
       },
       "cue": "Straight line head to heels, breathe",
-      "progression_to": "t_plank_reach",
+      "progression_to": "t_hollow_hold",
       "regression_to": null,
       "notes": ""
     },
@@ -3848,7 +3848,7 @@
       },
       "cue": "Reach without letting the hips rotate",
       "progression_to": null,
-      "regression_to": "t_plank",
+      "regression_to": "t_pallof",
       "notes": ""
     },
     {

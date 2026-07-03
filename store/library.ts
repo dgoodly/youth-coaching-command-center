@@ -69,11 +69,33 @@ export function validate(exercises: Exercise[]): void {
     if (!Array.isArray(e.equipment)) throw new Error(`library: "${e.id}" equipment must be an array.`);
   }
   // Progression / regression links must resolve to real ids.
+  const byId = new Map(exercises.map((e) => [e.id, e]));
   for (const e of exercises) {
     for (const key of ['progression_to', 'regression_to'] as const) {
       const target = e[key];
       if (target && !ids.has(target)) {
         throw new Error(`library: "${e.id}".${key} → "${target}" does not resolve.`);
+      }
+    }
+  }
+
+  // Progression / regression should stay WITHIN a variation_family. Crossing families
+  // silently breaks selectFill's block-stability check (a persisted variant advanced across
+  // a family boundary won't be found among the next assembly's pool-selected candidates, so
+  // the athlete's earned progression is dropped with no note). Warn loudly rather than throw:
+  // the loader hard-fails only on structural breakage (missing ids / bad enums); whether a
+  // deliberate cross-family link should ever exist is a coaching decision, not the loader's.
+  for (const e of exercises) {
+    for (const key of ['progression_to', 'regression_to'] as const) {
+      const targetId = e[key];
+      if (!targetId) continue;
+      const target = byId.get(targetId);
+      if (target && target.variation_family !== e.variation_family) {
+        console.warn(
+          `library WARNING: "${e.id}".${key} → "${targetId}" crosses variation_family ` +
+            `(${e.variation_family} → ${target.variation_family}). This will silently break ` +
+            `rotation stability in selectFill. Verify this is intentional.`,
+        );
       }
     }
   }
