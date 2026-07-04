@@ -19,7 +19,7 @@ independent ratings**, and keeping them separate is the whole point:
   to S because it demands elite landing control, full stop.
 - **`difficulty` (1–10)** — the **inherent demand** of the movement, used to *balance a
   session's total load* and to *order progressions within a family*. Two A-tier exercises
-  can have different difficulty (a goblet squat is 3; sprint-with-intent is 6).
+  can have different difficulty (a goblet squat is 3; a flying sprint is 5).
 
 Think of it as: **min_tier decides what's allowed; difficulty decides how hard what's
 allowed actually is.** This mirrors the program's core rule — tier governs selection,

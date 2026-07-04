@@ -2324,14 +2324,14 @@
         },
         "S": {
           "sets": 3,
-          "reps": "40yd",
+          "reps": "35yd",
           "rest_sec": 90
         }
       },
       "cue": "Smooth acceleration, tall finish",
       "progression_to": "s_flying_sprint",
       "regression_to": null,
-      "notes": "MAX-V family: never downstream of a heavy plyo block."
+      "notes": "MAX-V family: never downstream of a heavy plyo block. Sub-maximal build-up (ramp to ~90%), kept short so it primes rather than drifting into flat-out speed-endurance."
     },
     {
       "id": "s_flying_sprint",
@@ -2371,13 +2371,13 @@
         }
       },
       "cue": "Don't sprint the build-up — max effort through the fly zone, run tall",
-      "progression_to": "s_sprint_intent",
+      "progression_to": "s_flying_volume",
       "regression_to": "s_buildup",
-      "notes": "MAX-V family."
+      "notes": "MAX-V family. ~20yd build into a ~20-25yd (≈10-30m) maximal fly zone — NOT a flat-out long run."
     },
     {
-      "id": "s_sprint_intent",
-      "name": "Sprint With Intent (40–60+ yd)",
+      "id": "s_flying_volume",
+      "name": "Flying Sprint — Added Exposures (higher volume)",
       "slot": "sprint",
       "pattern": "max_velocity",
       "plane": "sagittal",
@@ -2402,20 +2402,20 @@
           "rest_sec": 0
         },
         "A": {
-          "sets": 3,
-          "reps": "40-50yd",
+          "sets": 6,
+          "reps": "15 build/20 fly",
           "rest_sec": 180
         },
         "S": {
-          "sets": 4,
-          "reps": "50-60yd",
+          "sets": 7,
+          "reps": "15 build/25 fly",
           "rest_sec": 180
         }
       },
-      "cue": "95–100% effort. Progress by adding reps or distance, not chasing the clock",
+      "cue": "Same flying structure — max effort through the fly zone. The progression is MORE exposures, never a longer run",
       "progression_to": null,
       "regression_to": "s_flying_sprint",
-      "notes": "MAX-V family. Track/field time 1–3x/week."
+      "notes": "MAX-V family, top rung. Progresses s_flying_sprint by ADDING quality fly reps/exposures (ramp high-speed volume ~5%/week), NOT by extending flat-out distance — the deprecated 40-60yd 'sprint with intent' is intentionally gone (hamstring-risk / speed-endurance drift)."
     },
     {
       "id": "s_mirror_drill",

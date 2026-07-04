@@ -124,6 +124,28 @@ test('validate warns (does not throw) on a cross-family progression link', () =>
   assert.ok(warnings.some((w) => w.includes('crosses variation_family')), 'expected a cross-family warning');
 });
 
+test('no sprint prescribes a flat-out distance ≥ 40 yd (flying-sprint safety rule)', () => {
+  // COACHING_INSTRUCTIONS SPRINT: max-velocity uses flying structure (~20yd build + short fly
+  // zone), and flat-out 40–60+ yd youth sprints are banned (hamstring / speed-endurance drift).
+  // Every sprint dose distance must stay sub-40 yd; flying reps ("15 build/20 fly") encode only
+  // the fly-zone length, well under 40. Catches a re-added "sprint with intent"-style entry.
+  const offenders: string[] = [];
+  for (const e of ex) {
+    if (e.slot !== 'sprint' || isAllDose(e.dose)) continue;
+    for (const [tier, d] of Object.entries(e.dose)) {
+      const reps = d?.reps;
+      if (typeof reps !== 'string') continue;
+      for (const m of reps.matchAll(/(\d+)\s*(?:-\s*(\d+)\s*)?yd/g)) {
+        const yards = [Number(m[1]), m[2] ? Number(m[2]) : null].filter((n): n is number => n !== null);
+        for (const y of yards) {
+          if (y >= 40) offenders.push(`${e.id} (${tier}: "${reps}") → ${y}yd`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(offenders, [], `flat-out sprint distances ≥ 40yd found: ${offenders.join('; ')}`);
+});
+
 test('loadLibrary reflects on-disk edits without a stale cache (#4)', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'cc-lib-'));
   const file = join(dir, 'lib.json');
