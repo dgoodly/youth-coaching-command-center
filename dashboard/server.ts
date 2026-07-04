@@ -14,7 +14,7 @@ import type { Assessment, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, TIER_STAGE } from '../engine/types.ts';
 import { computeMaturity } from '../engine/maturity.ts';
 import {
-  allAthletes, assessmentsFor, latestAssessment, heightLogFor, workoutLogFor,
+  allAthletes, assessmentsFor, latestAssessment, heightLogFor, workoutLogFor, wellnessLogFor,
   blockStateFor, daysSince, dueForReassessment,
 } from '../store/query.ts';
 import { ageFromDob } from '../store/athletes.ts';
@@ -45,7 +45,7 @@ async function rosterPage(): Promise<string> {
   for (const a of athletes) {
     const latest = await latestAssessment(a.athleteId);
     const heights = await heightLogFor(a.athleteId);
-    const maturity = computeMaturity(heights);
+    const maturity = computeMaturity(heights, { dob: a.dob, sex: a.sex });
     const block = await blockStateFor(a.athleteId);
     const age = ageFromDob(a.dob);
 
@@ -95,7 +95,8 @@ async function athletePage(id: string): Promise<string> {
   const assessments = await assessmentsFor(id); // oldest → newest
   const heights = await heightLogFor(id);
   const workouts = await workoutLogFor(id);
-  const maturity = computeMaturity(heights);
+  const wellness = await wellnessLogFor(id);
+  const maturity = computeMaturity(heights, { dob: a.dob, sex: a.sex });
   const age = ageFromDob(a.dob);
 
   // Tier history (newest first).
@@ -129,7 +130,25 @@ async function athletePage(id: string): Promise<string> {
     esc(w.coachNotes) || '<span class="muted">—</span>',
   ]);
 
-  const heightRows = heights.map((hh) => [esc(hh.date), `${hh.heightCm} cm`, `<span class="pill">${esc(hh.source)}</span>`]);
+  const heightRows = heights.map((hh) => [
+    esc(hh.date),
+    `${hh.heightCm} cm`,
+    hh.sittingHeightCm != null ? `${hh.sittingHeightCm} cm` : '<span class="muted">—</span>',
+    `<span class="pill">${esc(hh.source)}</span>`,
+  ]);
+
+  const wellnessRows = wellness.map((w) => [
+    esc(w.date),
+    w.sleepHours != null ? `${w.sleepHours} h` : '<span class="muted">—</span>',
+    w.soreness != null ? String(w.soreness) : '<span class="muted">—</span>',
+    w.energy != null ? String(w.energy) : '<span class="muted">—</span>',
+    esc(w.notes ?? '') || '<span class="muted">—</span>',
+  ]);
+
+  // Maturity-offset estimate line (Moore/Fransen), shown when computable.
+  const estLine = maturity.maturityOffsetYears !== null
+    ? `<p>Maturity estimate: <b>${maturity.phvBand?.toUpperCase()}-PHV</b> · offset ${maturity.maturityOffsetYears >= 0 ? '+' : '−'}${Math.abs(maturity.maturityOffsetYears).toFixed(1)} yr · est. age at PHV ${maturity.estimatedAgeAtPHV!.toFixed(1)} <span class="muted">(${esc(maturity.method ?? '')})</span></p>`
+    : `<p class="muted">Maturity estimate unavailable — ${esc(maturity.method ?? 'set DOB, sex, and (for boys) sitting height')}.</p>`;
 
   const body = `
     <p><a href="/">← Roster</a></p>
@@ -141,7 +160,11 @@ async function athletePage(id: string): Promise<string> {
 
     <h2>Maturity (dose axis — independent of tier)</h2>
     <p>${maturity.nearPHV ? '<span class="flag">⚠ ' : '<span class="ok">'}${esc(maturity.note)}</span></p>
-    ${table(['Date', 'Height', 'Source'], heightRows, 'No height entries logged.')}
+    ${estLine}
+    ${table(['Date', 'Standing', 'Sitting', 'Source'], heightRows, 'No height entries logged.')}
+
+    <h2>Wellness (weekly load / growth check)</h2>
+    ${table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged. Add with `npm run wellness`.')}
 
     <h2>Tier history</h2>
     ${table(['Date', 'Raw', 'Base', 'Final', 'Gate', 'Gut-call'], historyRows, 'No assessments yet.')}

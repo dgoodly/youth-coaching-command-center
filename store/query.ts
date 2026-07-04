@@ -4,7 +4,7 @@
  */
 
 import type {
-  Assessment, AthleteProfile, HeightLogEntry, WorkoutLogEntry, BlockState, Tier,
+  Assessment, AthleteProfile, HeightLogEntry, WellnessLogEntry, WorkoutLogEntry, BlockState, Tier,
 } from '../engine/types.ts';
 import { readCollection } from './json-store.ts';
 
@@ -70,6 +70,12 @@ export async function heightLogFor(athleteId: string): Promise<HeightLogEntry[]>
 /** Workout log for an athlete, newest → oldest. */
 export async function workoutLogFor(athleteId: string): Promise<WorkoutLogEntry[]> {
   const all = await readCollection('workout_log');
+  return all.filter((w) => w.athleteId === athleteId).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/** Wellness log for an athlete, newest → oldest. */
+export async function wellnessLogFor(athleteId: string): Promise<WellnessLogEntry[]> {
+  const all = await readCollection('wellness_log');
   return all.filter((w) => w.athleteId === athleteId).sort((a, b) => b.date.localeCompare(a.date));
 }
 

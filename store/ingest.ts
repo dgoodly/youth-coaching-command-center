@@ -45,6 +45,8 @@ export interface FieldFormInput {
   /** §3.7 — coach's independent gut-call tier, ideally entered BEFORE the reveal. */
   coachGutCall: Tier | null;
   heightCm: number | null;
+  /** Optional sitting height (cm) captured with standing height — feeds the maturity estimate. */
+  sittingHeightCm?: number | null;
   videoRefs?: string[];
   notes?: string;
   /** Optional paper-written outputs, for the cross-check (contract rule 2). */
@@ -151,6 +153,7 @@ export function buildAssessmentRecord(
           athleteId: input.athleteId,
           date: input.date,
           heightCm: input.heightCm,
+          ...(input.sittingHeightCm != null ? { sittingHeightCm: input.sittingHeightCm } : {}),
           source: 'assessment',
         }
       : null;

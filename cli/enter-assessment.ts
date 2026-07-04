@@ -90,6 +90,7 @@ async function main(): Promise<void> {
     const date = await ask(rl, 'Assessment date (YYYY-MM-DD)', todayIso());
     const tester = await ask(rl, 'Tester (parent/guardian)', 'Parent');
     const heightCm = await askOptionalNumber(rl, 'Standing height (cm)');
+    const sittingHeightCm = await askOptionalNumber(rl, 'Sitting height (cm, optional — for the maturity estimate)');
 
     // --- 3. The six scores (fixed spec order) ---
     line('\n--- Scores (0–3 each, from the paper form) ---');
@@ -131,6 +132,7 @@ async function main(): Promise<void> {
       broadLandingFailed,
       coachGutCall,
       heightCm,
+      sittingHeightCm,
       notes,
       ...(paperRaw !== null || paperFinal !== null
         ? { paper: { ...(paperRaw !== null ? { rawTotal: paperRaw } : {}), ...(paperFinal !== null ? { finalTier: paperFinal } : {}) } }
@@ -173,14 +175,18 @@ async function main(): Promise<void> {
  */
 async function runBatch(jsonPath: string): Promise<void> {
   const raw = await readFile(jsonPath, 'utf8');
-  const parsed = JSON.parse(raw) as FieldFormInput & { displayName?: string; valgusWatch?: boolean };
+  const parsed = JSON.parse(raw) as FieldFormInput & {
+    displayName?: string; valgusWatch?: boolean; sex?: 'M' | 'F' | null; dob?: string | null;
+  };
 
   // Resolve / create the athlete.
   let athleteId = parsed.athleteId;
   const athletes = await listAthletes();
   if (!athleteId || !athletes.some((a) => a.athleteId === athleteId)) {
     const name = parsed.displayName ?? athleteId ?? 'Unnamed athlete';
-    const created = await createAthlete({ displayName: name, valgusWatch: parsed.valgusWatch });
+    const created = await createAthlete({
+      displayName: name, valgusWatch: parsed.valgusWatch, sex: parsed.sex ?? null, dob: parsed.dob ?? null,
+    });
     athleteId = created.athleteId;
     line(`Created athlete "${created.displayName}" (${athleteId}).`);
   }
@@ -203,12 +209,15 @@ async function newAthlete(
   line('\n--- New athlete ---');
   const displayName = await ask(rl, 'Name');
   const dobRaw = await ask(rl, 'DOB (YYYY-MM-DD, optional)', '');
+  const sexRaw = (await ask(rl, 'Sex (M/F, optional — for the maturity estimate)', '')).trim().toUpperCase();
+  const sex = sexRaw === 'M' ? 'M' : sexRaw === 'F' ? 'F' : null;
   const sportsRaw = await ask(rl, 'Sport(s), comma-separated', '');
   const trainingMonths = (await askOptionalNumber(rl, 'Months of consistent training')) ?? 0;
   const valgusWatch = await askYesNo(rl, 'Knee-valgus watch? (prioritizes stick/knee-tracking work)', false);
   const profile = await createAthlete({
     displayName,
     dob: dobRaw || null,
+    sex,
     sports: sportsRaw ? sportsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [],
     trainingMonths,
     valgusWatch,

@@ -159,6 +159,13 @@ export interface AthleteProfile {
   dob: string | null; // ISO date; age derivable from this (contract: age derivable from DOB)
   sports: string[];
   /**
+   * Biological sex, needed for the maturity-offset estimate (COACHING_INSTRUCTIONS
+   * "MATURITY MONITORING"; the Moore/Fransen equations differ by sex). Optional/`null` when
+   * unknown — the estimate is simply skipped. Independent of tier and of gender identity;
+   * used only for the growth-maturation model.
+   */
+  sex?: 'M' | 'F' | null;
+  /**
    * Months of consistent training (spec §6). CONTEXT input, NOT one of the 18 scored
    * points — a tie-breaker between adjacent tiers and an input to dose logic.
    */
@@ -196,9 +203,32 @@ export interface BlockState {
 export interface HeightLogEntry {
   athleteId: string;
   date: string; // ISO date
-  heightCm: number;
+  heightCm: number; // standing height
+  /**
+   * Sitting height (cm), tracked quarterly alongside standing height (spec §7 /
+   * COACHING_INSTRUCTIONS "MATURITY MONITORING"). Feeds the Moore/Fransen maturity-offset
+   * estimate for boys. Optional — older entries and standing-only measures leave it null.
+   */
+  sittingHeightCm?: number | null;
   /** 'assessment' if this entry was dual-written from an assessment (contract rule 4). */
   source: 'assessment' | 'manual';
+}
+
+/**
+ * One brief weekly wellness / load check (COACHING_INSTRUCTIONS "MATURITY MONITORING"): a
+ * lightweight self-report to watch load and growth-related niggles (Osgood-Schlatter / Sever's
+ * cluster around PHV). All fields optional so a check can be as quick as one number.
+ */
+export interface WellnessLogEntry {
+  athleteId: string;
+  date: string; // ISO date
+  sleepHours?: number | null;
+  /** 1 (fresh) – 5 (very sore). */
+  soreness?: number | null;
+  /** 1 (flat) – 5 (great). */
+  energy?: number | null;
+  /** Free-text: niggles, growth-plate soreness (knee/heel), mood, etc. */
+  notes?: string;
 }
 
 // ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ export async function findAthlete(athleteId: string): Promise<AthleteProfile | u
 export interface NewAthleteInput {
   displayName: string;
   dob?: string | null;
+  sex?: 'M' | 'F' | null;
   sports?: string[];
   trainingMonths?: number;
   valgusWatch?: boolean;
@@ -35,6 +36,7 @@ export async function createAthlete(
     athleteId: randomUUID(),
     displayName: input.displayName.trim(),
     dob: input.dob ?? null,
+    sex: input.sex ?? null,
     sports: input.sports ?? [],
     trainingMonths: input.trainingMonths ?? 0,
     valgusWatch: input.valgusWatch ?? false,

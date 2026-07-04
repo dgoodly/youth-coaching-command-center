@@ -51,8 +51,12 @@ load upstream of the runs. Anchored to the reference program's real design:
 ### Maturity / PHV flag (spec §7)
 - **PHV trigger = height velocity ≥ 7 cm/yr** (`PHV_FLAG_CM_PER_YEAR` in engine/maturity.ts) →
   dose pullback. Reasoned default (boys' peak ~8–9 cm/yr); validate against real growth logs.
-- v1 uses standing-height velocity between the two most recent entries only. Future enrichment
-  (spec §7): sitting-height ratio, weight/shoe-size trend for sharper spurt detection.
+- **✅ APPLIED:** alongside velocity, `computeMaturity` now also returns a **Moore/Fransen (2015)
+  maturity-offset estimate** (years-from-PHV band) from sitting height + sex + DOB. The `±1yr`
+  circa-PHV band and the velocity flag are two independent spurt signals — tune both against real
+  growth logs (esp. the ±1yr band width and how the offset estimate agrees with observed velocity).
+- Remaining enrichment (spec §7): weight/shoe-size trend and Khamis-Roche
+  (%-of-predicted-adult-height, needs parental heights) for sharper/second-opinion spurt detection.
 
 ## Library coverage gaps — families needing C-tier members
 

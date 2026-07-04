@@ -80,10 +80,14 @@ provenance.
   `rawTotal / baseTier / finalTier / gateFired`, `coachGutCall`, `heightCm`, `videoRefs`, `notes`,
   and optional `paperMismatch` provenance (only present when hand-written paper values disagreed
   with the recompute).
-- **`AthleteProfile`** — id, displayName, dob (age derived), sports, `trainingMonths` (context,
-  not a scored point), `valgusWatch` (drives assembler valgus priority), createdAt, notes.
-- **`HeightLogEntry`** — `{athleteId, date, heightCm, source: 'assessment' | 'manual'}`. Feeds the
-  maturity axis; assessment-supplied heights are dual-written here with `source: 'assessment'`.
+- **`AthleteProfile`** — id, displayName, dob (age derived), `sex` (`'M' | 'F' | null`, for the
+  maturity estimate only), sports, `trainingMonths` (context, not a scored point), `valgusWatch`
+  (drives assembler valgus priority), createdAt, notes.
+- **`HeightLogEntry`** — `{athleteId, date, heightCm, sittingHeightCm?, source: 'assessment' |
+  'manual'}`. Feeds the maturity axis; assessment-supplied heights (standing + optional sitting)
+  are dual-written here with `source: 'assessment'`.
+- **`WellnessLogEntry`** — `{athleteId, date, sleepHours?, soreness?, energy?, notes?}`. Brief
+  weekly load/growth check (all fields optional).
 - **`BlockState`** — per-athlete rotation state: `blockStartDate`, `blockIndex` (0-based),
   `slotVariants` (map of `"<day>:<slot>:<index>"` → exerciseId).
 - **`WorkoutLogEntry`** — a served session snapshot: `servedForTier`, `sessionLabel`, `completed`,
@@ -126,18 +130,20 @@ proven by the tests (all 4096 score combinations): gates never *raise* the tier;
 
 ## 5. Maturity axis (`engine/maturity.ts`) — spec §7
 
-Pure function of the height log; governs **dose only**, never tier. `computeMaturity(entries)`
-returns `{latestHeightCm, velocityCmPerYear, nearPHV, note}`:
+Pure function of the height log + optional profile inputs; governs **dose only**, never tier.
+`computeMaturity(entries, { dob?, sex? })` returns two complementary, tier-independent signals:
 
-- Height velocity is computed from the **two most recent** entries (cm / year, using a 365.25-day
-  year). Needs ≥ 2 entries; degrades gracefully (distinct notes) for 0 entries, 1 entry, or two
-  entries sharing a date.
-- **`PHV_FLAG_CM_PER_YEAR = 7`** — at/above this velocity, `nearPHV` is true → the note prescribes
-  a **dose pullback** (trim volume, conservative loading, extra landing emphasis) and explicitly
-  states it does **not** change tier. Reasoned default, not validated (see `FEATURE_IDEAS.md`).
-
-v1 is deliberately standing-height-velocity only; richer signals (sitting-height ratio, weight/shoe
-trend) are noted as future enrichment.
+- **Height velocity** — from the **two most recent** entries (cm / year, 365.25-day year). Needs
+  ≥ 2 entries; degrades gracefully (distinct notes) for 0 entries, 1 entry, or two entries sharing
+  a date. **`PHV_FLAG_CM_PER_YEAR = 7`** — at/above this, `nearPHV` is true → the note prescribes a
+  **dose pullback** (trim volume, conservative loading, extra landing emphasis), explicitly *not* a
+  tier change. Reasoned default, not validated (see `FEATURE_IDEAS.md`).
+- **Maturity-offset estimate** — the **Moore/Fransen (2015)** equations (preferred over the older
+  Mirwald), sex-specific: boys use sitting height, girls use standing height, both × decimal age at
+  measurement. Returns `maturityOffsetYears` (years from PHV, − = pre), `estimatedAgeAtPHV`,
+  `phvBand` (`pre` < −1yr · `circa` ±1yr · `post` > +1yr), and `method`. Null (with a reason in
+  `method`) when sex, DOB, or — for boys — sitting height is missing. Population estimate, not
+  precision; the `circa` band is the spurt window where dose eases and coordination dips.
 
 ---
 
@@ -266,7 +272,7 @@ stored `slotVariants`; at a boundary the coach rotates deliberately.
 Plain JSON files under `/data`, one per collection, each an array — chosen for hand-readability
 (the coach can open and edit any record). Full read/rewrite per change is fine at this scale.
 
-- Collections: `athletes, assessments, height_log, workout_log, block_state`.
+- Collections: `athletes, assessments, height_log, wellness_log, workout_log, block_state`.
 - `readCollection` returns `[]` if the file is missing/empty (first run).
 - `writeCollection` pretty-prints (2-space) and **atomically renames** a temp file into place so a
   crash mid-write can't corrupt the live file.
@@ -310,6 +316,9 @@ dual-writes the height entry and prints the suggested re-assessment date (+5 wee
 - `--equip none,box` — override available equipment for the run.
 Printed shape resembles the reference program; tier is labeled coach-only.
 
+**`npm run wellness`** (`cli/log-wellness.ts`) — record a brief weekly wellness check
+(sleep / soreness / energy / notes) for an athlete. Interactive or `-- --json <path>` batch.
+
 **`npm run doctor`** (`cli/doctor.ts`) — scan the store for data-integrity gaps (v1: assessments
 whose `heightCm` never reached the height log). Report-only by default; `-- --fix` backfills the
 missing height-log entries. Scan logic is pure (`store/doctor.ts`).
@@ -335,7 +344,7 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **80 tests, all passing.** Coverage:
+via `--experimental-strip-types`. **87 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
@@ -343,7 +352,9 @@ via `--experimental-strip-types`. **80 tests, all passing.** Coverage:
   funnel per emphasis, Day-1 jump-ceiling protection, valgus priority, band-floor entry, block
   stability, rotation/progression, the misconfig throw, family-scoped variant selection, and the
   motor-skill enrichment block (present every day, placed after trunk / before cooldown).
-- **`engine/maturity.test.ts`** — velocity from the two most recent entries, PHV threshold, edge cases.
+- **`engine/maturity.test.ts`** — velocity from the two most recent entries, PHV threshold, edge
+  cases, and the Moore/Fransen maturity-offset estimate (pre/circa/post bands, sex-specific inputs,
+  graceful null when inputs are missing).
 - **`store/ingest.test.ts`** — recompute-as-source-of-truth, CAP rule, paper-mismatch surfacing,
   height dual-write, gut-call passthrough, validation errors, re-assessment date.
 - **`store/library.test.ts`** — the real library loads/validates (127 exercises, 9 slots, links
@@ -375,7 +386,8 @@ via `--experimental-strip-types`. **80 tests, all passing.** Coverage:
   maturity. Volume is tier-scaled only; maturity-weighting is a follow-up once maturity feeds the assembler.
 - **Funnel/cooldown rotation.** Warm-up base, funnels, and cooldown include all tier-available
   drills; they are not family-rotated in v1.
-- **Richer maturity signals.** Sitting-height ratio, weight/shoe trend (spec §7) — velocity-only for now.
+- **Richer maturity signals.** Sitting height + the Moore/Fransen maturity-offset estimate are now
+  in; weight/shoe-size trend and Khamis-Roche (%-predicted-adult-height, needs parental heights) remain future enrichment.
 - **Video refs.** `videoRefs` is stored but nothing captures/plays clips yet.
 - **Remaining C-tier library gaps.** `resisted_sprint`, `transition_sprint`, and `sled` still omit
   C athletes on some days (`depth_contrast` is A/S-only by design). See `FEATURE_IDEAS.md`.

@@ -21,6 +21,7 @@ import type {
   AthleteProfile,
   BlockState,
   HeightLogEntry,
+  WellnessLogEntry,
   WorkoutLogEntry,
 } from '../engine/types.ts';
 
@@ -35,6 +36,7 @@ export interface Collections {
   athletes: AthleteProfile[];
   assessments: Assessment[];
   height_log: HeightLogEntry[];
+  wellness_log: WellnessLogEntry[];
   workout_log: WorkoutLogEntry[];
   block_state: BlockState[];
 }
@@ -43,6 +45,7 @@ const FILES: Record<keyof Collections, string> = {
   athletes: 'athletes.json',
   assessments: 'assessments.json',
   height_log: 'height_log.json',
+  wellness_log: 'wellness_log.json',
   workout_log: 'workout_log.json',
   block_state: 'block_state.json',
 };

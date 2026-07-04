@@ -46,3 +46,55 @@ test('uses the two most recent entries', () => {
   assert.equal(m.latestHeightCm, 145.5);
   assert.equal(m.nearPHV, false);
 });
+
+// --- Maturity-offset estimate (Moore/Fransen 2015) ---
+
+function hs(date: string, heightCm: number, sittingHeightCm: number): HeightLogEntry {
+  return { athleteId: 'a', date, heightCm, sittingHeightCm, source: 'manual' };
+}
+
+test('boys: PRE-PHV estimate (young + short sitting height)', () => {
+  const m = computeMaturity([hs('2026-01-01', 135, 68)], { dob: '2017-01-01', sex: 'M' }); // ~age 9
+  assert.equal(m.phvBand, 'pre');
+  assert.ok(m.maturityOffsetYears !== null && m.maturityOffsetYears < -1);
+  assert.equal(m.method, 'Moore2015-male');
+  assert.ok(m.estimatedAgeAtPHV !== null);
+});
+
+test('boys: CIRCA-PHV estimate lands in the ±1yr window', () => {
+  // Tuned so age × sitting ≈ 8.128741 / 0.0070346 ≈ 1155 → offset ≈ 0.
+  const m = computeMaturity([hs('2026-01-01', 162, 89)], { dob: '2013-01-01', sex: 'M' }); // ~age 13
+  assert.equal(m.phvBand, 'circa');
+  assert.ok(m.maturityOffsetYears !== null && Math.abs(m.maturityOffsetYears) <= 1);
+  assert.match(m.note, /CIRCA-PHV/);
+});
+
+test('boys: POST-PHV estimate (older + tall sitting height)', () => {
+  const m = computeMaturity([hs('2026-01-01', 178, 95)], { dob: '2011-01-01', sex: 'M' }); // ~age 15
+  assert.equal(m.phvBand, 'post');
+  assert.ok(m.maturityOffsetYears !== null && m.maturityOffsetYears > 1);
+});
+
+test('girls: estimate uses standing height (sitting height not required)', () => {
+  const m = computeMaturity([h('2026-01-01', 150)], { dob: '2014-01-01', sex: 'F' }); // ~age 12
+  assert.ok(m.maturityOffsetYears !== null, 'female equation needs only standing height');
+  assert.equal(m.method, 'Moore2015-female');
+});
+
+test('no estimate without sex', () => {
+  const m = computeMaturity([hs('2026-01-01', 150, 80)], { dob: '2014-01-01' });
+  assert.equal(m.maturityOffsetYears, null);
+  assert.match(m.method ?? '', /sex/);
+});
+
+test('no estimate for boys without a sitting height', () => {
+  const m = computeMaturity([h('2026-01-01', 150)], { dob: '2014-01-01', sex: 'M' });
+  assert.equal(m.maturityOffsetYears, null);
+  assert.match(m.method ?? '', /sitting height/);
+});
+
+test('estimate works from a single entry (no velocity needed)', () => {
+  const m = computeMaturity([hs('2026-01-01', 135, 68)], { dob: '2017-01-01', sex: 'M' });
+  assert.equal(m.velocityCmPerYear, null); // one entry
+  assert.ok(m.maturityOffsetYears !== null); // estimate still available
+});

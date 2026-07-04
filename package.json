@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "enter": "node --experimental-strip-types --no-warnings cli/enter-assessment.ts",
     "session": "node --experimental-strip-types --no-warnings cli/build-session.ts",
+    "wellness": "node --experimental-strip-types --no-warnings cli/log-wellness.ts",
     "doctor": "node --experimental-strip-types --no-warnings cli/doctor.ts",
     "dashboard": "node --experimental-strip-types --no-warnings dashboard/server.ts"
   },
