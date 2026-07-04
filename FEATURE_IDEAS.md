@@ -48,6 +48,13 @@ load upstream of the runs. Anchored to the reference program's real design:
 ### Re-assessment cadence (spec §6)
 - **4–6 weeks** between assessments (tool flags due at ≥ 6 wks / 42 days). Default; tune.
 
+### Specialization / volume guardrails (COACHING_INSTRUCTIONS "SAFETY / DON'T")
+Checked by `engine/guardrails.ts` (`checkVolumeGuardrails`); all reasoned defaults:
+- **Weekly sport+training hours ≤ child's age** (watch within 2 h of the cap). Rough consensus
+  heuristic — validate the "≤ age" line and the watch margin.
+- **Intense organized sport < 16 h/week** (`INTENSE_SPORT_HOURS_CAP`; watch at ≥ 13 h). Tune the cap.
+- **≥ 1–2 rest days/week** (exceeded at < 1, watch at < 2). Tune.
+
 ### Maturity / PHV flag (spec §7)
 - **PHV trigger = height velocity ≥ 7 cm/yr** (`PHV_FLAG_CM_PER_YEAR` in engine/maturity.ts) →
   dose pullback. Reasoned default (boys' peak ~8–9 cm/yr); validate against real growth logs.

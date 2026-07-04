@@ -25,6 +25,9 @@ export interface NewAthleteInput {
   sports?: string[];
   trainingMonths?: number;
   valgusWatch?: boolean;
+  weeklySportHours?: number | null;
+  weeklyTrainingHours?: number | null;
+  restDaysPerWeek?: number | null;
   notes?: string;
 }
 
@@ -40,6 +43,9 @@ export async function createAthlete(
     sports: input.sports ?? [],
     trainingMonths: input.trainingMonths ?? 0,
     valgusWatch: input.valgusWatch ?? false,
+    weeklySportHours: input.weeklySportHours ?? null,
+    weeklyTrainingHours: input.weeklyTrainingHours ?? null,
+    restDaysPerWeek: input.restDaysPerWeek ?? null,
     createdAt: now.toISOString(),
     notes: input.notes ?? '',
   };

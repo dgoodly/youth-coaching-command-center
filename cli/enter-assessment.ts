@@ -177,6 +177,7 @@ async function runBatch(jsonPath: string): Promise<void> {
   const raw = await readFile(jsonPath, 'utf8');
   const parsed = JSON.parse(raw) as FieldFormInput & {
     displayName?: string; valgusWatch?: boolean; sex?: 'M' | 'F' | null; dob?: string | null;
+    weeklySportHours?: number | null; weeklyTrainingHours?: number | null; restDaysPerWeek?: number | null;
   };
 
   // Resolve / create the athlete.
@@ -186,6 +187,9 @@ async function runBatch(jsonPath: string): Promise<void> {
     const name = parsed.displayName ?? athleteId ?? 'Unnamed athlete';
     const created = await createAthlete({
       displayName: name, valgusWatch: parsed.valgusWatch, sex: parsed.sex ?? null, dob: parsed.dob ?? null,
+      weeklySportHours: parsed.weeklySportHours ?? null,
+      weeklyTrainingHours: parsed.weeklyTrainingHours ?? null,
+      restDaysPerWeek: parsed.restDaysPerWeek ?? null,
     });
     athleteId = created.athleteId;
     line(`Created athlete "${created.displayName}" (${athleteId}).`);
@@ -214,6 +218,9 @@ async function newAthlete(
   const sportsRaw = await ask(rl, 'Sport(s), comma-separated', '');
   const trainingMonths = (await askOptionalNumber(rl, 'Months of consistent training')) ?? 0;
   const valgusWatch = await askYesNo(rl, 'Knee-valgus watch? (prioritizes stick/knee-tracking work)', false);
+  const weeklySportHours = await askOptionalNumber(rl, 'Weekly organized-sport hours (guardrail)');
+  const weeklyTrainingHours = await askOptionalNumber(rl, 'Weekly training hours (guardrail)');
+  const restDaysPerWeek = await askOptionalNumber(rl, 'Rest days per week (guardrail)');
   const profile = await createAthlete({
     displayName,
     dob: dobRaw || null,
@@ -221,6 +228,9 @@ async function newAthlete(
     sports: sportsRaw ? sportsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [],
     trainingMonths,
     valgusWatch,
+    weeklySportHours,
+    weeklyTrainingHours,
+    restDaysPerWeek,
   });
   line(`Created ${profile.displayName}.`);
   return { athleteId: profile.athleteId, athleteName: profile.displayName, dob: profile.dob };

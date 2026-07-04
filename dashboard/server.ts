@@ -13,6 +13,7 @@ import { createServer } from 'node:http';
 import type { Assessment, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, TIER_STAGE } from '../engine/types.ts';
 import { computeMaturity } from '../engine/maturity.ts';
+import { checkVolumeGuardrails, type GuardrailStatus } from '../engine/guardrails.ts';
 import {
   allAthletes, assessmentsFor, latestAssessment, heightLogFor, workoutLogFor, wellnessLogFor,
   blockStateFor, daysSince, dueForReassessment,
@@ -48,6 +49,10 @@ async function rosterPage(): Promise<string> {
     const maturity = computeMaturity(heights, { dob: a.dob, sex: a.sex });
     const block = await blockStateFor(a.athleteId);
     const age = ageFromDob(a.dob);
+    const guard = checkVolumeGuardrails({
+      age, weeklySportHours: a.weeklySportHours,
+      weeklyTrainingHours: a.weeklyTrainingHours, restDaysPerWeek: a.restDaysPerWeek,
+    });
 
     const nameCell = `<a class="row" href="/athlete?id=${encodeURIComponent(a.athleteId)}">${esc(a.displayName)}</a>`
       + (a.valgusWatch ? ' <span class="pill">valgus</span>' : '');
@@ -62,6 +67,9 @@ async function rosterPage(): Promise<string> {
         : maturity.velocityCmPerYear !== null
           ? `<span class="ok">${maturity.velocityCmPerYear.toFixed(1)} cm/yr</span>`
           : '<span class="muted">—</span>',
+      guard.anyExceeded
+        ? '<span class="flag">over</span>'
+        : guard.anyWatch ? '<span class="pill">watch</span>' : '<span class="muted">—</span>',
       block ? `<span class="pill">block ${block.blockIndex}</span>` : '<span class="muted">—</span>',
     ]);
   }
@@ -69,11 +77,11 @@ async function rosterPage(): Promise<string> {
   const body = `<h1>Roster</h1>
     <p class="sub">${athletes.length} athlete${athletes.length === 1 ? '' : 's'} · tiers &amp; scores are coach-only (§3.3)</p>
     ${table(
-      ['Athlete', 'Age', 'Tier', 'Last assessment', 'Re-assess', 'Height velocity', 'Block'],
+      ['Athlete', 'Age', 'Tier', 'Last assessment', 'Re-assess', 'Height velocity', 'Load', 'Block'],
       rows,
       'No athletes yet. Add one with `npm run enter`.',
     )}
-    <p class="muted">Re-assess flag fires at ≥ 6 weeks (spec §6). PHV flag = height velocity ≥ 7 cm/yr → dose pullback (dose only, not tier).</p>`;
+    <p class="muted">Re-assess flag fires at ≥ 6 weeks (spec §6). PHV flag = height velocity ≥ 7 cm/yr → dose pullback (dose only, not tier). Load = specialization/volume guardrails (weekly hours ≤ age · sport &lt; 16 h · ≥ 1–2 rest days).</p>`;
   return page('Roster', body);
 }
 
@@ -145,6 +153,17 @@ async function athletePage(id: string): Promise<string> {
     esc(w.notes ?? '') || '<span class="muted">—</span>',
   ]);
 
+  // Specialization / volume guardrails (COACHING_INSTRUCTIONS "SAFETY / DON'T").
+  const guard = checkVolumeGuardrails({
+    age, weeklySportHours: a.weeklySportHours,
+    weeklyTrainingHours: a.weeklyTrainingHours, restDaysPerWeek: a.restDaysPerWeek,
+  });
+  const GUARD_CLASS: Record<GuardrailStatus, string> = { ok: 'ok', watch: 'pill', exceeded: 'flag', unknown: 'muted' };
+  const guardRows = guard.findings.map((f) => [
+    `<span class="${GUARD_CLASS[f.status]}">${f.status}</span>`,
+    esc(f.message),
+  ]);
+
   // Maturity-offset estimate line (Moore/Fransen), shown when computable.
   const estLine = maturity.maturityOffsetYears !== null
     ? `<p>Maturity estimate: <b>${maturity.phvBand?.toUpperCase()}-PHV</b> · offset ${maturity.maturityOffsetYears >= 0 ? '+' : '−'}${Math.abs(maturity.maturityOffsetYears).toFixed(1)} yr · est. age at PHV ${maturity.estimatedAgeAtPHV!.toFixed(1)} <span class="muted">(${esc(maturity.method ?? '')})</span></p>`
@@ -165,6 +184,9 @@ async function athletePage(id: string): Promise<string> {
 
     <h2>Wellness (weekly load / growth check)</h2>
     ${table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged. Add with `npm run wellness`.')}
+
+    <h2>Training-load guardrails (specialization / volume)</h2>
+    ${table(['Status', 'Guardrail'], guardRows, 'No guardrail data.')}
 
     <h2>Tier history</h2>
     ${table(['Date', 'Raw', 'Base', 'Final', 'Gate', 'Gut-call'], historyRows, 'No assessments yet.')}

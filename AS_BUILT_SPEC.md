@@ -41,6 +41,7 @@ transfers unchanged into a future app; the **surface** (CLIs, dashboard, JSON st
 | Data model + types | `engine/types.ts` | **Durable core** | nothing |
 | Scoring engine | `engine/scoring.ts` | **Durable core** | types |
 | Maturity axis | `engine/maturity.ts` | **Durable core** | types |
+| Volume guardrails | `engine/guardrails.ts` | **Durable core** | (none) |
 | Library schema + dose helpers | `engine/program.ts` | **Durable core** | types |
 | Program assembler | `engine/assembler.ts` | **Durable core** | program, types, (library eqOk) |
 | Field-form ingest | `store/ingest.ts` | core logic, store I/O | engine + json-store |
@@ -82,7 +83,8 @@ provenance.
   with the recompute).
 - **`AthleteProfile`** — id, displayName, dob (age derived), `sex` (`'M' | 'F' | null`, for the
   maturity estimate only), sports, `trainingMonths` (context, not a scored point), `valgusWatch`
-  (drives assembler valgus priority), createdAt, notes.
+  (drives assembler valgus priority), `weeklySportHours` / `weeklyTrainingHours` / `restDaysPerWeek`
+  (optional, feed the volume guardrails), createdAt, notes.
 - **`HeightLogEntry`** — `{athleteId, date, heightCm, sittingHeightCm?, source: 'assessment' |
   'manual'}`. Feeds the maturity axis; assessment-supplied heights (standing + optional sitting)
   are dual-written here with `source: 'assessment'`.
@@ -144,6 +146,14 @@ Pure function of the height log + optional profile inputs; governs **dose only**
   `phvBand` (`pre` < −1yr · `circa` ±1yr · `post` > +1yr), and `method`. Null (with a reason in
   `method`) when sex, DOB, or — for boys — sitting height is missing. Population estimate, not
   precision; the `circa` band is the spurt window where dose eases and coordination dips.
+
+**Volume guardrails** (`engine/guardrails.ts`, also pure/durable) make the coach's anti-overuse
+stance checkable: `checkVolumeGuardrails({ age, weeklySportHours, weeklyTrainingHours,
+restDaysPerWeek })` returns per-rule findings (`ok`/`watch`/`exceeded`/`unknown`) for three rules —
+total weekly sport+training hours ≤ age; intense organized sport < `INTENSE_SPORT_HOURS_CAP` (16
+h/week); ≥ 1–2 rest days/week — plus `anyExceeded`/`anyWatch` roll-ups. Advisory (flags, never
+blocks); missing inputs yield `unknown`, not a false pass. Surfaced on the dashboard (roster "Load"
+badge + an athlete-page findings table).
 
 ---
 
@@ -332,9 +342,10 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 `.claude/launch.json` config registers it for the preview tooling). Three views:
 
 - **`/`** Roster — per athlete: tier badge, age, last-assessment date, re-assess flag (fires at
-  ≥ 6 weeks / 42 days), height velocity (PHV-flagged), current block.
-- **`/athlete?id=`** Individual — maturity/height log, tier history (raw / base / final / gate /
-  gut-call), per-test score trends, workout log.
+  ≥ 6 weeks / 42 days), height velocity (PHV-flagged), a volume-guardrail "Load" badge, current block.
+- **`/athlete?id=`** Individual — maturity estimate + standing/sitting height log, wellness log,
+  training-load guardrail findings, tier history (raw / base / final / gate / gut-call), per-test
+  score trends, workout log.
 - **`/validation`** — the threshold-tuning surface: calculated tier vs coach gut-call with an
   agreement %, a per-assessment match/DIFFERS table, and a gate-firing tally. This is where the
   score bands and gate thresholds get tuned against real athletes.
@@ -344,7 +355,7 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **87 tests, all passing.** Coverage:
+via `--experimental-strip-types`. **92 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
@@ -355,6 +366,8 @@ via `--experimental-strip-types`. **87 tests, all passing.** Coverage:
 - **`engine/maturity.test.ts`** — velocity from the two most recent entries, PHV threshold, edge
   cases, and the Moore/Fransen maturity-offset estimate (pre/circa/post bands, sex-specific inputs,
   graceful null when inputs are missing).
+- **`engine/guardrails.test.ts`** — the three volume guardrails (hours-vs-age, intense-sport cap,
+  rest days) across ok/watch/exceeded/unknown, and the report roll-ups.
 - **`store/ingest.test.ts`** — recompute-as-source-of-truth, CAP rule, paper-mismatch surfacing,
   height dual-write, gut-call passthrough, validation errors, re-assessment date.
 - **`store/library.test.ts`** — the real library loads/validates (127 exercises, 9 slots, links

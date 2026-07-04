@@ -176,6 +176,14 @@ export interface AthleteProfile {
    * lateral days. Independent of tier/maturity.
    */
   valgusWatch: boolean;
+  /**
+   * Specialization / volume-guardrail inputs (COACHING_INSTRUCTIONS "SAFETY / DON'T"). All
+   * optional/`null` when unknown — the corresponding check just reports "unknown" rather than
+   * firing. Hours are per week.
+   */
+  weeklySportHours?: number | null;
+  weeklyTrainingHours?: number | null;
+  restDaysPerWeek?: number | null;
   createdAt: string; // ISO datetime
   notes: string;
 }
