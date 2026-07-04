@@ -72,6 +72,24 @@ test('every tier (incl. C) gets a non-empty warm-up, jump, sprint, and lift', ()
   }
 });
 
+test('every tier × day gets a motor-skill enrichment block, placed after trunk and before cooldown', () => {
+  for (const tier of TIERS) {
+    for (const t of templates) {
+      const { session } = assemble(tier, t.day);
+      const ms = block(session, 'motor_skill');
+      assert.ok(ms && ms.items.length > 0, `motor_skill present ${tier}/${t.day}`);
+      const order = session.blocks.map((b) => b.slot);
+      const msIdx = order.indexOf('motor_skill');
+      const cdIdx = order.indexOf('cooldown');
+      const trunkIdx = order.indexOf('trunk');
+      if (trunkIdx !== -1) assert.ok(trunkIdx < msIdx, `motor_skill after trunk ${tier}/${t.day}`);
+      if (cdIdx !== -1) assert.ok(msIdx < cdIdx, `motor_skill before cooldown ${tier}/${t.day}`);
+      // Enrichment is never single-leg-only landing load — it's throw/catch, rotational, locomotor.
+      assert.ok(['throw_catch', 'rotational_skill', 'locomotor_skill'].includes(ms.items[0]!.exercise.variation_family));
+    }
+  }
+});
+
 test('trunk appears only on Days 1/2/4, never Day 3', () => {
   for (const tier of TIERS) {
     assert.ok(block(assemble(tier, 1).session, 'trunk'), `trunk on 1 (${tier})`);

@@ -11,7 +11,8 @@
       "jump": [["pogo"], ["vertical_jump"]],
       "sprint": [["max_velocity"]],
       "lift": [["squat"], ["sl_squat"], ["hamstring", "hinge"], ["frontal_strength"]],
-      "trunk": [["anti_rotation", "anti_lateral", "anti_extension"]]
+      "trunk": [["anti_rotation", "anti_lateral", "anti_extension"]],
+      "motor_skill": [["throw_catch"]]
     }
   },
   {
@@ -26,7 +27,8 @@
       "jump": [["pogo"], ["hurdle_hop"], ["horizontal_jump_sl"], ["lateral_jump"], ["depth_contrast"]],
       "sprint": [["accel_start"], ["resisted_sprint"]],
       "lift": [["pull"], ["push"]],
-      "trunk": [["rotation", "anti_extension"]]
+      "trunk": [["rotation", "anti_extension"]],
+      "motor_skill": [["locomotor_skill"]]
     }
   },
   {
@@ -41,7 +43,8 @@
       "jump": [["pogo"], ["horizontal_jump_bilat"], ["lateral_jump"], ["horizontal_jump_sl"]],
       "sprint": [["accel_start"], ["transition_sprint"], ["cod_speed"]],
       "lift": [["squat"], ["hinge"], ["sled"], ["sl_squat"]],
-      "trunk": []
+      "trunk": [],
+      "motor_skill": [["rotational_skill"]]
     }
   },
   {
@@ -56,7 +59,8 @@
       "jump": [["pogo"], ["lateral_jump"], ["rotational_jump"]],
       "sprint": [["cod_speed"]],
       "lift": [["sl_squat"], ["push"], ["pull"], ["iso"]],
-      "trunk": [["rotation", "anti_extension"]]
+      "trunk": [["rotation", "anti_extension"]],
+      "motor_skill": [["throw_catch"], ["rotational_skill"], ["locomotor_skill"]]
     }
   }
 ]

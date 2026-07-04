@@ -15,6 +15,7 @@
     "sprint",
     "lift",
     "trunk",
+    "motor_skill",
     "cooldown"
   ],
   "tiers": [
@@ -4432,6 +4433,260 @@
       "progression_to": "j_90_rotational",
       "regression_to": null,
       "notes": ""
+    },
+    {
+      "slot": "motor_skill",
+      "stick": false,
+      "valgus_relevant": false,
+      "notes": "",
+      "id": "m_partner_toss",
+      "name": "Partner Toss & Catch (both hands / single hand)",
+      "pattern": "throw_catch",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "throw_catch",
+      "equipment": [
+        "partner"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": "10 catches",
+          "rest_sec": 30
+        },
+        "B": {
+          "sets": 2,
+          "reps": "12 catches",
+          "rest_sec": 30
+        },
+        "A": {
+          "sets": 2,
+          "reps": "12 catches",
+          "rest_sec": 30
+        },
+        "S": {
+          "sets": 3,
+          "reps": "12 catches",
+          "rest_sec": 30
+        }
+      },
+      "cue": "Soft hands, eyes to the ball, catch out in front",
+      "progression_to": "m_reaction_catch",
+      "regression_to": null
+    },
+    {
+      "slot": "motor_skill",
+      "stick": false,
+      "valgus_relevant": false,
+      "notes": "",
+      "id": "m_reaction_catch",
+      "name": "Reactive Catch (partner cues, off-hand / off-angle)",
+      "pattern": "throw_catch",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "throw_catch",
+      "equipment": [
+        "partner"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "8 reactive",
+          "rest_sec": 30
+        },
+        "A": {
+          "sets": 3,
+          "reps": "10 reactive",
+          "rest_sec": 30
+        },
+        "S": {
+          "sets": 3,
+          "reps": "12 reactive",
+          "rest_sec": 30
+        }
+      },
+      "cue": "React late on purpose — track, adjust, secure it",
+      "progression_to": null,
+      "regression_to": "m_partner_toss"
+    },
+    {
+      "slot": "motor_skill",
+      "stick": false,
+      "valgus_relevant": false,
+      "notes": "",
+      "id": "m_rot_scoop_toss",
+      "name": "Rotational Scoop Toss (med ball, into wall)",
+      "pattern": "rotational_skill",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 2,
+      "variation_family": "rotational_skill",
+      "equipment": [
+        "med_ball",
+        "wall"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": "6 ea side",
+          "rest_sec": 30
+        },
+        "B": {
+          "sets": 3,
+          "reps": "6 ea side",
+          "rest_sec": 30
+        },
+        "A": {
+          "sets": 3,
+          "reps": "8 ea side",
+          "rest_sec": 30
+        },
+        "S": {
+          "sets": 3,
+          "reps": "8 ea side",
+          "rest_sec": 30
+        }
+      },
+      "cue": "Wind from the hips, throw through the middle, not the arms",
+      "progression_to": "m_rot_shuffle_throw",
+      "regression_to": null
+    },
+    {
+      "slot": "motor_skill",
+      "stick": false,
+      "valgus_relevant": false,
+      "notes": "",
+      "id": "m_rot_shuffle_throw",
+      "name": "Shuffle → Rotational Throw (med ball)",
+      "pattern": "rotational_skill",
+      "plane": "transverse",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "rotational_skill",
+      "equipment": [
+        "med_ball",
+        "wall"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "5 ea side",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "6 ea side",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 4,
+          "reps": "6 ea side",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Move, plant, then rotate and throw — sequence from the ground up",
+      "progression_to": null,
+      "regression_to": "m_rot_scoop_toss"
+    },
+    {
+      "slot": "motor_skill",
+      "stick": false,
+      "valgus_relevant": false,
+      "notes": "",
+      "id": "m_bear_crawl",
+      "name": "Bear Crawl (forward / backward / lateral)",
+      "pattern": "locomotor",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "C",
+      "difficulty": 1,
+      "variation_family": "locomotor_skill",
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 2,
+          "reps": "10yd",
+          "rest_sec": 30
+        },
+        "B": {
+          "sets": 2,
+          "reps": "12yd",
+          "rest_sec": 30
+        },
+        "A": {
+          "sets": 2,
+          "reps": "15yd",
+          "rest_sec": 30
+        },
+        "S": {
+          "sets": 3,
+          "reps": "15yd",
+          "rest_sec": 30
+        }
+      },
+      "cue": "Flat back, knees under hips, opposite hand/foot — stay quiet",
+      "progression_to": "m_crawl_complex",
+      "regression_to": null
+    },
+    {
+      "slot": "motor_skill",
+      "stick": false,
+      "valgus_relevant": false,
+      "notes": "",
+      "id": "m_crawl_complex",
+      "name": "Animal / Crawl Complex (mixed patterns + direction changes)",
+      "pattern": "locomotor",
+      "plane": "mixed",
+      "laterality": "bilateral",
+      "min_tier": "B",
+      "difficulty": 3,
+      "variation_family": "locomotor_skill",
+      "equipment": [
+        "none"
+      ],
+      "dose": {
+        "C": {
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
+        },
+        "B": {
+          "sets": 3,
+          "reps": "15yd mixed",
+          "rest_sec": 45
+        },
+        "A": {
+          "sets": 3,
+          "reps": "20yd mixed",
+          "rest_sec": 45
+        },
+        "S": {
+          "sets": 3,
+          "reps": "20yd mixed",
+          "rest_sec": 45
+        }
+      },
+      "cue": "Flow between patterns, change direction on your own cue, control it",
+      "progression_to": null,
+      "regression_to": "m_bear_crawl"
     }
   ]
 }

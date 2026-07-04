@@ -68,7 +68,7 @@ separately from sets/reps/distance.
 
 | Field | Purpose |
 |---|---|
-| `slot` | Where it goes in the session skeleton: `warmup_base`, `funnel_linear`, `funnel_cod`, `jump`, `sprint`, `lift`, `trunk`, `cooldown` |
+| `slot` | Where it goes in the session skeleton: `warmup_base`, `funnel_linear`, `funnel_cod`, `jump`, `sprint`, `lift`, `trunk`, `motor_skill`, `cooldown` |
 | `pattern` | The quality/movement trained (e.g. `horizontal_jump`, `hinge`, `max_velocity`) — used to ensure a session covers the right qualities |
 | `plane` | `sagittal` / `frontal` / `transverse` / `mixed` — lets the assembler hit all three planes and load frontal/transverse on lateral days |
 | `laterality` | `bilateral` / `unilateral` — supports the single-leg bias |
@@ -176,10 +176,11 @@ variant (now easy = a deload) or keep climbing.
 | sprint | 14 |
 | lift | 29 |
 | trunk | 9 |
+| motor_skill | 6 |
 | cooldown | 7 |
-| **Total** | **121** |
+| **Total** | **127** |
 
-31 variation families across the library. Every `progression_to` / `regression_to`
+34 variation families across the library. Every `progression_to` / `regression_to`
 reference resolves to a real exercise (validated at build).
 
 This is a working v1 seed, not a finished universe — it covers every slot, tier, and the

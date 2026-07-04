@@ -84,6 +84,7 @@ const SLOT_TITLES: Record<Slot, string> = {
   sprint: 'SPRINT',
   lift: 'LIFT',
   trunk: 'TRUNK (back of the lift block)',
+  motor_skill: 'MOTOR-SKILL ENRICHMENT (throw/catch · rotational · locomotor)',
   cooldown: 'Cooldown',
 };
 
@@ -208,10 +209,10 @@ export function assembleSession(params: AssembleParams): AssembleResult {
   }
   blocks.push({ slot: funnelSlot, title: SLOT_TITLES[funnelSlot], items: funnel.map((e) => toItem(e, tier)) });
 
-  // 3–6. Rotated main-work slots: Jump → Sprint → Lift → Trunk.
+  // 3–6. Rotated main-work slots: Jump → Sprint → Lift → Trunk → Motor-skill enrichment.
   const bandFloor = DIFFICULTY_BAND[tier][0];
-  for (const slot of ['jump', 'sprint', 'lift', 'trunk'] as const) {
-    const pools = template.slots[slot];
+  for (const slot of ['jump', 'sprint', 'lift', 'trunk', 'motor_skill'] as const) {
+    const pools = template.slots[slot] ?? [];
     // Jumps on a ceilinged (max-velocity) day stay light (prime only); everything else targets
     // the tier band so advanced athletes start near their level, not at a family's easiest variant.
     const preferBandFloor = !(slot === 'jump' && template.jump_difficulty_ceiling !== null);

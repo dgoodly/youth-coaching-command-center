@@ -143,8 +143,8 @@ trend) are noted as future enrichment.
 
 ## 6. Exercise library (`library/exercise_library.json`, schema in `engine/program.ts`)
 
-The library is the single tagged source the assembler draws from. **121 exercises**, **31
-variation families**, across **8 slots**:
+The library is the single tagged source the assembler draws from. **127 exercises**, **34
+variation families**, across **9 slots**:
 
 | Slot | Count |
 |---|---|
@@ -155,6 +155,7 @@ variation families**, across **8 slots**:
 | sprint | 14 |
 | lift | 29 |
 | trunk | 9 |
+| motor_skill | 6 |
 | cooldown | 7 |
 
 **Per-exercise schema** (`Exercise`): `id, name, slot, pattern, plane, laterality, min_tier,
@@ -188,9 +189,11 @@ via `CC_LIBRARY_FILE`, `CC_DAY_TEMPLATES_FILE`, `CC_EQUIPMENT_CONFIG` env vars.
 
 ## 7. Day templates (`library/day-templates.json`) — the 4-day split
 
-Each template is a tier-shared, sequencing-safe recipe. Slots `jump/sprint/lift/trunk` are filled
-from **pools of variation families** (`SlotFill = string[]`); within a block the fill uses
+Each template is a tier-shared, sequencing-safe recipe. Slots `jump/sprint/lift/trunk/motor_skill`
+are filled from **pools of variation families** (`SlotFill = string[]`); within a block the fill uses
 `pool[blockIndex % pool.length]`, and multi-family pools (used for trunk) cycle biases across blocks.
+Each day's `motor_skill` pool rotates enrichment families across the week (Day 1 throw/catch,
+Day 2 locomotor, Day 3 rotational, Day 4 all three) so breadth accumulates.
 
 | Day | Label | Emphasis | Sprint | Jump ceiling |
 |---|---|---|---|---|
@@ -209,11 +212,14 @@ ceiling** (see §8).
 Pure: caller supplies exercises, template, equipment, and block state; it returns the assembled
 session plus the (possibly updated) `slotVariants`. `assembleSession` builds the fixed skeleton:
 
-**warm-up base → funnel (exactly one, by emphasis) → Jump → Sprint → Lift → Trunk → cooldown.**
+**warm-up base → funnel (exactly one, by emphasis) → Jump → Sprint → Lift → Trunk → Motor-skill → cooldown.**
 
 - **Warm-up base, funnel, cooldown** are not family-rotated — they include all tier-available
   drills (`fixedSlotItems`). The linear funnel trims to 3 drills in `funnel_mode: short` (Day 2).
-- **Jump / Sprint / Lift / Trunk** each fill from their pools via **`selectFill`** (§3 steps 1–6):
+- **Jump / Sprint / Lift / Trunk / Motor-skill** each fill from their pools via **`selectFill`**
+  (§3 steps 1–6). `motor_skill` is general enrichment (throw/catch, rotational, locomotor) programmed
+  on every day (COACHING_INSTRUCTIONS "MOTOR-SKILL BREADTH"), folded in after trunk; its pool is
+  optional per template and absent pools yield no block:
   1. gate by tier (`isAvailableAtTier`);
   2. filter to available equipment;
   3. choose the family from the pool by block index, **with graceful fallback** to the next pool
@@ -329,19 +335,21 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **78 tests, all passing.** Coverage:
+via `--experimental-strip-types`. **80 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
 - **`engine/assembler.test.ts`** — sequencing rule across every tier × day, skeleton order, one
   funnel per emphasis, Day-1 jump-ceiling protection, valgus priority, band-floor entry, block
-  stability, rotation/progression, the misconfig throw, and family-scoped variant selection.
+  stability, rotation/progression, the misconfig throw, family-scoped variant selection, and the
+  motor-skill enrichment block (present every day, placed after trunk / before cooldown).
 - **`engine/maturity.test.ts`** — velocity from the two most recent entries, PHV threshold, edge cases.
 - **`store/ingest.test.ts`** — recompute-as-source-of-truth, CAP rule, paper-mismatch surfacing,
   height dual-write, gut-call passthrough, validation errors, re-assessment date.
-- **`store/library.test.ts`** — the real library loads/validates (121 exercises, 8 slots, links
+- **`store/library.test.ts`** — the real library loads/validates (127 exercises, 9 slots, links
   resolve, no cross-family links), the two availability conditions, equipment filter, family
-  grouping, every slot populatable at C, the cross-family warning, and no-stale-cache re-reads.
+  grouping, every slot populatable at C, the cross-family warning, no-stale-cache re-reads, and the
+  flying-sprint distance guard (no sprint dose ≥ 40 yd).
 - **`store/doctor.test.ts`** — height-log gap detection, matching, null-height skip, backfill.
 - **`store/query.test.ts`** — `resolveAthleteIn` found/not_found/ambiguous resolution.
 
@@ -362,6 +370,9 @@ via `--experimental-strip-types`. **78 tests, all passing.** Coverage:
 - **Athlete-facing surface.** The `Audience` split exists in types, but only the coach dashboard is
   built; no athlete/parent view yet.
 - **Active difficulty rebalancing.** Difficulty balance is advisory only (§8).
+- **Maturity-weighted motor-skill volume.** The `motor_skill` slot is programmed every session, but
+  the "weight enrichment heavier pre-PHV" nuance isn't wired — the assembler selects on tier, not
+  maturity. Volume is tier-scaled only; maturity-weighting is a follow-up once maturity feeds the assembler.
 - **Funnel/cooldown rotation.** Warm-up base, funnels, and cooldown include all tier-available
   drills; they are not family-rotated in v1.
 - **Richer maturity signals.** Sitting-height ratio, weight/shoe trend (spec §7) — velocity-only for now.

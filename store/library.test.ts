@@ -1,5 +1,5 @@
 /**
- * Library loader/schema tests — prove the real 121-exercise library loads and validates,
+ * Library loader/schema tests — prove the real 127-exercise library loads and validates,
  * and that the two independent availability conditions (min_tier gate + 0-set convention)
  * behave per EXERCISE_LIBRARY.md §2A.6 / §3 step 1. Plumbing only — no selection logic here.
  */
@@ -27,10 +27,11 @@ function makeExercise(over: Partial<Exercise> & { id: string }): Exercise {
   };
 }
 
-test('real library loads: 121 exercises, 8 slots, links resolve', () => {
-  assert.equal(ex.length, 121, '121 exercises');
-  assert.equal(lib.slots.length, 8, '8 slots incl. trunk');
+test('real library loads: 127 exercises, 9 slots, links resolve', () => {
+  assert.equal(ex.length, 127, '127 exercises');
+  assert.equal(lib.slots.length, 9, '9 slots incl. trunk + motor_skill');
   assert.ok(lib.slots.includes('trunk'), 'trunk slot present');
+  assert.ok(lib.slots.includes('motor_skill'), 'motor_skill slot present');
   // validate() already ran in loadLibrary(); a throw would have failed the load.
 });
 

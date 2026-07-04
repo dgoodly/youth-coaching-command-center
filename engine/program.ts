@@ -15,7 +15,11 @@
 import type { Tier } from './types.ts';
 import { TIER_RANK } from './types.ts';
 
-/** The 8 session slots (EXERCISE_LIBRARY.md §2). Note `trunk` — folds into the back of lift days. */
+/**
+ * The 9 session slots (EXERCISE_LIBRARY.md §2). `trunk` folds into the back of lift days;
+ * `motor_skill` is general motor-skill enrichment (throw/catch, rotational, locomotor patterns
+ * outside the primary sport — COACHING_INSTRUCTIONS "MOTOR-SKILL BREADTH"), folded in after trunk.
+ */
 export type Slot =
   | 'warmup_base'
   | 'funnel_linear'
@@ -24,6 +28,7 @@ export type Slot =
   | 'sprint'
   | 'lift'
   | 'trunk'
+  | 'motor_skill'
   | 'cooldown';
 
 /**
@@ -39,6 +44,7 @@ export const SLOT_ORDER: readonly Slot[] = [
   'sprint',
   'lift',
   'trunk',
+  'motor_skill',
   'cooldown',
 ] as const;
 
@@ -180,6 +186,8 @@ export interface DayTemplate {
     sprint: SlotFill[];
     lift: SlotFill[];
     trunk: SlotFill[];
+    /** General motor-skill enrichment pool (optional per day; folded in after trunk). */
+    motor_skill?: SlotFill[];
   };
 }
 
