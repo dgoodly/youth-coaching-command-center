@@ -68,7 +68,6 @@ async function main(): Promise<void> {
     const athletes = await listAthletes();
     let athleteId: string;
     let athleteName: string;
-    let dob: string | null = null;
 
     if (athletes.length > 0) {
       line('Existing athletes:');
@@ -82,13 +81,12 @@ async function main(): Promise<void> {
         const chosen = athletes[pick - 1]!;
         athleteId = chosen.athleteId;
         athleteName = chosen.displayName;
-        dob = chosen.dob;
       } else {
-        ({ athleteId, athleteName, dob } = await newAthlete(rl));
+        ({ athleteId, athleteName } = await newAthlete(rl));
       }
     } else {
       line('No athletes yet — creating the first one.');
-      ({ athleteId, athleteName, dob } = await newAthlete(rl));
+      ({ athleteId, athleteName } = await newAthlete(rl));
     }
 
     line(`\nAthlete: ${athleteName}\n`);
@@ -190,8 +188,17 @@ async function runBatch(jsonPath: string): Promise<void> {
   // Resolve / create the athlete.
   let athleteId = parsed.athleteId;
   const athletes = await listAthletes();
-  if (!athleteId || !athletes.some((a) => a.athleteId === athleteId)) {
-    const name = parsed.displayName ?? athleteId ?? 'Unnamed athlete';
+  if (athleteId) {
+    // An explicit athleteId MUST resolve. A typo'd id must not silently create a new athlete —
+    // that forks the real athlete's history into a phantom record. Drop athleteId to create one.
+    if (!athletes.some((a) => a.athleteId === athleteId)) {
+      line(`✗ athleteId "${athleteId}" not found. Refusing to create a new athlete from an explicit id ` +
+        `(a typo would fork the athlete's history). Fix the id, or omit athleteId to create a new athlete by displayName.`);
+      process.exitCode = 1;
+      return;
+    }
+  } else {
+    const name = parsed.displayName ?? 'Unnamed athlete';
     const created = await createAthlete({
       displayName: name, valgusWatch: parsed.valgusWatch, sex: parsed.sex ?? null, dob: parsed.dob ?? null,
       weeklySportHours: parsed.weeklySportHours ?? null,
@@ -216,7 +223,7 @@ async function runBatch(jsonPath: string): Promise<void> {
 
 async function newAthlete(
   rl: ReturnType<typeof makeRl>,
-): Promise<{ athleteId: string; athleteName: string; dob: string | null }> {
+): Promise<{ athleteId: string; athleteName: string }> {
   line('\n--- New athlete ---');
   const displayName = await ask(rl, 'Name');
   let dobRaw = await ask(rl, 'DOB (YYYY-MM-DD, optional)', '');
@@ -244,7 +251,7 @@ async function newAthlete(
     restDaysPerWeek,
   });
   line(`Created ${profile.displayName}.`);
-  return { athleteId: profile.athleteId, athleteName: profile.displayName, dob: profile.dob };
+  return { athleteId: profile.athleteId, athleteName: profile.displayName };
 }
 
 const jsonFlagIdx = argv.indexOf('--json');

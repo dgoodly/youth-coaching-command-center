@@ -78,13 +78,12 @@ function validateScores(scores: Scores): void {
 }
 
 /**
- * Build (but do not persist) an assessment record from a field form. Pure.
- * Recomputes raw/base/final via the spec §4 engine; the paper values are a cross-check.
+ * Build (but do not persist) an assessment record from a field form. Does NO store I/O, so it is
+ * directly unit-testable; recomputes raw/base/final deterministically via the spec §4 engine (the
+ * paper values are only a cross-check). The one bit of non-determinism is the generated
+ * `assessmentId` (randomUUID) — callers that need a stable id can overwrite it.
  */
-export function buildAssessmentRecord(
-  input: FieldFormInput,
-  now: Date = new Date(),
-): BuiltAssessment {
+export function buildAssessmentRecord(input: FieldFormInput): BuiltAssessment {
   const warnings: string[] = [];
 
   // Defensive copy so we can apply the CAP RULE without mutating the caller's object.
@@ -158,7 +157,6 @@ export function buildAssessmentRecord(
         }
       : null;
 
-  void now; // reserved for future "createdAt"-style stamping; kept for signature stability
   return { assessment, heightEntry, warnings };
 }
 
