@@ -122,6 +122,31 @@ test('the real library has no cross-family progression/regression links', () => 
   assert.deepEqual(crossing, [], `cross-family links present: ${crossing.join('; ')}`);
 });
 
+test('validate rejects an invalid laterality, plane, or non-numeric dose value (A5/A6)', () => {
+  assert.throws(() => validate([makeExercise({ id: 'x', laterality: 'mixed' as never })]), /invalid laterality/);
+  assert.throws(() => validate([makeExercise({ id: 'x', plane: 'diagonal' as never })]), /invalid plane/);
+  assert.throws(
+    () => validate([makeExercise({ id: 'x', dose: { C: { sets: 3, reps: 5, rest_sec: 's' as never } } })]),
+    /numeric sets & rest_sec/,
+  );
+  assert.throws(
+    () => validate([makeExercise({ id: 'x', dose: { C: { sets: '4' as never, reps: 5, rest_sec: 60 } } })]),
+    /numeric sets & rest_sec/,
+  );
+});
+
+test('the shipped library has valid laterality and numeric dose values everywhere (A5/A6)', () => {
+  for (const e of ex) {
+    assert.ok(['bilateral', 'unilateral'].includes(e.laterality), `${e.id} laterality ${e.laterality}`);
+    if (!isAllDose(e.dose)) {
+      for (const [tier, d] of Object.entries(e.dose)) {
+        assert.equal(typeof d!.sets, 'number', `${e.id} ${tier} sets`);
+        assert.equal(typeof d!.rest_sec, 'number', `${e.id} ${tier} rest_sec`);
+      }
+    }
+  }
+});
+
 test('validate warns (does not throw) on a cross-family progression link', () => {
   const exercises: Exercise[] = [
     makeExercise({ id: 'a', variation_family: 'fam1', progression_to: 'b' }),

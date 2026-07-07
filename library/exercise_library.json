@@ -515,7 +515,7 @@
       "slot": "funnel_cod",
       "pattern": "ground_lateral",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "bilateral",
       "min_tier": "C",
       "difficulty": 2,
       "variation_family": "cod_funnel",
@@ -538,7 +538,7 @@
       "slot": "funnel_cod",
       "pattern": "ground_lateral",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "unilateral",
       "min_tier": "B",
       "difficulty": 3,
       "variation_family": "cod_funnel",
@@ -561,7 +561,7 @@
       "slot": "funnel_cod",
       "pattern": "reactive_hop",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "bilateral",
       "min_tier": "C",
       "difficulty": 3,
       "variation_family": "cod_funnel",
@@ -584,7 +584,7 @@
       "slot": "funnel_cod",
       "pattern": "lateral_power",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "bilateral",
       "min_tier": "B",
       "difficulty": 4,
       "variation_family": "cod_funnel",
@@ -607,7 +607,7 @@
       "slot": "funnel_cod",
       "pattern": "rotational_locomotion",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "bilateral",
       "min_tier": "B",
       "difficulty": 4,
       "variation_family": "cod_funnel",
@@ -630,7 +630,7 @@
       "slot": "funnel_cod",
       "pattern": "rotational_locomotion",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "bilateral",
       "min_tier": "C",
       "difficulty": 3,
       "variation_family": "cod_funnel",
@@ -653,7 +653,7 @@
       "slot": "funnel_cod",
       "pattern": "reverse_locomotion",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "bilateral",
       "min_tier": "C",
       "difficulty": 2,
       "variation_family": "cod_funnel",
@@ -676,7 +676,7 @@
       "slot": "funnel_cod",
       "pattern": "reverse_locomotion",
       "plane": "frontal",
-      "laterality": "mixed",
+      "laterality": "bilateral",
       "min_tier": "C",
       "difficulty": 2,
       "variation_family": "cod_funnel",
@@ -3327,19 +3327,19 @@
           "rest_sec": 0
         },
         "B": {
-          "sets": "4",
-          "reps": " ",
-          "rest_sec": "s"
+          "sets": 4,
+          "reps": "AMRAP",
+          "rest_sec": 120
         },
         "A": {
-          "sets": "4",
-          "reps": " ",
-          "rest_sec": "s"
+          "sets": 4,
+          "reps": "AMRAP",
+          "rest_sec": 120
         },
         "S": {
-          "sets": "4",
-          "reps": " ",
-          "rest_sec": "s"
+          "sets": 4,
+          "reps": "AMRAP",
+          "rest_sec": 120
         }
       },
       "cue": "Dead hang to chin-over. Chase monthly total reps",
@@ -3374,14 +3374,14 @@
           "rest_sec": 0
         },
         "A": {
-          "sets": "3",
-          "reps": " ",
-          "rest_sec": "×"
+          "sets": 3,
+          "reps": "max hold",
+          "rest_sec": 120
         },
         "S": {
-          "sets": "3",
-          "reps": " ",
-          "rest_sec": "×"
+          "sets": 3,
+          "reps": "max hold",
+          "rest_sec": 120
         }
       },
       "cue": "Hold chin over the bar, then lower slow",

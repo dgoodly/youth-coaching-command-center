@@ -360,7 +360,7 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **93 tests, all passing.** Coverage:
+via `--experimental-strip-types`. **99 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
@@ -373,6 +373,8 @@ via `--experimental-strip-types`. **93 tests, all passing.** Coverage:
   graceful null when inputs are missing).
 - **`engine/guardrails.test.ts`** — the three volume guardrails (hours-vs-age, intense-sport cap,
   rest days) across ok/watch/exceeded/unknown, and the report roll-ups.
+- **`engine/boundary.test.ts`** — the durable-core boundary: no production `engine/*` file imports
+  `store`/`cli`/`dashboard`.
 - **`store/ingest.test.ts`** — recompute-as-source-of-truth, CAP rule, paper-mismatch surfacing,
   height dual-write, gut-call passthrough, validation errors, re-assessment date.
 - **`store/library.test.ts`** — the real library loads/validates (127 exercises, 9 slots, links

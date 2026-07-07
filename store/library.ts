@@ -41,6 +41,8 @@ export const PLANS_FILE = process.env.CC_PLANS_FILE
   : join(ROOT, 'library', 'plans.json');
 
 const VALID_SLOTS = new Set<Slot>(SLOT_ORDER);
+const VALID_PLANES = new Set(['sagittal', 'frontal', 'transverse', 'mixed']);
+const VALID_LATERALITY = new Set(['bilateral', 'unilateral']);
 
 /**
  * Load + validate the library from `file` (defaults to {@link LIBRARY_FILE}). NOT cached: a
@@ -72,9 +74,24 @@ export function validate(exercises: Exercise[]): void {
     if (typeof e.difficulty !== 'number' || e.difficulty < 1 || e.difficulty > 10) {
       throw new Error(`library: "${e.id}" difficulty must be 1–10 (got ${e.difficulty}).`);
     }
+    if (!VALID_PLANES.has(e.plane)) throw new Error(`library: "${e.id}" invalid plane "${e.plane}".`);
+    if (!VALID_LATERALITY.has(e.laterality)) throw new Error(`library: "${e.id}" invalid laterality "${e.laterality}" (bilateral|unilateral).`);
     if (!e.variation_family) throw new Error(`library: "${e.id}" missing variation_family.`);
     if (!e.dose || (isAllDose(e.dose) === false && Object.keys(e.dose).length === 0)) {
       throw new Error(`library: "${e.id}" has no dose.`);
+    }
+    // Per-tier dose values must be well-typed: sets/rest_sec numeric (0-set allowed), reps
+    // number|string. Catches transcription corruption like `rest_sec: "s"` that only "works"
+    // via JS coercion and breaks any consumer doing arithmetic on the numbers.
+    if (!isAllDose(e.dose)) {
+      for (const [tier, d] of Object.entries(e.dose)) {
+        if (!d || typeof d.sets !== 'number' || typeof d.rest_sec !== 'number') {
+          throw new Error(`library: "${e.id}" dose.${tier} needs numeric sets & rest_sec (got ${JSON.stringify(d)}).`);
+        }
+        if (typeof d.reps !== 'number' && typeof d.reps !== 'string') {
+          throw new Error(`library: "${e.id}" dose.${tier}.reps must be a number or string.`);
+        }
+      }
     }
     if (!Array.isArray(e.equipment)) throw new Error(`library: "${e.id}" equipment must be an array.`);
   }
