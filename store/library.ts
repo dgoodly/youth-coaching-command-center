@@ -13,9 +13,9 @@ import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { Exercise, Library, Slot, DayTemplate } from '../engine/program.ts';
+import type { Exercise, Library, Slot, DayTemplate, WorkoutPlan } from '../engine/program.ts';
 import { SLOT_ORDER, isAllDose } from '../engine/program.ts';
-import { isTier } from '../engine/types.ts';
+import { isTier, type Tier } from '../engine/types.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -31,6 +31,10 @@ export const EQUIPMENT_CONFIG = process.env.CC_EQUIPMENT_CONFIG
 export const DAY_TEMPLATES_FILE = process.env.CC_DAY_TEMPLATES_FILE
   ? resolve(process.env.CC_DAY_TEMPLATES_FILE)
   : join(ROOT, 'library', 'day-templates.json');
+
+export const PLANS_FILE = process.env.CC_PLANS_FILE
+  ? resolve(process.env.CC_PLANS_FILE)
+  : join(ROOT, 'library', 'plans.json');
 
 const VALID_SLOTS = new Set<Slot>(SLOT_ORDER);
 
@@ -122,6 +126,31 @@ export async function loadDayTemplate(day: number): Promise<DayTemplate> {
   const t = all.find((x) => x.day === day);
   if (!t) throw new Error(`No day template for day ${day} (have: ${all.map((x) => x.day).join(', ')}).`);
   return t;
+}
+
+/**
+ * Load the tier-scoped workout plans (which days of the split each tier follows). Validated
+ * against the day templates so a plan can't reference a day that doesn't exist. Returns [] if
+ * the file is absent (plans are optional; callers fall back to the full split).
+ */
+export async function loadPlans(): Promise<WorkoutPlan[]> {
+  if (!existsSync(PLANS_FILE)) return [];
+  const rows = JSON.parse(await readFile(PLANS_FILE, 'utf8')) as WorkoutPlan[];
+  if (!Array.isArray(rows)) throw new Error('plans.json must be a JSON array.');
+  const validDays = new Set((await loadDayTemplates()).map((t) => t.day));
+  for (const p of rows) {
+    if (!isTier(p.tier)) throw new Error(`plans.json: invalid tier "${p.tier}".`);
+    if (!Array.isArray(p.days) || p.days.length === 0) throw new Error(`plans.json: plan ${p.tier} needs a non-empty days array.`);
+    for (const d of p.days) {
+      if (!validDays.has(d)) throw new Error(`plans.json: plan ${p.tier} references day ${d}, which has no template.`);
+    }
+  }
+  return rows;
+}
+
+/** The plan for a tier, or null if none is defined (caller decides the fallback). */
+export async function planForTier(tier: Tier): Promise<WorkoutPlan | null> {
+  return (await loadPlans()).find((p) => p.tier === tier) ?? null;
 }
 
 /** The coach's available equipment (global config). 'none' is always implicitly available. */

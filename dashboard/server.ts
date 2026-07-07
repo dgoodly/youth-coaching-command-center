@@ -20,7 +20,11 @@ import {
 } from '../store/query.ts';
 import { ageFromDob } from '../store/athletes.ts';
 import { readCollection } from '../store/json-store.ts';
-import { page, esc, tierBadge, table } from './render.ts';
+import {
+  loadExercises, loadDayTemplates, loadAvailableEquipment, planForTier,
+} from '../store/library.ts';
+import { assembleSession } from '../engine/assembler.ts';
+import { page, esc, tierBadge, table, sessionHtml, planTabs } from './render.ts';
 
 const PORT = Number(process.env.CC_DASHBOARD_PORT ?? 5173);
 
@@ -93,6 +97,46 @@ function gutCell(a: Assessment): string {
   if (!a.coachGutCall) return '<span class="muted">—</span>';
   const match = a.coachGutCall === a.finalTier;
   return `${tierBadge(a.coachGutCall)} <span class="${match ? 'match' : 'differ'}">${match ? '✓' : '≠'}</span>`;
+}
+
+/**
+ * "Current plan" section: the tier-scoped plan the athlete is on, rendered as instant client-side
+ * day tabs (Day 1 default). Each day is the fully assembled session for (tier + that day's template
+ * + the athlete's block state). Tiers with no explicit plan fall back to the full 4-day split.
+ */
+async function planSection(athleteId: string, tier: Tier | null, valgusWatch: boolean): Promise<string> {
+  if (!tier) return '<p class="empty">No assessment yet — assign a tier to see the athlete\'s plan.</p>';
+
+  const [exercises, templates, equipment, block, plan] = await Promise.all([
+    loadExercises(), loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId), planForTier(tier),
+  ]);
+  const effective = plan ?? { tier, name: 'Full 4-day split', days: templates.map((t) => t.day).sort((a, b) => a - b) };
+
+  const panels = effective.days.map((day) => {
+    const template = templates.find((t) => t.day === day)!;
+    const { session } = assembleSession({
+      tier, day, exercises, template, valgusWatch, equipment,
+      blockIndex: block?.blockIndex ?? 0, slotVariants: block?.slotVariants,
+    });
+    const blocks = session.blocks.map((b) => ({
+      title: b.title,
+      items: b.items.map((it) => ({
+        name: it.exercise.name,
+        doseText: it.doseText,
+        tags: [
+          it.exercise.laterality === 'unilateral' ? 'SL' : null,
+          it.exercise.stick ? 'stick' : null,
+          `d${it.exercise.difficulty}`,
+        ].filter((x): x is string => x !== null),
+        cue: it.exercise.cue,
+      })),
+    }));
+    const note = `<p class="panel-note">${esc(session.label)} · sprint: ${esc(session.sprintEmphasis)}</p>`;
+    return { label: `Day ${day}`, html: note + sessionHtml(blocks) };
+  });
+
+  return `<p class="sub">On <b>${esc(effective.name)}</b> · ${effective.days.length} day${effective.days.length === 1 ? '' : 's'}/week · tier ${esc(tier)}${plan ? '' : ' <span class="muted">(no tier-specific plan defined — showing full split)</span>'}</p>`
+    + planTabs(panels);
 }
 
 async function athletePage(id: string): Promise<string> {
@@ -169,12 +213,15 @@ async function athletePage(id: string): Promise<string> {
     ? `<p>Maturity estimate: <b>${maturity.phvBand?.toUpperCase()}-PHV</b> · offset ${maturity.maturityOffsetYears >= 0 ? '+' : '−'}${Math.abs(maturity.maturityOffsetYears).toFixed(1)} yr · est. age at PHV ${maturity.estimatedAgeAtPHV!.toFixed(1)} <span class="muted">(${esc(maturity.method ?? '')})</span></p>`
     : `<p class="muted">Maturity estimate unavailable — ${esc(maturity.method ?? 'set DOB, sex, and (for boys) sitting height')}.</p>`;
 
+  const tier = await currentTierOf(id);
+  const planHtml = await planSection(id, tier, a.valgusWatch);
+
   const body = `
     <p><a href="/">← Roster</a></p>
     <h1>${esc(a.displayName)} ${a.valgusWatch ? '<span class="pill">valgus watch</span>' : ''}</h1>
     <p class="sub">
       ${age !== null ? `Age ${age} · ` : ''}${esc(a.sports.join(', ') || 'no sports listed')} ·
-      ${a.trainingMonths} mo training · current tier ${tierBadge(await currentTierOf(id))}
+      ${a.trainingMonths} mo training · current tier ${tierBadge(tier)}
     </p>
 
     <h2>Maturity (dose axis — independent of tier)</h2>
@@ -193,6 +240,9 @@ async function athletePage(id: string): Promise<string> {
 
     <h2>Score trends (per test, 0–3)</h2>
     ${trends}
+
+    <h2>Current plan</h2>
+    ${planHtml}
 
     <h2>Workout log</h2>
     ${table(['Date', 'Session', 'Tier', 'Status', 'Notes'], workoutRows, 'No sessions logged.')}

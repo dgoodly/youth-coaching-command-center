@@ -191,6 +191,17 @@ export interface DayTemplate {
   };
 }
 
+/**
+ * A named, tier-scoped training plan: an ordered subset of the 4-day split's `day` numbers that a
+ * given tier follows. The athlete's current plan is looked up by their assessed tier; each `days`
+ * entry is assembled by the normal pipeline (tier + that day's template + the athlete's block state).
+ */
+export interface WorkoutPlan {
+  tier: Tier;
+  name: string;
+  days: number[]; // references DayTemplate.day, in presentation order
+}
+
 /** Per-tier per-exercise difficulty target band (EXERCISE_LIBRARY.md §3 step 6, "rough guide"). */
 export const DIFFICULTY_BAND: Record<Tier, [number, number]> = {
   C: [1, 3],

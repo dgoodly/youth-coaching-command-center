@@ -10,7 +10,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { loadLibrary, loadExercises, equipmentAvailable, byFamily, validate } from './library.ts';
+import { loadLibrary, loadExercises, equipmentAvailable, byFamily, validate, loadPlans, loadDayTemplates, planForTier } from './library.ts';
 import { isAvailableAtTier, tierDose, isAllDose, SLOT_ORDER, type Exercise } from '../engine/program.ts';
 import { TIERS } from '../engine/types.ts';
 
@@ -91,6 +91,19 @@ test('variation families group multiple swappable members', () => {
   assert.ok(fams.size >= 30, 'about 31 families');
   const horiz = fams.get('horizontal_jump_bilat');
   assert.ok(horiz && horiz.length >= 4, 'horizontal_jump_bilat has a rotation ladder');
+});
+
+test('workout plans load, reference real days, and resolve by tier (A: 3-day, C: 2-day)', async () => {
+  const plans = await loadPlans();
+  const validDays = new Set((await loadDayTemplates()).map((t) => t.day));
+  for (const p of plans) {
+    assert.ok(p.days.length > 0, `${p.tier} plan has days`);
+    for (const d of p.days) assert.ok(validDays.has(d), `${p.tier} plan day ${d} has a template`);
+  }
+  const a = await planForTier('A');
+  assert.deepEqual(a?.days, [1, 2, 4], 'A plan is the 3-day 1·2·4 split');
+  const c = await planForTier('C');
+  assert.deepEqual(c?.days, [1, 2], 'C plan is the 2-day 1·2 split');
 });
 
 test('the real library has no cross-family progression/regression links', () => {

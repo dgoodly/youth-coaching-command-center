@@ -344,7 +344,10 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 - **`/`** Roster — per athlete: tier badge, age, last-assessment date, re-assess flag (fires at
   ≥ 6 weeks / 42 days), height velocity (PHV-flagged), a volume-guardrail "Load" badge, current block.
 - **`/athlete?id=`** Individual — maturity estimate + standing/sitting height log, wellness log,
-  training-load guardrail findings, tier history (raw / base / final / gate / gut-call), per-test
+  training-load guardrail findings, the athlete's **current plan** (tier-scoped, from
+  `library/plans.json` — A: 3-day 1·2·4, C: 2-day 1·2; other tiers fall back to the full split)
+  rendered as instant client-side day tabs (Day 1 default, no reload) where each day is the fully
+  assembled session for that day, tier history (raw / base / final / gate / gut-call), per-test
   score trends, workout log.
 - **`/validation`** — the threshold-tuning surface: calculated tier vs coach gut-call with an
   agreement %, a per-assessment match/DIFFERS table, and a gate-firing tally. This is where the
@@ -355,7 +358,7 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **92 tests, all passing.** Coverage:
+via `--experimental-strip-types`. **93 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
@@ -372,8 +375,9 @@ via `--experimental-strip-types`. **92 tests, all passing.** Coverage:
   height dual-write, gut-call passthrough, validation errors, re-assessment date.
 - **`store/library.test.ts`** — the real library loads/validates (127 exercises, 9 slots, links
   resolve, no cross-family links), the two availability conditions, equipment filter, family
-  grouping, every slot populatable at C, the cross-family warning, no-stale-cache re-reads, and the
-  flying-sprint distance guard (no sprint dose ≥ 40 yd).
+  grouping, every slot populatable at C, the cross-family warning, no-stale-cache re-reads, the
+  flying-sprint distance guard (no sprint dose ≥ 40 yd), and the tier-scoped workout plans
+  (valid days, A=1·2·4 / C=1·2).
 - **`store/doctor.test.ts`** — height-log gap detection, matching, null-height skip, backfill.
 - **`store/query.test.ts`** — `resolveAthleteIn` found/not_found/ambiguous resolution.
 

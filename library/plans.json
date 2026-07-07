@@ -1,0 +1,14 @@
+[
+  {
+    "tier": "A",
+    "name": "3-Day A — Speed & Power",
+    "days": [1, 2, 4],
+    "_note": "Proficient athlete: max-velocity, plyo-density/single-leg, and lateral/rotational power."
+  },
+  {
+    "tier": "C",
+    "name": "2-Day C — Foundation",
+    "days": [1, 2],
+    "_note": "Foundational athlete: an upper/lower-balanced pair (lower+speed, upper+plyo)."
+  }
+]
