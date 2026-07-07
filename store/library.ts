@@ -1,5 +1,5 @@
 /**
- * Exercise-library loader — reads `library/exercise_library.json` (the canonical 121-exercise
+ * Exercise-library loader — reads `library/exercise_library.json` (the canonical 127-exercise
  * library, root object with an `exercises` array) and the global equipment config, returning
  * validated, typed data for the assembler. Light validation so a hand-edited library fails
  * loudly rather than silently producing a broken session.
@@ -16,6 +16,10 @@ import { fileURLToPath } from 'node:url';
 import type { Exercise, Library, Slot, DayTemplate, WorkoutPlan } from '../engine/program.ts';
 import { SLOT_ORDER, isAllDose } from '../engine/program.ts';
 import { isTier, type Tier } from '../engine/types.ts';
+
+// Re-exported so store consumers keep a single import surface; the implementation now lives in
+// the durable core (engine/program.ts) so the assembler doesn't import the store.
+export { equipmentAvailable } from '../engine/program.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -163,12 +167,6 @@ export async function loadAvailableEquipment(): Promise<Set<string>> {
   const set = new Set(cfg.available ?? []);
   set.add('none');
   return set;
-}
-
-/** True if every equipment item an exercise needs is on hand (or the config allows all). */
-export function equipmentAvailable(ex: Exercise, available: Set<string>): boolean {
-  if (available.has('*')) return true;
-  return ex.equipment.every((eq) => available.has(eq));
 }
 
 /** Group exercises by variation_family (for rotation). */

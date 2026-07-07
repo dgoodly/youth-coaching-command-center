@@ -112,6 +112,16 @@ export function isAllDose(dose: Dose): dose is AllDose {
 }
 
 /**
+ * True if every equipment item an exercise needs is on hand — or the set allows all via '*'.
+ * Pure (belongs in the durable core): the assembler filters on this without reaching into the
+ * store. `none` is treated like any other item (callers include it in the available set).
+ */
+export function equipmentAvailable(ex: Exercise, available: ReadonlySet<string>): boolean {
+  if (available.has('*')) return true;
+  return ex.equipment.every((eq) => available.has(eq));
+}
+
+/**
  * The prescription for a tier, or `null` if the exercise carries a per-tier dose and this
  * tier is 0-set (not prescribed). For `{ all }` doses this returns null (the caller uses the
  * `all` string directly) — check {@link isAllDose} first.

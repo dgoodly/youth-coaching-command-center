@@ -24,10 +24,8 @@ import {
   slotKey,
   isAvailableAtTier,
   doseLabel,
+  equipmentAvailable,
 } from './program.ts';
-import { equipmentAvailable } from '../store/library.ts';
-
-const ALLOW_ALL_EQUIPMENT: ReadonlySet<string> = new Set(['*']);
 
 export interface AssembledItem {
   exercise: Exercise;
@@ -89,8 +87,7 @@ const SLOT_TITLES: Record<Slot, string> = {
 };
 
 function eqOk(ex: Exercise, equipment: ReadonlySet<string>): boolean {
-  if (equipment === ALLOW_ALL_EQUIPMENT || equipment.has('*')) return true;
-  return equipmentAvailable(ex, equipment as Set<string>);
+  return equipmentAvailable(ex, equipment);
 }
 
 function toItem(ex: Exercise, tier: Tier): AssembledItem {

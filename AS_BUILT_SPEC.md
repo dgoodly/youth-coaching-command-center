@@ -43,7 +43,7 @@ transfers unchanged into a future app; the **surface** (CLIs, dashboard, JSON st
 | Maturity axis | `engine/maturity.ts` | **Durable core** | types |
 | Volume guardrails | `engine/guardrails.ts` | **Durable core** | (none) |
 | Library schema + dose helpers | `engine/program.ts` | **Durable core** | types |
-| Program assembler | `engine/assembler.ts` | **Durable core** | program, types, (library eqOk) |
+| Program assembler | `engine/assembler.ts` | **Durable core** | program, types |
 | Field-form ingest | `store/ingest.ts` | core logic, store I/O | engine + json-store |
 | Rotation / block state | `store/blocks.ts` | core logic, store I/O | program + json-store |
 | JSON persistence | `store/json-store.ts` | **Disposable** | types |
@@ -56,8 +56,10 @@ transfers unchanged into a future app; the **surface** (CLIs, dashboard, JSON st
 | Data-doctor CLI | `cli/doctor.ts` | **Disposable** | doctor + json-store |
 | Dashboard (HTTP + render) | `dashboard/*.ts` | **Disposable** | query + engine |
 
-**Rule enforced by imports:** engine code depends only on `engine/*`; it never imports `store/*`
-(the assembler's one equipment helper is passed in, not imported outward). This is what lets the
+**Rule enforced by imports:** production engine code depends only on `engine/*`; it never imports
+`store/*` (the shared `equipmentAvailable` helper lives in `engine/program.ts`, not the store). A
+test (`engine/boundary.test.ts`) scans the engine source and fails if any non-test file imports
+`store`/`cli`/`dashboard`, so the boundary is enforced, not just documented. This is what lets the
 engine drop into the future app untouched.
 
 **Runtime:** Node ≥ 22, TypeScript run directly via `--experimental-strip-types` (no build step).
