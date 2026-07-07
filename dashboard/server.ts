@@ -113,26 +113,33 @@ async function planSection(athleteId: string, tier: Tier | null, valgusWatch: bo
   const effective = plan ?? { tier, name: 'Full 4-day split', days: templates.map((t) => t.day).sort((a, b) => a - b) };
 
   const panels = effective.days.map((day) => {
-    const template = templates.find((t) => t.day === day)!;
-    const { session } = assembleSession({
-      tier, day, exercises, template, valgusWatch, equipment,
-      blockIndex: block?.blockIndex ?? 0, slotVariants: block?.slotVariants,
-    });
-    const blocks = session.blocks.map((b) => ({
-      title: b.title,
-      items: b.items.map((it) => ({
-        name: it.exercise.name,
-        doseText: it.doseText,
-        tags: [
-          it.exercise.laterality === 'unilateral' ? 'SL' : null,
-          it.exercise.stick ? 'stick' : null,
-          `d${it.exercise.difficulty}`,
-        ].filter((x): x is string => x !== null),
-        cue: it.exercise.cue,
-      })),
-    }));
-    const note = `<p class="panel-note">${esc(session.label)} · sprint: ${esc(session.sprintEmphasis)}</p>`;
-    return { label: `Day ${day}`, html: note + sessionHtml(blocks) };
+    const template = templates.find((t) => t.day === day);
+    // Assembling a day can throw (e.g. a misconfigured template hits the hard sequencing guard).
+    // Contain it to this one panel so the athlete page still renders instead of 500ing.
+    try {
+      if (!template) throw new Error(`no day template for day ${day}`);
+      const { session } = assembleSession({
+        tier, day, exercises, template, valgusWatch, equipment,
+        blockIndex: block?.blockIndex ?? 0, slotVariants: block?.slotVariants,
+      });
+      const blocks = session.blocks.map((b) => ({
+        title: b.title,
+        items: b.items.map((it) => ({
+          name: it.exercise.name,
+          doseText: it.doseText,
+          tags: [
+            it.exercise.laterality === 'unilateral' ? 'SL' : null,
+            it.exercise.stick ? 'stick' : null,
+            `d${it.exercise.difficulty}`,
+          ].filter((x): x is string => x !== null),
+          cue: it.exercise.cue,
+        })),
+      }));
+      const note = `<p class="panel-note">${esc(session.label)} · sprint: ${esc(session.sprintEmphasis)}</p>`;
+      return { label: `Day ${day}`, html: note + sessionHtml(blocks) };
+    } catch (err) {
+      return { label: `Day ${day}`, html: `<p class="flag">Could not assemble Day ${day}: ${esc((err as Error).message)}</p>` };
+    }
   });
 
   return `<p class="sub">On <b>${esc(effective.name)}</b> · ${effective.days.length} day${effective.days.length === 1 ? '' : 's'}/week · tier ${esc(tier)}${plan ? '' : ' <span class="muted">(no tier-specific plan defined — showing full split)</span>'}</p>`
