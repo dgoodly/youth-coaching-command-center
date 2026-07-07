@@ -347,8 +347,9 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
   ≥ 6 weeks / 42 days), height velocity (PHV-flagged), a volume-guardrail "Load" badge, current block.
 - **`/athlete?id=`** Individual — maturity estimate + standing/sitting height log, wellness log,
   training-load guardrail findings, the athlete's **current plan** (tier-scoped, from
-  `library/plans.json` — A: 3-day 1·2·4, C: 2-day 1·2; other tiers fall back to the full split)
-  rendered as instant client-side day tabs (Day 1 default, no reload) where each day is the fully
+  `library/plans.json` — S: full 4-day, A/B: 3-day 1·2·4, C: 2-day 1·2; a tier with no plan would
+  fall back to the full split) rendered as instant client-side day tabs (Day 1 default, no reload;
+  a day that fails to assemble is contained to its own panel) where each day is the fully
   assembled session for that day, tier history (raw / base / final / gate / gut-call), per-test
   score trends, workout log.
 - **`/validation`** — the threshold-tuning surface: calculated tier vs coach gut-call with an
@@ -360,7 +361,7 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **99 tests, all passing.** Coverage:
+via `--experimental-strip-types`. **100 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
