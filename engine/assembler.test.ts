@@ -128,15 +128,27 @@ test('Day 1 keeps summed jump difficulty within the ceiling for all tiers (prote
   }
 });
 
-test('A/S Day 1 carry max-velocity; C/B regress to acceleration', () => {
+test('Day 1 max-velocity slot: A/S run true max-velocity; C/B get a submaximal build-up (spec §5)', () => {
+  // A/S: a genuine flying max-velocity drill (difficulty ≥ 5) → emphasis stays max_velocity.
   for (const tier of ['A', 'S'] as const) {
     const { session } = assemble(tier, 1);
     const sprint = block(session, 'sprint')!;
-    assert.ok(sprint.items.some((it) => it.exercise.pattern === 'max_velocity'), `max-V ${tier}`);
+    assert.ok(
+      sprint.items.some((it) => it.exercise.pattern === 'max_velocity' && it.exercise.difficulty >= 5),
+      `true max-V ${tier}`,
+    );
+    assert.equal(session.sprintEmphasis, 'max_velocity', `emphasis ${tier}`);
   }
-  // C: the max_velocity family's C member is s_buildup (a ramp) — still pattern max_velocity but
-  // difficulty stays under the ceiling; sprintEmphasis stays a submax ramp. Just assert it assembles.
-  assert.doesNotThrow(() => assemble('C', 1));
+  // C/B: the slot is realized as the family's submaximal build-up (pattern max_velocity, difficulty
+  // < 5) — spec §5 permits build-ups at C; NOT flat-out max-velocity. Labeled honestly, with a note.
+  for (const tier of ['C', 'B'] as const) {
+    const { session } = assemble(tier, 1);
+    const sprint = block(session, 'sprint')!;
+    assert.ok(sprint.items.length > 0, `sprint populated ${tier}`);
+    assert.ok(sprint.items.every((it) => it.exercise.difficulty < 5), `submaximal ${tier}`);
+    assert.equal(session.sprintEmphasis, 'acceleration+buildup', `emphasis ${tier}`);
+    assert.ok(session.assemblyNotes.some((n) => /build-up/.test(n)), `build-up note ${tier}`);
+  }
 });
 
 test('short funnel (Day 2) is trimmed vs full funnel (Day 1) at the same tier', () => {

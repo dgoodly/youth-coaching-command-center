@@ -27,6 +27,13 @@ import {
   equipmentAvailable,
 } from './program.ts';
 
+/**
+ * Difficulty at/above which a `max_velocity`-pattern sprint counts as TRUE max-velocity (the
+ * "Proficient — max-velocity" band, EXERCISE_LIBRARY.md §1). Below it (e.g. a build-up ramp to
+ * ~90%, difficulty 3) the drill is submaximal and labeled as a build-up, not flat-out max velocity.
+ */
+const MAX_VELOCITY_DIFFICULTY_FLOOR = 5;
+
 export interface AssembledItem {
   exercise: Exercise;
   /** Human dose string for the athlete's tier (or the { all } string). */
@@ -237,13 +244,26 @@ export function assembleSession(params: AssembleParams): AssembleResult {
   // Fixed skeleton order (defensive — construction already orders).
   blocks.sort((a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot));
 
-  // Realized sprint emphasis (max-velocity may not be unlocked → regressed).
+  // Realized sprint emphasis. The max-velocity SLOT is expressed differently by tier (spec §5):
+  // A/S run a true flying max-velocity drill; C/B get the family's submaximal build-up (a ramp to
+  // ~90%, still pattern `max_velocity` but difficulty below the max-velocity band). A build-up is
+  // NOT flat-out max-velocity volume, so we label it honestly rather than printing "max_velocity"
+  // for a C athlete. Full regression to acceleration only happens when the tier has no
+  // max-velocity-family member at all. (The sequencing guard keys off `pattern`, not this label.)
   const sprintItems = blocks.find((b) => b.slot === 'sprint')?.items ?? [];
-  const hasMaxV = sprintItems.some((it) => it.exercise.pattern === 'max_velocity');
+  const maxVItems = sprintItems.filter((it) => it.exercise.pattern === 'max_velocity');
+  const hasTrueMaxV = maxVItems.some((it) => it.exercise.difficulty >= MAX_VELOCITY_DIFFICULTY_FLOOR);
   let sprintEmphasis = template.sprint_emphasis;
-  if (template.sprint_emphasis === 'max_velocity' && !hasMaxV) {
-    sprintEmphasis = 'acceleration';
-    notes.push(`Max-velocity not unlocked at tier ${tier} — sprint is acceleration-only (spec §5).`);
+  if (template.sprint_emphasis === 'max_velocity') {
+    if (hasTrueMaxV) {
+      sprintEmphasis = 'max_velocity';
+    } else if (maxVItems.length > 0) {
+      sprintEmphasis = 'acceleration+buildup';
+      notes.push(`Max-velocity slot realized as a submaximal build-up at tier ${tier} (spec §5: build-ups OK; no flat-out max-velocity volume).`);
+    } else {
+      sprintEmphasis = 'acceleration';
+      notes.push(`Max-velocity not unlocked at tier ${tier} — sprint is acceleration-only (spec §5).`);
+    }
   }
 
   // Difficulty balance (advisory) — count main-work items outside the tier band.

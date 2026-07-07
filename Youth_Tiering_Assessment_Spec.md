@@ -185,15 +185,15 @@ tier's session from one library.
 
 | Tier | Stage | Movement selection unlocked |
 |---|---|---|
-| **C** | Foundational | Bodyweight + iso/eccentric strength; double-leg landings emphasized; low-amplitude jumps; ACCELERATION sprints only (no max-velocity volume); NO depth drops; primary focus = teach the stick |
-| **B** | Developing | Light external load (goblet/DBs); single-leg work introduced; low-level contrast chains; short max-velocity exposure; stick training still central |
+| **C** | Foundational | Bodyweight + iso/eccentric strength; double-leg landings emphasized; low-amplitude jumps; ACCELERATION sprints + submaximal build-ups (ramp to ~90%) — NO flat-out / max-velocity volume; NO depth drops; primary focus = teach the stick |
+| **B** | Developing | Light external load (goblet/DBs); single-leg work introduced; low-level contrast chains; short max-velocity exposure via submaximal build-ups; stick training still central |
 | **A** | Proficient | Full contrast chains; single-leg plyometrics; max-velocity at distance; loaded progressions; fuller volume |
 | **S** | Advanced | Depth drops; high plyo density; full max-velocity volume; heavier loading; rotational/multidirectional complexity — essentially the full 4-day split as designed |
 
 **Anchor:** the existing 4-day split (experienced 9-year-old, valgus) is an A/S-tier
 program. A C-tier athlete gets a structurally identical session — same Jump→Sprint→Lift
 order, same base+funnel warm-up — with simpler movements, double-leg landings, no depth
-drops, acceleration-only sprinting.
+drops, and acceleration + submaximal build-up sprinting (no flat-out max-velocity volume).
 
 Within a tier, the maturity axis (§7) scales the dose.
 
