@@ -5,7 +5,12 @@
  *   npm run session -- --athlete "Maya" --day 2            (tier from latest assessment; uses block state)
  *   npm run session -- --athlete <id> --day 3 --log         (also records it to workout_log)
  *   npm run session -- --athlete <id> --rotate              (advance to the next training block)
- *   npm run session -- --tier C --day 4 --equip none,box    (override equipment for this run)
+ *   npm run session -- --athlete <id> --day 1 --equip none  (PREVIEW ONLY — see below)
+ *
+ * `--equip` is a one-off equipment override for a single printout (e.g. a travel / bodyweight
+ * session). It is a PREVIEW: it never writes the athlete's block variants and never logs, so a
+ * constrained-equipment run can't downgrade and stick for the rest of the block. Run without
+ * `--equip` to update or log the athlete's real plan.
  *
  * Printed shape resembles the 4-day reference program. Tier is coach-only (§3.3).
  */
@@ -123,18 +128,30 @@ async function main(): Promise<void> {
     }
   }
 
+  const equipOverride = has('equip');
   const { session, slotVariants: updated } = assembleSession({
     tier, day, exercises, template, valgusWatch, equipment, blockIndex, slotVariants,
   });
   printSession(session, athleteName, valgusWatch);
 
-  // Persist any newly-chosen variants so the block stays stable.
-  if (athleteId) {
+  // A one-off --equip override is a PREVIEW ONLY. It must never write back to the athlete's block:
+  // the narrowed equipment forces downgraded picks (e.g. barbell → bodyweight), and block-stability
+  // would then keep those downgrades for the rest of the ~9-week block, silently losing the
+  // athlete's earned variants. Same reason it isn't logged. Run without --equip to update the plan.
+  if (equipOverride && (athleteId || has('log'))) {
+    line(
+      `\n(--equip override: preview only — ${athleteId ? "the athlete's saved block variants were NOT changed" : 'nothing persisted'}` +
+        `${has('log') ? ' and it was NOT logged' : ''}. Run without --equip to update or log the real plan.)`,
+    );
+  }
+
+  // Persist any newly-chosen variants so the block stays stable (never on a --equip preview).
+  if (athleteId && !equipOverride) {
     const state = await getOrInitBlockState(athleteId);
     await saveBlockState({ ...state, slotVariants: updated });
   }
 
-  if (has('log')) {
+  if (has('log') && !equipOverride) {
     if (!athleteId) line('⚠ --log requires --athlete. Not logged.');
     else {
       await append('workout_log', {
