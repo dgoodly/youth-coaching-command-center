@@ -60,9 +60,10 @@ the repo and diffable. Read them before building:
   warm-up, strength-first-on-mechanics, scale-dose-to-maturity, etc.). The program
   assembler must not violate these. (This is the same text as the coach's project
   custom-instructions, exported to a file so this environment can read it.)
-- **`4Day_Athletic_Split_Program.md`** — a fully built A/S-tier program. Use it as the
-  reference shape for what an assembled session looks like, and as the anchor for the
-  movement library's tagging.
+- **`4Day_Athletic_Split_Program.md`** (plus 2-day and 3-day companion reference programs) —
+  fully built reference programs at each training frequency. Use them as the reference shape for
+  what an assembled session looks like at 2, 3, and 4 days/week, and the 4-day as the anchor for
+  the movement library's tagging. See §2A.8 for the multi-frequency requirement.
 - **`Field_Form_Data_Contract.md`** — the data-entry contract derived from the paper
   capture form. Whatever the coach writes on paper must map 1:1 into the tool; this file
   defines those fields and the ingestion rules.
@@ -126,6 +127,18 @@ points as binding:
    doses are reasoned starting points, not tested values — same status as the assessment's
    score bands/gate thresholds. They belong in the same validation loop; note them in
    `FEATURE_IDEAS.md` as "tune against real athletes."
+
+8. **Support 2-, 3-, and 4-day training frequencies.** The seed folder now carries reference
+   programs at all three frequencies, not just the original 4-day split — the assembler/program
+   layer must support all three. A lower-frequency program is a **subset of the same 4-day
+   day-template set, not a different chassis**: the day templates stay the source of session
+   structure, and frequency is expressed as *which* of those days a given plan runs.
+   **Implemented via tier-scoped plans (`library/plans.json`):** each plan names the day-template
+   days a tier follows — C = 2-day (days 1·2), A/B = 3-day (days 1·2·4), S = 4-day (1·2·3·4) — and
+   every plan day is assembled by the normal pipeline (`planForTier` → `assembleSession` per day;
+   surfaced as the dashboard's day tabs). Validate each assembled frequency against its matching
+   reference program. When adding/adjusting frequencies, edit `plans.json` (and add a reference
+   program), not the assembler — day selection is the knob, the chassis is fixed.
 
 ---
 
