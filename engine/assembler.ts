@@ -285,6 +285,16 @@ export function assertSequencingRule(session: AssembledSession, template: DayTem
     (it) => it.exercise.pattern === 'max_velocity',
   );
   const ceiling = template.jump_difficulty_ceiling;
+  // A max-velocity day with NO declared ceiling gets no protection — the exact hole this guard
+  // exists to close. Treat it as a misconfiguration and refuse, rather than silently allowing
+  // unlimited plyo upstream of the runs (null "looks normal" — it's the value on non-max-V days).
+  if (hasMaxV && ceiling === null) {
+    throw new Error(
+      `Hard sequencing rule misconfigured (day ${session.day}, tier ${session.tier}): a max-velocity ` +
+        `sprint is present but the template declares no jump_difficulty_ceiling. A max-velocity day ` +
+        `must set a ceiling so accumulated plyo load upstream of the runs is bounded.`,
+    );
+  }
   if (hasMaxV && ceiling !== null && session.jumpDifficultySum > ceiling) {
     throw new Error(
       `Hard sequencing rule violated (day ${session.day}, tier ${session.tier}): max-velocity ` +

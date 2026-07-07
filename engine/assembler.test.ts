@@ -231,6 +231,18 @@ test('assertSequencingRule passes when no max-velocity is present regardless of 
   assert.doesNotThrow(() => assertSequencingRule(s, t));
 });
 
+test('assembleSession THROWS on a max-velocity day that declares no ceiling (misconfig, review A4)', () => {
+  const bad: DayTemplate = {
+    day: 9, label: 'no-ceiling max-V', emphasis: 'linear-speed', funnel_mode: 'full',
+    sprint_emphasis: 'max_velocity', jump_difficulty_ceiling: null, // <-- the hole
+    slots: { jump: [['pogo']], sprint: [['max_velocity']], lift: [['squat']], trunk: [] },
+  };
+  assert.throws(
+    () => assembleSession({ tier: 'A', day: 9, exercises, template: bad, valgusWatch: false, equipment: ALL_EQUIP }),
+    /declares no jump_difficulty_ceiling/,
+  );
+});
+
 test('a persisted variant from a different family than the pool selects is not silently kept', () => {
   // Locks in the #1 fix at the assembler level: selectFill's block-stability check is
   // family-scoped, so a variant that was advanced across a family boundary (the cross-family
