@@ -204,12 +204,14 @@ export function assembleSession(params: AssembleParams): AssembleResult {
     items: fixedSlotItems(exercises, 'warmup_base', tier, equipment).map((e) => toItem(e, tier)),
   });
 
-  // 2. Exactly one funnel, by emphasis. Short mode trims to the first three drills.
+  // 2. Exactly one funnel, by emphasis. Short mode trims to the first three drills — for whichever
+  //    funnel the day selected (a short CoD funnel must trim too, not be silently ignored).
   const funnelSlot: Slot = template.emphasis === 'linear-speed' ? 'funnel_linear' : 'funnel_cod';
   let funnel = fixedSlotItems(exercises, funnelSlot, tier, equipment);
-  if (funnelSlot === 'funnel_linear' && template.funnel_mode === 'short') {
+  if (template.funnel_mode === 'short') {
     funnel = funnel.slice(0, 3);
-    notes.push('Linear funnel trimmed to short mode (Day 2 plyo block does the rest).');
+    const which = funnelSlot === 'funnel_linear' ? 'Linear' : 'CoD';
+    notes.push(`${which} funnel trimmed to short mode (the day's density block does the rest).`);
   }
   blocks.push({ slot: funnelSlot, title: SLOT_TITLES[funnelSlot], items: funnel.map((e) => toItem(e, tier)) });
 

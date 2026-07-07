@@ -158,6 +158,19 @@ test('short funnel (Day 2) is trimmed vs full funnel (Day 1) at the same tier', 
   assert.ok(d1 >= d2, 'full ≥ short');
 });
 
+test('short mode also trims a CoD funnel — not just linear (B4)', () => {
+  const cod = templates.find((t) => t.emphasis === 'change-of-direction')!;
+  const full = assembleSession({ tier: 'A', day: cod.day, exercises, template: cod, valgusWatch: false, equipment: ALL_EQUIP });
+  const short = assembleSession({
+    tier: 'A', day: cod.day, exercises, template: { ...cod, funnel_mode: 'short' }, valgusWatch: false, equipment: ALL_EQUIP,
+  });
+  const fullN = block(full.session, 'funnel_cod')!.items.length;
+  const shortN = block(short.session, 'funnel_cod')!.items.length;
+  assert.ok(fullN > 3, 'the CoD funnel has more than 3 drills at full length');
+  assert.equal(shortN, 3, 'short mode trims the CoD funnel to 3');
+  assert.ok(short.session.assemblyNotes.some((n) => /CoD funnel trimmed/.test(n)), 'trim noted');
+});
+
 test('valgus watch prefers a stick option near the family floor (selectFill branch)', () => {
   // Synthetic family: floor is non-stick (d2); a near-floor member IS stick (d3).
   const base: Omit<Exercise, 'id' | 'name' | 'difficulty' | 'stick'> = {

@@ -135,6 +135,14 @@ export async function loadDayTemplates(): Promise<DayTemplate[]> {
   if (!Array.isArray(rows)) throw new Error('day-templates.json must be a JSON array.');
   for (const t of rows) {
     if (typeof t.day !== 'number') throw new Error('day-templates.json: each template needs a numeric day.');
+    // Validate the enum fields — a typo silently mis-routes: a bad `emphasis` falls through to the
+    // CoD funnel, a bad `funnel_mode` is treated as full-length.
+    if (t.emphasis !== 'linear-speed' && t.emphasis !== 'change-of-direction') {
+      throw new Error(`day-templates.json: day ${t.day} invalid emphasis "${t.emphasis}" (linear-speed|change-of-direction).`);
+    }
+    if (t.funnel_mode !== 'full' && t.funnel_mode !== 'short') {
+      throw new Error(`day-templates.json: day ${t.day} invalid funnel_mode "${t.funnel_mode}" (full|short).`);
+    }
     if (!t.slots?.jump || !t.slots?.sprint || !t.slots?.lift) {
       throw new Error(`day-templates.json: day ${t.day} missing jump/sprint/lift slot pools.`);
     }
