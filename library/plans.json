@@ -1,9 +1,21 @@
 [
   {
+    "tier": "S",
+    "name": "4-Day S — Full Split",
+    "days": [1, 2, 3, 4],
+    "_note": "Advanced athlete: the full 4-day split as designed (spec §5: S is essentially the full split)."
+  },
+  {
     "tier": "A",
     "name": "3-Day A — Speed & Power",
     "days": [1, 2, 4],
     "_note": "Proficient athlete: max-velocity, plyo-density/single-leg, and lateral/rotational power."
+  },
+  {
+    "tier": "B",
+    "name": "3-Day B — Developing",
+    "days": [1, 2, 4],
+    "_note": "Developing athlete: same 3-day structure as A (tier governs content/dose, not day count). Reasoned default — tune the day count if a developing athlete needs more recovery."
   },
   {
     "tier": "C",

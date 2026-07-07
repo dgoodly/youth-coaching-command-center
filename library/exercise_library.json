@@ -794,9 +794,9 @@
       ],
       "dose": {
         "C": {
-          "sets": 2,
-          "reps": 6,
-          "rest_sec": 45
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
         },
         "B": {
           "sets": 2,
@@ -878,9 +878,9 @@
       ],
       "dose": {
         "C": {
-          "sets": 3,
-          "reps": 4,
-          "rest_sec": 75
+          "sets": 0,
+          "reps": 0,
+          "rest_sec": 0
         },
         "B": {
           "sets": 3,
