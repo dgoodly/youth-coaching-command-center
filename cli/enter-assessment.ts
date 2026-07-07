@@ -48,6 +48,13 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** True for a real YYYY-MM-DD date (padded, and an actual calendar day). Blank is allowed upstream. */
+function isValidIsoDate(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const t = Date.parse(s + 'T00:00:00Z');
+  return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === s;
+}
+
 function line(s = ''): void {
   stdout.write(s + '\n');
 }
@@ -212,7 +219,11 @@ async function newAthlete(
 ): Promise<{ athleteId: string; athleteName: string; dob: string | null }> {
   line('\n--- New athlete ---');
   const displayName = await ask(rl, 'Name');
-  const dobRaw = await ask(rl, 'DOB (YYYY-MM-DD, optional)', '');
+  let dobRaw = await ask(rl, 'DOB (YYYY-MM-DD, optional)', '');
+  while (dobRaw && !isValidIsoDate(dobRaw)) {
+    line('  ↳ not a valid YYYY-MM-DD date (zero-padded). Re-enter, or leave blank.');
+    dobRaw = await ask(rl, 'DOB (YYYY-MM-DD, optional)', '');
+  }
   const sexRaw = (await ask(rl, 'Sex (M/F, optional — for the maturity estimate)', '')).trim().toUpperCase();
   const sex = sexRaw === 'M' ? 'M' : sexRaw === 'F' ? 'F' : null;
   const sportsRaw = await ask(rl, 'Sport(s), comma-separated', '');

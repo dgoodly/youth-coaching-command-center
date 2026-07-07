@@ -98,3 +98,24 @@ test('estimate works from a single entry (no velocity needed)', () => {
   assert.equal(m.velocityCmPerYear, null); // one entry
   assert.ok(m.maturityOffsetYears !== null); // estimate still available
 });
+
+test('malformed DOB yields NO estimate — never a bogus NaN circa-PHV (A2)', () => {
+  for (const dob of ['not-a-date', '2014-3-5', '03/14/2014', '2014-13-40']) {
+    const m = computeMaturity([hs('2026-01-01', 150, 80)], { dob, sex: 'M' });
+    assert.equal(m.maturityOffsetYears, null, `offset null for ${dob}`);
+    assert.equal(m.phvBand, null, `no band for ${dob}`);
+    assert.doesNotMatch(m.note, /NaN/, `note has no NaN for ${dob}`);
+    assert.doesNotMatch(m.note, /CIRCA-PHV/, `no false circa-PHV for ${dob}`);
+  }
+});
+
+test('malformed entry date does not produce a NaN velocity (A2)', () => {
+  const m = computeMaturity(
+    [{ athleteId: 'a', date: '2025-13-99', heightCm: 140, source: 'manual' }, h('2026-04-01', 150)],
+    {},
+  );
+  // Whatever the sort does with a bad date, velocity must be null (not NaN), never PHV-flagged.
+  assert.equal(m.velocityCmPerYear, null);
+  assert.equal(m.nearPHV, false);
+  assert.doesNotMatch(m.note, /NaN/);
+});

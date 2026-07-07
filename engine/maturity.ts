@@ -102,8 +102,13 @@ function estimateFrom(latest: HeightLogEntry, inputs: MaturityInputs): Estimate 
   if (!sex) return NO_ESTIMATE('no estimate: athlete sex not set');
   if (!dob) return NO_ESTIMATE('no estimate: DOB not set');
   const age = decimalAge(dob, latest.date);
+  // A malformed DOB (or entry date) makes decimalAge NaN; without this guard the offset is NaN,
+  // every band comparison is false, and the band silently defaults to 'circa' — surfacing a
+  // confident "−NaN yr, ease the dose" recommendation from garbage input.
+  if (!Number.isFinite(age)) return NO_ESTIMATE('no estimate: DOB is not a valid ISO date (YYYY-MM-DD)');
   const offset = mooreOffset(sex, age, latest.heightCm, latest.sittingHeightCm);
   if (offset === null) return NO_ESTIMATE('no estimate: sitting height needed for the male equation');
+  if (!Number.isFinite(offset)) return NO_ESTIMATE('no estimate: height values are not valid numbers');
   const band: PhvBand = offset < -1 ? 'pre' : offset > 1 ? 'post' : 'circa';
   return {
     maturityOffsetYears: offset,
@@ -154,10 +159,10 @@ export function computeMaturity(entries: HeightLogEntry[], inputs: MaturityInput
 
   const prev = log[log.length - 2]!;
   const years = yearsBetween(prev.date, latest.date);
-  if (years <= 0) {
+  if (!Number.isFinite(years) || years <= 0) {
     return {
       latestHeightCm: latest.heightCm, velocityCmPerYear: null, nearPHV: false, ...est,
-      note: `Two height entries share a date — cannot compute velocity.${estPhrase}`,
+      note: `Cannot compute velocity from the two most recent entries (same or invalid dates).${estPhrase}`,
     };
   }
 
