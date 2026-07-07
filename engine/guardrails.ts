@@ -47,15 +47,17 @@ export function checkVolumeGuardrails(input: GuardrailInputs): GuardrailReport {
   const { age, weeklySportHours: sport, weeklyTrainingHours: training, restDaysPerWeek: rest } = input;
   const findings: GuardrailFinding[] = [];
 
-  // Rule 1 — total weekly load vs age.
-  if (!has(age) || (!has(sport) && !has(training))) {
+  // Rule 1 — total weekly load vs age. Needs age AND BOTH hour fields: the rule is about the
+  // TOTAL, so a missing field can't be assumed 0 (null = "unrecorded", distinct from a real 0)
+  // — treating it as 0 would report a false "ok" from partial data (record 0 explicitly for none).
+  if (!has(age) || !has(sport) || !has(training)) {
     findings.push({
       rule: 'weekly_hours_vs_age',
       status: 'unknown',
-      message: 'Weekly hours vs age: need age (DOB) and at least one of sport/training hours.',
+      message: 'Weekly hours vs age: need age (DOB) and both weekly sport and training hours (enter 0 for none).',
     });
   } else {
-    const total = (has(sport) ? sport : 0) + (has(training) ? training : 0);
+    const total = sport + training;
     if (total > age) {
       findings.push({
         rule: 'weekly_hours_vs_age',

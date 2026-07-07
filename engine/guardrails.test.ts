@@ -21,9 +21,14 @@ test('weekly hours ≤ age: within, near, and over', () => {
   assert.equal(statusOf(checkVolumeGuardrails({ age: 12, weeklySportHours: 12, weeklyTrainingHours: 3 }), 'weekly_hours_vs_age'), 'exceeded');
 });
 
-test('weekly hours vs age is unknown without age or any hours', () => {
-  assert.equal(statusOf(checkVolumeGuardrails({ age: null, weeklySportHours: 10 }), 'weekly_hours_vs_age'), 'unknown');
+test('weekly hours vs age is unknown unless age AND both hour fields are present (A3)', () => {
+  assert.equal(statusOf(checkVolumeGuardrails({ age: null, weeklySportHours: 10, weeklyTrainingHours: 2 }), 'weekly_hours_vs_age'), 'unknown');
   assert.equal(statusOf(checkVolumeGuardrails({ age: 12 }), 'weekly_hours_vs_age'), 'unknown');
+  // Only one hour field present → unknown, NOT a false "ok" from treating the other as 0.
+  assert.equal(statusOf(checkVolumeGuardrails({ age: 10, weeklySportHours: null, weeklyTrainingHours: 4 }), 'weekly_hours_vs_age'), 'unknown');
+  assert.equal(statusOf(checkVolumeGuardrails({ age: 10, weeklySportHours: 6 }), 'weekly_hours_vs_age'), 'unknown');
+  // A real 0 is recorded explicitly and DOES evaluate.
+  assert.equal(statusOf(checkVolumeGuardrails({ age: 10, weeklySportHours: 6, weeklyTrainingHours: 0 }), 'weekly_hours_vs_age'), 'ok');
 });
 
 test('intense-sport cap fires at/above the cap', () => {
