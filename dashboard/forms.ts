@@ -1,0 +1,295 @@
+/**
+ * Dashboard write-surface forms (Phase 2) — DISPOSABLE surface. Pure form-value shaping,
+ * server-side validation, and HTML rendering for the athlete + assessment forms. No I/O and
+ * no server boot, so these are directly unit-testable (server.ts wires them to the store).
+ *
+ * Boundary rule (BUILD_BRIEF §1): validation here is only about well-formed INPUT (required
+ * fields, ranges, date shape). It never computes a tier, applies the CAP rule, or assembles a
+ * session — that trusted logic stays in `store/ingest.ts` / `engine/*`. `validateAssessmentForm`
+ * hands a `FieldFormInput` to the same ingest path the CLI uses; the engine recomputes the tier.
+ *
+ * XSS: every value below is browser-sourced and rendered back into HTML, so it all flows through
+ * `esc()`. No user string is ever interpolated raw.
+ */
+
+import type { AthleteProfile, Assessment, Scores, TestScore, Tier } from '../engine/types.ts';
+import { SCORE_KEYS, isTier } from '../engine/types.ts';
+import type { NewAthleteInput } from '../store/athletes.ts';
+import { type FieldFormInput, nextAssessmentDate } from '../store/ingest.ts';
+import {
+  page, esc, tierBadge, textField, textAreaField, selectField, checkboxField,
+  errorBanner, okBanner, type FieldErrors,
+} from './render.ts';
+
+export const SCORE_LABEL: Record<string, string> = {
+  squat: 'Squat', dropStick: 'Drop-stick', balance: 'Balance',
+  pushup: 'Push-up', broad: 'Broad', pogo: 'Pogo',
+};
+
+// ---------------------------------------------------------------------------
+// Shared parse / validation helpers
+// ---------------------------------------------------------------------------
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** True for a real calendar date in strict YYYY-MM-DD form (rejects e.g. 2026-13-40). */
+export function isIsoDate(s: string): boolean {
+  if (!ISO_DATE.test(s)) return false;
+  const d = new Date(s + 'T00:00:00Z');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Parse an optional non-negative integer; '' → undefined; invalid → records an error. */
+function parseOptInt(raw: string, name: string, label: string, errors: FieldErrors): number | undefined {
+  if (raw === '') return undefined;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 0) {
+    errors[name] = `${label} must be a whole number ≥ 0.`;
+    return undefined;
+  }
+  return n;
+}
+
+/** Parse an optional non-negative number in [0, max]; '' → null; invalid → records an error. */
+function parseOptNum(raw: string, name: string, label: string, max: number, errors: FieldErrors): number | null {
+  if (raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0 || n > max) {
+    errors[name] = `${label} must be a number between 0 and ${max}.`;
+    return null;
+  }
+  return n;
+}
+
+// ---------------------------------------------------------------------------
+// Athlete form
+// ---------------------------------------------------------------------------
+
+export interface AthleteFormValues {
+  displayName: string; dob: string; sex: string; sports: string; trainingMonths: string;
+  valgusWatch: boolean; weeklySportHours: string; weeklyTrainingHours: string;
+  restDaysPerWeek: string; notes: string;
+}
+
+export function emptyAthleteValues(): AthleteFormValues {
+  return {
+    displayName: '', dob: '', sex: '', sports: '', trainingMonths: '', valgusWatch: false,
+    weeklySportHours: '', weeklyTrainingHours: '', restDaysPerWeek: '', notes: '',
+  };
+}
+
+export function athleteValuesFromParams(p: URLSearchParams): AthleteFormValues {
+  const g = (k: string) => (p.get(k) ?? '').trim();
+  return {
+    displayName: g('displayName'), dob: g('dob'), sex: g('sex'), sports: g('sports'),
+    trainingMonths: g('trainingMonths'), valgusWatch: p.get('valgusWatch') === '1',
+    weeklySportHours: g('weeklySportHours'), weeklyTrainingHours: g('weeklyTrainingHours'),
+    restDaysPerWeek: g('restDaysPerWeek'), notes: g('notes'),
+  };
+}
+
+export function athleteValuesFromProfile(a: AthleteProfile): AthleteFormValues {
+  const s = (n: number | null | undefined) => (n != null ? String(n) : '');
+  return {
+    displayName: a.displayName, dob: a.dob ?? '', sex: a.sex ?? '', sports: a.sports.join(', '),
+    trainingMonths: s(a.trainingMonths), valgusWatch: a.valgusWatch,
+    weeklySportHours: s(a.weeklySportHours), weeklyTrainingHours: s(a.weeklyTrainingHours),
+    restDaysPerWeek: s(a.restDaysPerWeek), notes: a.notes ?? '',
+  };
+}
+
+/** Server-side validation — never trust the browser. Returns a store input or per-field errors. */
+export function validateAthleteForm(v: AthleteFormValues): { input: NewAthleteInput | null; errors: FieldErrors } {
+  const errors: FieldErrors = {};
+
+  if (!v.displayName) errors.displayName = 'Name is required.';
+
+  let dob: string | null = null;
+  if (v.dob) {
+    if (!isIsoDate(v.dob)) errors.dob = 'Use a valid date (YYYY-MM-DD).';
+    else if (v.dob > todayIso()) errors.dob = 'Date of birth is in the future.';
+    else dob = v.dob;
+  }
+
+  let sex: 'M' | 'F' | null = null;
+  if (v.sex === 'M' || v.sex === 'F') sex = v.sex;
+  else if (v.sex) errors.sex = 'Pick M, F, or leave blank.';
+
+  const sports = v.sports ? v.sports.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const trainingMonths = parseOptInt(v.trainingMonths, 'trainingMonths', 'Training months', errors);
+  const weeklySportHours = parseOptNum(v.weeklySportHours, 'weeklySportHours', 'Weekly sport hours', 168, errors);
+  const weeklyTrainingHours = parseOptNum(v.weeklyTrainingHours, 'weeklyTrainingHours', 'Weekly training hours', 168, errors);
+  const restDaysPerWeek = parseOptNum(v.restDaysPerWeek, 'restDaysPerWeek', 'Rest days/week', 7, errors);
+
+  if (Object.keys(errors).length > 0) return { input: null, errors };
+  return {
+    input: {
+      displayName: v.displayName, dob, sex, sports, trainingMonths: trainingMonths ?? 0,
+      valgusWatch: v.valgusWatch, weeklySportHours, weeklyTrainingHours, restDaysPerWeek, notes: v.notes,
+    },
+    errors,
+  };
+}
+
+export function athleteFormPage(
+  mode: 'new' | 'edit', v: AthleteFormValues, errors: FieldErrors, athleteId?: string,
+): string {
+  const action = mode === 'new' ? '/athlete/new' : `/athlete/edit?id=${encodeURIComponent(athleteId ?? '')}`;
+  const back = mode === 'edit' && athleteId ? `/athlete?id=${encodeURIComponent(athleteId)}` : '/';
+  const heading = mode === 'new' ? 'New athlete' : `Edit ${v.displayName || 'athlete'}`;
+  const body = `
+    <p><a href="${esc(back)}">← Back</a></p>
+    <h1>${esc(heading)}</h1>
+    ${errorBanner(Object.values(errors))}
+    <form class="cc" method="post" action="${esc(action)}">
+      ${textField('displayName', 'Display name', v.displayName, errors, { placeholder: 'e.g. Maya R.' })}
+      ${textField('dob', 'Date of birth', v.dob, errors, { type: 'date', hint: 'Optional — drives age and the maturity estimate.' })}
+      ${selectField('sex', 'Sex (maturity estimate only)', v.sex, [['', '—'], ['M', 'M'], ['F', 'F']], errors, 'Used only for the Moore/Fransen maturity offset — never affects tier (§3.1).')}
+      ${textField('sports', 'Sports', v.sports, errors, { placeholder: 'soccer, track', hint: 'Comma-separated.' })}
+      ${textField('trainingMonths', 'Training months', v.trainingMonths, errors, { type: 'number', min: 0, hint: 'Context, not a scored point.' })}
+      ${checkboxField('valgusWatch', 'Valgus watch — prioritise knee-cave-safe options in assembly', v.valgusWatch)}
+      <h2>Training load (optional — feeds the volume guardrails)</h2>
+      <div class="scores">
+        ${textField('weeklySportHours', 'Weekly sport hrs', v.weeklySportHours, errors, { type: 'number', min: 0, step: '0.5' })}
+        ${textField('weeklyTrainingHours', 'Weekly training hrs', v.weeklyTrainingHours, errors, { type: 'number', min: 0, step: '0.5' })}
+        ${textField('restDaysPerWeek', 'Rest days/week', v.restDaysPerWeek, errors, { type: 'number', min: 0, max: 7 })}
+      </div>
+      ${textAreaField('notes', 'Notes', v.notes, errors)}
+      <div class="actions">
+        <button class="btn" type="submit">${mode === 'new' ? 'Create athlete' : 'Save changes'}</button>
+        <a class="btn secondary" href="${esc(back)}">Cancel</a>
+      </div>
+    </form>`;
+  return page(heading, body);
+}
+
+// ---------------------------------------------------------------------------
+// Assessment entry form (gut-call BEFORE reveal, §3.7)
+// ---------------------------------------------------------------------------
+
+type ScoreKey = (typeof SCORE_KEYS)[number];
+
+export interface AssessmentFormValues {
+  date: string; tester: string; scores: Record<ScoreKey, string>;
+  broadLandingFailed: boolean; coachGutCall: string;
+  heightCm: string; sittingHeightCm: string; videoRefs: string; notes: string;
+}
+
+export function emptyAssessmentValues(): AssessmentFormValues {
+  const scores = Object.fromEntries(SCORE_KEYS.map((k) => [k, ''])) as Record<ScoreKey, string>;
+  return {
+    date: todayIso(), tester: '', scores, broadLandingFailed: false, coachGutCall: '',
+    heightCm: '', sittingHeightCm: '', videoRefs: '', notes: '',
+  };
+}
+
+export function assessmentValuesFromParams(p: URLSearchParams): AssessmentFormValues {
+  const g = (k: string) => (p.get(k) ?? '').trim();
+  const scores = Object.fromEntries(SCORE_KEYS.map((k) => [k, g(k)])) as Record<ScoreKey, string>;
+  return {
+    date: g('date'), tester: g('tester'), scores,
+    broadLandingFailed: p.get('broadLandingFailed') === '1', coachGutCall: g('coachGutCall'),
+    heightCm: g('heightCm'), sittingHeightCm: g('sittingHeightCm'), videoRefs: g('videoRefs'), notes: g('notes'),
+  };
+}
+
+export function validateAssessmentForm(
+  athleteId: string, v: AssessmentFormValues,
+): { input: FieldFormInput | null; errors: FieldErrors } {
+  const errors: FieldErrors = {};
+
+  if (!isIsoDate(v.date)) errors.date = 'Use a valid date (YYYY-MM-DD).';
+  else if (v.date > todayIso()) errors.date = 'Assessment date is in the future.';
+  if (!v.tester) errors.tester = 'Tester is required.';
+
+  const scores = {} as Scores;
+  for (const k of SCORE_KEYS) {
+    const raw = v.scores[k];
+    if (raw === '') { errors[k] = 'Required (0–3).'; continue; }
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < 0 || n > 3) errors[k] = 'Must be 0–3.';
+    else scores[k] = n as TestScore;
+  }
+
+  let coachGutCall: Tier | null = null;
+  if (v.coachGutCall) {
+    if (isTier(v.coachGutCall)) coachGutCall = v.coachGutCall;
+    else errors.coachGutCall = 'Pick S/A/B/C or leave as no gut-call.';
+  }
+
+  const heightCm = parseOptNum(v.heightCm, 'heightCm', 'Standing height (cm)', 260, errors);
+  const sittingHeightCm = parseOptNum(v.sittingHeightCm, 'sittingHeightCm', 'Sitting height (cm)', 200, errors);
+  const videoRefs = v.videoRefs ? v.videoRefs.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [];
+
+  if (Object.keys(errors).length > 0) return { input: null, errors };
+  return {
+    input: {
+      athleteId, date: v.date, tester: v.tester, scores,
+      broadLandingFailed: v.broadLandingFailed, coachGutCall, heightCm,
+      sittingHeightCm, videoRefs, notes: v.notes,
+    },
+    errors,
+  };
+}
+
+export function assessmentFormPage(athlete: AthleteProfile, v: AssessmentFormValues, errors: FieldErrors): string {
+  const back = `/athlete?id=${encodeURIComponent(athlete.athleteId)}`;
+  const scoreFields = SCORE_KEYS
+    .map((k) => textField(k, SCORE_LABEL[k] ?? k, v.scores[k], errors, { type: 'number', min: 0, max: 3 }))
+    .join('');
+  const body = `
+    <p><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
+    <h1>New assessment — ${esc(athlete.displayName)}</h1>
+    <p class="sub">Enter the six scores and your gut-call. The computed tier is revealed only <b>after</b> you save,
+      so the gut-call stays an independent read (clean validation data, §3.7).</p>
+    ${errorBanner(Object.values(errors))}
+    <form class="cc" method="post" action="/assessment/new?athleteId=${encodeURIComponent(athlete.athleteId)}">
+      ${textField('date', 'Date', v.date, errors, { type: 'date' })}
+      ${textField('tester', 'Tester', v.tester, errors, { placeholder: 'e.g. Coach D' })}
+      <h2>Scores (0–3)</h2>
+      <div class="scores">${scoreFields}</div>
+      ${checkboxField('broadLandingFailed', 'Broad-jump landing was uncontrolled (CAP rule → broad capped at 1)', v.broadLandingFailed)}
+      ${selectField('coachGutCall', 'Your gut-call tier — enter BEFORE saving', v.coachGutCall, [['', '— no gut-call —'], ['S', 'S'], ['A', 'A'], ['B', 'B'], ['C', 'C']], errors, 'Your independent read, captured before the computed tier is shown. This is the threshold-tuning signal (validation view).')}
+      <h2>Growth &amp; context (optional)</h2>
+      <div class="scores">
+        ${textField('heightCm', 'Standing height (cm)', v.heightCm, errors, { type: 'number', min: 0, step: '0.1' })}
+        ${textField('sittingHeightCm', 'Sitting height (cm)', v.sittingHeightCm, errors, { type: 'number', min: 0, step: '0.1' })}
+      </div>
+      ${textAreaField('videoRefs', 'Video refs', v.videoRefs, errors, 'One per line or comma-separated.')}
+      ${textAreaField('notes', 'Notes', v.notes, errors)}
+      <div class="actions">
+        <button class="btn" type="submit">Save &amp; reveal tier</button>
+        <a class="btn secondary" href="${esc(back)}">Cancel</a>
+      </div>
+    </form>`;
+  return page('New assessment', body);
+}
+
+/** The post-save reveal — the FIRST time the computed tier is shown for this entry (§3.7). */
+export function assessmentRevealPage(athlete: AthleteProfile, warnings: string[], a: Assessment): string {
+  const back = `/athlete?id=${encodeURIComponent(athlete.athleteId)}`;
+  const gut = a.coachGutCall;
+  const match = gut !== null && gut === a.finalTier;
+  const gutLine = gut !== null
+    ? `Your gut-call was ${tierBadge(gut)} — computed ${tierBadge(a.finalTier)} ${match ? '<span class="match">✓ match</span>' : '<span class="differ">≠ differs</span>'}`
+    : `No gut-call recorded — computed ${tierBadge(a.finalTier)}.`;
+  const gateHtml = a.gateFired === 'none' ? '<span class="muted">none</span>' : `<code>${esc(a.gateFired)}</code>`;
+  const warnHtml = warnings.length
+    ? `<div class="banner err"><b>Warnings:</b><ul>${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>`
+    : '';
+  const body = `
+    <p><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
+    <h1>Assessment saved</h1>
+    ${okBanner(`<b>Computed tier: ${tierBadge(a.finalTier)}</b> · base ${tierBadge(a.baseTier)} · raw ${a.rawTotal}/18 · gate ${gateHtml}<br>${gutLine}`)}
+    ${warnHtml}
+    <p>Suggested re-assessment: <b>${esc(nextAssessmentDate(a.date))}</b> (+5 weeks).</p>
+    <div class="actions">
+      <a class="btn" href="${esc(back)}">View athlete</a>
+      <a class="btn secondary" href="/assessment/new?athleteId=${encodeURIComponent(athlete.athleteId)}">Enter another</a>
+    </div>`;
+  return page('Assessment saved', body);
+}

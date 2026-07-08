@@ -8,7 +8,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test --experimental-strip-types --no-warnings \"engine/**/*.test.ts\" \"store/**/*.test.ts\"",
+    "test": "node --test --experimental-strip-types --no-warnings \"engine/**/*.test.ts\" \"store/**/*.test.ts\" \"dashboard/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "enter": "node --experimental-strip-types --no-warnings cli/enter-assessment.ts",
     "session": "node --experimental-strip-types --no-warnings cli/build-session.ts",

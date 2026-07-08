@@ -8,7 +8,7 @@
  * Run: `npm run dashboard` then open http://localhost:5173
  */
 
-import { createServer } from 'node:http';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
 import type { Assessment, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, TIER_STAGE } from '../engine/types.ts';
@@ -18,20 +18,21 @@ import {
   allAthletes, assessmentsFor, latestAssessment, heightLogFor, workoutLogFor, wellnessLogFor,
   blockStateFor, daysSince, dueForReassessment,
 } from '../store/query.ts';
-import { ageFromDob } from '../store/athletes.ts';
+import { ageFromDob, createAthlete, updateAthlete, findAthlete } from '../store/athletes.ts';
 import { readCollection } from '../store/json-store.ts';
+import { buildAssessmentRecord, saveAssessment } from '../store/ingest.ts';
 import {
   loadExercises, loadDayTemplates, loadAvailableEquipment, planForTier,
 } from '../store/library.ts';
 import { assembleSession } from '../engine/assembler.ts';
 import { page, esc, tierBadge, table, sessionHtml, planTabs } from './render.ts';
+import {
+  SCORE_LABEL,
+  emptyAthleteValues, athleteValuesFromParams, athleteValuesFromProfile, validateAthleteForm, athleteFormPage,
+  emptyAssessmentValues, assessmentValuesFromParams, validateAssessmentForm, assessmentFormPage, assessmentRevealPage,
+} from './forms.ts';
 
 const PORT = Number(process.env.CC_DASHBOARD_PORT ?? 5173);
-
-const SCORE_LABEL: Record<string, string> = {
-  squat: 'Squat', dropStick: 'Drop-stick', balance: 'Balance',
-  pushup: 'Push-up', broad: 'Broad', pogo: 'Pogo',
-};
 
 function dueCell(days: number): string {
   return days >= 42
@@ -80,6 +81,7 @@ async function rosterPage(): Promise<string> {
 
   const body = `<h1>Roster</h1>
     <p class="sub">${athletes.length} athlete${athletes.length === 1 ? '' : 's'} · tiers &amp; scores are coach-only (§3.3)</p>
+    <p><a class="btn" href="/athlete/new">+ New athlete</a></p>
     ${table(
       ['Athlete', 'Age', 'Tier', 'Last assessment', 'Re-assess', 'Height velocity', 'Load', 'Block'],
       rows,
@@ -230,6 +232,10 @@ async function athletePage(id: string): Promise<string> {
       ${age !== null ? `Age ${age} · ` : ''}${esc(a.sports.join(', ') || 'no sports listed')} ·
       ${a.trainingMonths} mo training · current tier ${tierBadge(tier)}
     </p>
+    <div class="actions">
+      <a class="btn" href="/assessment/new?athleteId=${encodeURIComponent(a.athleteId)}">+ Enter assessment</a>
+      <a class="btn secondary" href="/athlete/edit?id=${encodeURIComponent(a.athleteId)}">Edit athlete</a>
+    </div>
 
     <h2>Maturity (dose axis — independent of tier)</h2>
     <p>${maturity.nearPHV ? '<span class="flag">⚠ ' : '<span class="ok">'}${esc(maturity.note)}</span></p>
@@ -319,23 +325,114 @@ async function validationPage(): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// Write surface (Phase 2) — forms, server-side validation, POST handlers
+// ---------------------------------------------------------------------------
+//
+// Boundary rule (BUILD_BRIEF §1): these handlers parse+validate browser input and then call
+// the SAME store write functions the CLIs use (`createAthlete`/`updateAthlete`/`saveAssessment`).
+// They never recompute a tier, apply the CAP rule, or assemble a session inline — that logic
+// lives in `store/*` and `engine/*` behind the existing interfaces. The browser is a thin,
+// untrusted front door to the trusted engine.
+
+/** Read a urlencoded request body (plain forms only — no framework, no multipart). Bounded. */
+function readBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk) => {
+      data += chunk;
+      if (data.length > 1_000_000) {
+        reject(new Error('Request body too large.'));
+        req.destroy();
+      }
+    });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+}
+
+function sendHtml(res: ServerResponse, code: number, html: string): void {
+  res.writeHead(code, { 'content-type': 'text/html; charset=utf-8' });
+  res.end(html);
+}
+function redirect(res: ServerResponse, location: string): void {
+  res.writeHead(303, { location }); // 303 → GET the target after a write (PRG pattern)
+  res.end();
+}
+function notFoundPage(): string {
+  return page('Not found', '<h1>404</h1><p><a href="/">← Roster</a></p>');
+}
+
+// --- athlete create / edit ---
+
+async function athleteNewFormPage(): Promise<string> {
+  return athleteFormPage('new', emptyAthleteValues(), {});
+}
+async function athleteEditFormPage(id: string): Promise<string> {
+  const a = await findAthlete(id);
+  if (!a) return notFoundPage();
+  return athleteFormPage('edit', athleteValuesFromProfile(a), {}, id);
+}
+async function handleAthleteNew(params: URLSearchParams, res: ServerResponse): Promise<void> {
+  const values = athleteValuesFromParams(params);
+  const { input, errors } = validateAthleteForm(values);
+  if (!input) return sendHtml(res, 400, athleteFormPage('new', values, errors));
+  const created = await createAthlete(input);
+  redirect(res, `/athlete?id=${encodeURIComponent(created.athleteId)}`);
+}
+async function handleAthleteEdit(id: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  if (!(await findAthlete(id))) return sendHtml(res, 404, notFoundPage());
+  const values = athleteValuesFromParams(params);
+  const { input, errors } = validateAthleteForm(values);
+  if (!input) return sendHtml(res, 400, athleteFormPage('edit', values, errors, id));
+  await updateAthlete(id, input);
+  redirect(res, `/athlete?id=${encodeURIComponent(id)}`);
+}
+
+// --- assessment entry (gut-call BEFORE reveal, §3.7) ---
+
+async function assessmentNewFormPage(athleteId: string): Promise<string> {
+  const a = await findAthlete(athleteId);
+  if (!a) return notFoundPage();
+  return assessmentFormPage(a, emptyAssessmentValues(), {});
+}
+async function handleAssessmentNew(athleteId: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  const athlete = await findAthlete(athleteId);
+  if (!athlete) return sendHtml(res, 404, notFoundPage());
+  const values = assessmentValuesFromParams(params);
+  const { input, errors } = validateAssessmentForm(athleteId, values);
+  if (!input) return sendHtml(res, 400, assessmentFormPage(athlete, values, errors));
+  const built = buildAssessmentRecord(input); // engine recomputes tier — never done inline here
+  const saved = await saveAssessment(built);
+  sendHtml(res, 200, assessmentRevealPage(athlete, built.warnings, saved));
+}
+
+// ---------------------------------------------------------------------------
 // Server
 // ---------------------------------------------------------------------------
 
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
-    let html: string;
-    if (url.pathname === '/') html = await rosterPage();
-    else if (url.pathname === '/athlete') html = await athletePage(url.searchParams.get('id') ?? '');
-    else if (url.pathname === '/validation') html = await validationPage();
-    else {
-      res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
-      res.end(page('Not found', '<h1>404</h1><p><a href="/">← Roster</a></p>'));
-      return;
+    const path = url.pathname;
+
+    if ((req.method ?? 'GET') === 'POST') {
+      const params = new URLSearchParams(await readBody(req));
+      if (path === '/athlete/new') return await handleAthleteNew(params, res);
+      if (path === '/athlete/edit') return await handleAthleteEdit(url.searchParams.get('id') ?? '', params, res);
+      if (path === '/assessment/new') return await handleAssessmentNew(url.searchParams.get('athleteId') ?? '', params, res);
+      return sendHtml(res, 404, notFoundPage());
     }
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    res.end(html);
+
+    let html: string;
+    if (path === '/') html = await rosterPage();
+    else if (path === '/athlete') html = await athletePage(url.searchParams.get('id') ?? '');
+    else if (path === '/athlete/new') html = await athleteNewFormPage();
+    else if (path === '/athlete/edit') html = await athleteEditFormPage(url.searchParams.get('id') ?? '');
+    else if (path === '/assessment/new') html = await assessmentNewFormPage(url.searchParams.get('athleteId') ?? '');
+    else if (path === '/validation') html = await validationPage();
+    else return sendHtml(res, 404, notFoundPage());
+
+    sendHtml(res, 200, html);
   } catch (err) {
     res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' });
     res.end(`Dashboard error: ${(err as Error).message}`);

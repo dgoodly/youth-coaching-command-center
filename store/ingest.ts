@@ -29,7 +29,7 @@ import type {
 } from '../engine/types.ts';
 import { SCORE_KEYS, isTestScore, isTier } from '../engine/types.ts';
 import { assignTier } from '../engine/scoring.ts';
-import { append, readCollection, writeCollection } from './json-store.ts';
+import { append, appendAll, readCollection, writeCollection, type PendingAppend } from './json-store.ts';
 
 /** The raw input a completed paper field form provides (contract page-1 + scores + outputs). */
 export interface FieldFormInput {
@@ -162,13 +162,17 @@ export function buildAssessmentRecord(input: FieldFormInput): BuiltAssessment {
 
 /**
  * Persist a built assessment: append the assessment record and (rule 4) dual-write the
- * height entry to the height log. Returns the stored assessment.
+ * height entry to the height log. Both go through a single `appendAll` so they commit as one
+ * serialized unit (§10 dual-write atomicity) — the assessment is listed first, so the only
+ * reachable partial state is the doctor-recoverable "assessment saved, height not yet".
+ * Returns the stored assessment.
  */
 export async function saveAssessment(built: BuiltAssessment): Promise<Assessment> {
-  await append('assessments', built.assessment);
+  const appends: PendingAppend[] = [{ collection: 'assessments', record: built.assessment }];
   if (built.heightEntry) {
-    await append('height_log', built.heightEntry);
+    appends.push({ collection: 'height_log', record: built.heightEntry });
   }
+  await appendAll(appends);
   return built.assessment;
 }
 

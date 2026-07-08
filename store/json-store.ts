@@ -54,6 +54,37 @@ function pathFor(name: keyof Collections): string {
   return join(DATA_DIR, FILES[name]);
 }
 
+// ---------------------------------------------------------------------------
+// Write serialization (in-process mutex)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every mutation is a read-modify-write, and the store is now written from a dashboard that
+ * can issue concurrent requests (two browser tabs, or a tab + a CLI sharing this process).
+ * Two overlapping mutations could each read the old array and then write it back, silently
+ * dropping one update. We serialize ALL mutations through a single promise chain so they run
+ * one at a time. At localhost / single-coach scale this is the whole locking story — no
+ * file-locking library, no datastore (BUILD_BRIEF §4); it closes the "two writers race" gap
+ * that turning the dashboard read-write reintroduces.
+ *
+ * Note this is in-process only: it does not guard against a *separate* OS process writing the
+ * same files concurrently (a second `node` invocation). That remains the single-writer
+ * assumption of §10 — unchanged, and still fine for one coach on localhost.
+ */
+let writeChain: Promise<unknown> = Promise.resolve();
+
+/** Run `fn` after all previously-queued mutations settle, and before any queued after it. */
+export function runExclusive<T>(fn: () => Promise<T>): Promise<T> {
+  // Chain onto the tail regardless of whether the previous task resolved or rejected, so one
+  // failed write can't wedge the queue.
+  const result = writeChain.then(fn, fn);
+  writeChain = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
 /** Read a collection. Returns [] if the file does not exist yet (first run). */
 export async function readCollection<K extends keyof Collections>(
   name: K,
@@ -70,28 +101,110 @@ export async function readCollection<K extends keyof Collections>(
   return parsed as Collections[K];
 }
 
+/** Write one collection's array to its temp file, pretty-printed for hand-readability. */
+async function stageWrite<K extends keyof Collections>(
+  name: K,
+  records: Collections[K],
+): Promise<[tmp: string, file: string]> {
+  const file = pathFor(name);
+  const tmp = `${file}.tmp`;
+  await writeFile(tmp, JSON.stringify(records, null, 2) + '\n', 'utf8');
+  return [tmp, file];
+}
+
 /**
  * Write a collection. Pretty-printed (2-space) for hand-readability, then atomically
- * renamed into place so a crash mid-write can't corrupt the live file.
+ * renamed into place so a crash mid-write can't corrupt the live file. Serialized.
  */
 export async function writeCollection<K extends keyof Collections>(
   name: K,
   records: Collections[K],
 ): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true });
-  const file = pathFor(name);
-  const tmp = `${file}.tmp`;
-  await writeFile(tmp, JSON.stringify(records, null, 2) + '\n', 'utf8');
-  await rename(tmp, file);
+  return runExclusive(async () => {
+    await mkdir(DATA_DIR, { recursive: true });
+    const [tmp, file] = await stageWrite(name, records);
+    await rename(tmp, file);
+  });
 }
 
-/** Append one record to a collection and persist. Returns the appended record. */
+/** Append one record to a collection and persist. Returns the appended record. Serialized. */
 export async function append<K extends keyof Collections>(
   name: K,
   record: Collections[K][number],
 ): Promise<Collections[K][number]> {
-  const all = await readCollection(name);
-  (all as unknown[]).push(record);
-  await writeCollection(name, all);
-  return record;
+  return runExclusive(async () => {
+    await mkdir(DATA_DIR, { recursive: true });
+    const all = await readCollection(name);
+    (all as unknown[]).push(record);
+    const [tmp, file] = await stageWrite(name, all);
+    await rename(tmp, file);
+    return record;
+  });
+}
+
+/**
+ * Read-modify-write a single collection as one serialized unit. `mutate` receives the current
+ * array and returns the array to persist (mutating in place and returning it is fine). Use this
+ * for edits (find-and-replace a record) so the read and the write can't be split by a concurrent
+ * mutation — the plain read-then-`writeCollection` pattern reopens that race.
+ */
+export async function updateCollection<K extends keyof Collections>(
+  name: K,
+  mutate: (records: Collections[K]) => Collections[K],
+): Promise<Collections[K]> {
+  return runExclusive(async () => {
+    await mkdir(DATA_DIR, { recursive: true });
+    const next = mutate(await readCollection(name));
+    const [tmp, file] = await stageWrite(name, next);
+    await rename(tmp, file);
+    return next;
+  });
+}
+
+/** One record destined for a named collection — a discriminated union over the collections. */
+export type PendingAppend = {
+  [K in keyof Collections]: { collection: K; record: Collections[K][number] };
+}[keyof Collections];
+
+/**
+ * Append several records across collections as ONE serialized unit — the fix for the
+ * assessment+height-log dual-write desync (§10). Previously `saveAssessment` did two
+ * independent `append` calls; a crash between them left an assessment with no matching
+ * height entry, silently under-feeding the maturity axis (recoverable only via `npm run
+ * doctor`).
+ *
+ * Here we read every affected collection, apply all appends, **stage every temp file first**
+ * (the slow, awaited part), then rename them back-to-back. A crash can therefore only land in
+ * the tiny window between two consecutive `rename()` syscalls, not across full read→write
+ * cycles. Renames run in the order the appends were passed, so if the caller lists the
+ * assessment before its height entry, the only reachable partial state is
+ * "assessment written, height-log not yet" — exactly the state `store/doctor.ts` already
+ * detects and backfills. (True cross-file atomicity would need a journal/datastore, which is
+ * out of scope by design; the doctor stays the backstop for this shrunk window.)
+ */
+export async function appendAll(appends: readonly PendingAppend[]): Promise<void> {
+  if (appends.length === 0) return;
+  return runExclusive(async () => {
+    await mkdir(DATA_DIR, { recursive: true });
+    // Load each affected collection once, preserving first-seen order for deterministic renames.
+    const order: (keyof Collections)[] = [];
+    const buffers = new Map<keyof Collections, unknown[]>();
+    for (const { collection } of appends) {
+      if (!buffers.has(collection)) {
+        buffers.set(collection, (await readCollection(collection)) as unknown[]);
+        order.push(collection);
+      }
+    }
+    for (const { collection, record } of appends) {
+      buffers.get(collection)!.push(record);
+    }
+    // Stage all temp files before committing any, so the crash window is only between renames.
+    const staged: Array<[tmp: string, file: string]> = [];
+    for (const collection of order) {
+      staged.push(await stageWrite(collection, buffers.get(collection)! as Collections[typeof collection]));
+    }
+    for (const [tmp, file] of staged) {
+      await rename(tmp, file);
+    }
+  });
 }

@@ -7,7 +7,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { AthleteProfile } from '../engine/types.ts';
-import { append, readCollection } from './json-store.ts';
+import { append, readCollection, updateCollection } from './json-store.ts';
 
 export async function listAthletes(): Promise<AthleteProfile[]> {
   return readCollection('athletes');
@@ -51,6 +51,41 @@ export async function createAthlete(
   };
   await append('athletes', profile);
   return profile;
+}
+
+/** The mutable profile fields an edit can set (everything except id + createdAt). */
+export type AthleteEdits = NewAthleteInput;
+
+/**
+ * Update an existing athlete's editable fields in place, preserving `athleteId` and `createdAt`.
+ * Returns the updated profile, or null if no athlete has that id. Goes through the serialized
+ * store write (`writeCollection`), so it can't interleave with a concurrent mutation.
+ */
+export async function updateAthlete(
+  athleteId: string,
+  edits: AthleteEdits,
+): Promise<AthleteProfile | null> {
+  let updated: AthleteProfile | null = null;
+  await updateCollection('athletes', (all) => {
+    const idx = all.findIndex((a) => a.athleteId === athleteId);
+    if (idx < 0) return all; // no such athlete — leave the collection untouched
+    updated = {
+      ...all[idx]!,
+      displayName: edits.displayName.trim(),
+      dob: edits.dob ?? null,
+      sex: edits.sex ?? null,
+      sports: edits.sports ?? [],
+      trainingMonths: edits.trainingMonths ?? 0,
+      valgusWatch: edits.valgusWatch ?? false,
+      weeklySportHours: edits.weeklySportHours ?? null,
+      weeklyTrainingHours: edits.weeklyTrainingHours ?? null,
+      restDaysPerWeek: edits.restDaysPerWeek ?? null,
+      notes: edits.notes ?? '',
+    };
+    all[idx] = updated;
+    return all;
+  });
+  return updated;
 }
 
 /** Whole-year age from DOB on a given date, or null if no DOB (contract: derivable from DOB). */

@@ -57,6 +57,31 @@ const CSS = `
   ul.ex li { padding:6px 2px; border-bottom:1px solid #1b222b; }
   ul.ex .cue { font-size:12px; color:#8b95a3; }
   .panel-note { color:#8b95a3; margin:0 0 10px; }
+  form.cc { max-width: 640px; }
+  .field { margin: 0 0 14px; }
+  .field > label { display:block; font-size:12px; color:#b9c2cf; font-weight:600; margin:0 0 4px; text-transform:uppercase; letter-spacing:.03em; }
+  .field .hint { display:block; font-size:12px; color:#8b95a3; margin:3px 0 0; }
+  input[type=text], input[type=date], input[type=number], select, textarea {
+    width:100%; background:#0b0e12; color:#e6e9ee; border:1px solid #2a323d; border-radius:8px;
+    padding:8px 10px; font:inherit; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#8ab4ff; }
+  textarea { min-height:64px; resize:vertical; }
+  .field.bad input, .field.bad select, .field.bad textarea { border-color:#b4534f; }
+  .field .fieldErr { display:block; color:#fca5a5; font-size:12px; margin:4px 0 0; font-weight:600; }
+  .check { display:flex; align-items:center; gap:8px; }
+  .check input { width:auto; }
+  .check label { text-transform:none; letter-spacing:0; margin:0; }
+  .scores { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; }
+  .btn { display:inline-block; background:#12402f; color:#86efac; border:1px solid #1c5a3f; padding:8px 16px;
+    border-radius:8px; font:inherit; font-weight:600; cursor:pointer; text-decoration:none; }
+  .btn:hover { background:#164d38; }
+  .btn.secondary { background:#1b222b; color:#b9c2cf; border-color:#2a323d; }
+  .btn.secondary:hover { background:#232a33; }
+  .actions { display:flex; gap:10px; align-items:center; margin-top:6px; }
+  .banner { padding:10px 14px; border-radius:8px; margin:0 0 16px; }
+  .banner.err { background:#341b1b; border:1px solid #5a2a2a; color:#fca5a5; }
+  .banner.ok { background:#12291f; border:1px solid #1c5a3f; color:#86efac; }
+  .banner ul { margin:6px 0 0; padding-left:18px; }
 `;
 
 /** Wrap page body in the shared shell with nav. */
@@ -121,4 +146,68 @@ export function planTabs(panels: { label: string; html: string }[]): string {
     + `root.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-tab')===i);});`
     + `root.querySelectorAll('.tabpanel').forEach(function(p){p.classList.toggle('hidden',p.getAttribute('data-panel')!==i);});}</script>`;
   return `<div class="plan"><div class="tabs">${tabs}</div>${bodies}${js}</div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Form helpers (Phase 2 write surface). Every value is `esc()`d — these fields are now
+// browser-sourced, so this is a real XSS surface even on localhost.
+// ---------------------------------------------------------------------------
+
+/** Per-field validation messages, keyed by input name. */
+export type FieldErrors = Record<string, string>;
+
+/** Wrap a labelled input + optional hint + optional error into a field row. */
+function field(name: string, label: string, control: string, errors: FieldErrors, hint?: string): string {
+  const err = errors[name];
+  const hintHtml = hint ? `<span class="hint">${esc(hint)}</span>` : '';
+  const errHtml = err ? `<span class="fieldErr">${esc(err)}</span>` : '';
+  return `<div class="field${err ? ' bad' : ''}"><label for="f_${esc(name)}">${esc(label)}</label>${control}${hintHtml}${errHtml}</div>`;
+}
+
+/** Text / date / number input field. */
+export function textField(
+  name: string, label: string, value: string, errors: FieldErrors,
+  opts: { type?: 'text' | 'date' | 'number'; placeholder?: string; hint?: string; min?: number; max?: number; step?: string } = {},
+): string {
+  const attrs = [
+    `id="f_${esc(name)}"`, `name="${esc(name)}"`, `type="${opts.type ?? 'text'}"`,
+    `value="${esc(value)}"`,
+    opts.placeholder ? `placeholder="${esc(opts.placeholder)}"` : '',
+    opts.min !== undefined ? `min="${opts.min}"` : '',
+    opts.max !== undefined ? `max="${opts.max}"` : '',
+    opts.step ? `step="${esc(opts.step)}"` : '',
+  ].filter(Boolean).join(' ');
+  return field(name, label, `<input ${attrs}>`, errors, opts.hint);
+}
+
+/** Textarea field. */
+export function textAreaField(name: string, label: string, value: string, errors: FieldErrors, hint?: string): string {
+  return field(name, label, `<textarea id="f_${esc(name)}" name="${esc(name)}">${esc(value)}</textarea>`, errors, hint);
+}
+
+/** Select field. `options` are `[value, label]`; the current `value` is preselected. */
+export function selectField(
+  name: string, label: string, value: string, options: [string, string][], errors: FieldErrors, hint?: string,
+): string {
+  const opts = options
+    .map(([v, l]) => `<option value="${esc(v)}"${v === value ? ' selected' : ''}>${esc(l)}</option>`)
+    .join('');
+  return field(name, label, `<select id="f_${esc(name)}" name="${esc(name)}">${opts}</select>`, errors, hint);
+}
+
+/** Checkbox field (renders label to the right of the box). */
+export function checkboxField(name: string, label: string, checked: boolean): string {
+  return `<div class="field check"><input id="f_${esc(name)}" name="${esc(name)}" type="checkbox" value="1"${checked ? ' checked' : ''}><label for="f_${esc(name)}">${esc(label)}</label></div>`;
+}
+
+/** A top-of-form error banner listing the messages that blocked the save. */
+export function errorBanner(messages: string[]): string {
+  if (messages.length === 0) return '';
+  const items = messages.map((m) => `<li>${esc(m)}</li>`).join('');
+  return `<div class="banner err"><b>Couldn't save — fix the fields below:</b><ul>${items}</ul></div>`;
+}
+
+/** A success/info banner (e.g. the post-save tier reveal). */
+export function okBanner(html: string): string {
+  return `<div class="banner ok">${html}</div>`;
 }

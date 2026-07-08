@@ -1,7 +1,7 @@
 # As-Built Spec — Youth Coaching Command Center
 
 > **What this is:** a description of the system **as actually implemented in this repo**, as of
-> 2026-07-03. It is the counterpart to the design docs (`BUILD_BRIEF.md`, `Youth_Tiering_Assessment_Spec.md`,
+> 2026-07-07. It is the counterpart to the design docs (`BUILD_BRIEF.md`, `Youth_Tiering_Assessment_Spec.md`,
 > `COACHING_INSTRUCTIONS.md`, `EXERCISE_LIBRARY.md`, `Field_Form_Data_Contract.md`), which state
 > *intent*. Where a design doc and the code disagree, **the code wins and this doc records the code.**
 > Section references like "spec §4" point back into those design docs.
@@ -18,8 +18,10 @@ A local, single-coach command center for youth athletic development. It:
 3. Assembles a tier-appropriate 4-day training session from a tagged exercise library,
    enforcing the coach's hard sequencing rules.
 4. Tracks growth (a height log → maturity / PHV signal) and rotation state (training blocks),
-   and surfaces everything on a read-only dashboard — including a **validation view** that
-   compares the computed tier to the coach's gut-call for threshold tuning.
+   and surfaces everything on a local dashboard — read-only for the analytics views, plus a
+   **limited write surface** (create/edit athletes, enter assessments) that flows through the
+   same trusted store/engine path (§12) — including a **validation view** that compares the
+   computed tier to the coach's gut-call for threshold tuning.
 
 **Two independent axes, never collapsed** (spec §3.1):
 - **Tier** (from the assessment) governs *movement selection / risk*.
@@ -54,7 +56,7 @@ transfers unchanged into a future app; the **surface** (CLIs, dashboard, JSON st
 | Data-entry CLI | `cli/enter-assessment.ts` | **Disposable** | ingest + athletes |
 | Session-builder CLI | `cli/build-session.ts` | **Disposable** | assembler + store |
 | Data-doctor CLI | `cli/doctor.ts` | **Disposable** | doctor + json-store |
-| Dashboard (HTTP + render) | `dashboard/*.ts` | **Disposable** | query + engine |
+| Dashboard (HTTP + render + forms) | `dashboard/*.ts` | **Disposable** | query + engine + store writes |
 
 **Rule enforced by imports:** production engine code depends only on `engine/*`; it never imports
 `store/*` (the shared `equipmentAvailable` helper lives in `engine/program.ts`, not the store). A
@@ -289,21 +291,29 @@ Plain JSON files under `/data`, one per collection, each an array — chosen for
 - `writeCollection` pretty-prints (2-space) and **atomically renames** a temp file into place so a
   crash mid-write can't corrupt the live file.
 - `append` = read → push → write.
+- `updateCollection(name, mutate)` = read → transform → write as one serialized unit (for edits).
+- `appendAll(appends[])` = append across collections as one unit (see dual-write below).
 - `DATA_DIR` overridable via `CC_DATA_DIR` (used by tests to isolate).
 
-**Atomicity across collections:** a single `writeCollection` is atomic (temp-file rename), but a
-multi-collection operation is not. `saveAssessment` appends the assessment and the height-log entry
-in two independent writes — a crash between them can leave an assessment with no matching height
-entry, silently under-feeding the maturity axis. This is **detectable and recoverable** rather than
-prevented: `npm run doctor` scans for assessments whose height never reached the height log, and
-`npm run doctor -- --fix` backfills them (`store/doctor.ts`).
+**Write serialization (in-process mutex):** every mutation (`append`, `writeCollection`,
+`updateCollection`, `appendAll`) runs through `runExclusive` — a single promise-chain queue — so two
+overlapping requests can't interleave a read-modify-write and lose an update. This was added when the
+dashboard became read-write (Phase 2 forms): a browser can now issue concurrent writes (two tabs), so
+the previous unlocked read-modify-write became a live race. At localhost / single-coach scale the
+queue is the whole locking story — no file-locking library, no datastore. It is **in-process only**:
+a *separate* OS process writing the same files concurrently is still outside its guarantee, so the
+single-writer-across-processes assumption of App #2 stands (a second device / sync process / networked
+writer still needs a real transactional datastore).
 
-**Concurrency:** the store assumes a **single writer at a time** (one coach, one CLI/dashboard
-process). `append`/`writeCollection` do read-modify-write with no locking — concurrent writers can
-race and lose an update (they can't *corrupt* a file; the atomic rename still prevents torn writes).
-This is fine for v1's usage. App #2, if it introduces any second writer (a second device, a sync
-process, a web client with write endpoints), needs a real transactional datastore or an explicit
-locking/queueing layer before this assumption can be relied on.
+**Atomicity across collections:** a single `writeCollection` is atomic (temp-file rename). A
+multi-collection write goes through `appendAll`, which reads every affected collection, applies all
+appends, **stages every temp file first**, then renames them back-to-back in the order passed — so a
+crash can only land in the tiny window between two consecutive `rename()` syscalls, not across full
+read→write cycles. `saveAssessment` uses it, listing the assessment before its height entry, so the
+only reachable partial state is "assessment written, height-log not yet" — exactly the state
+`npm run doctor` already detects and `-- --fix` backfills (`store/doctor.ts`). True cross-file 2PC
+would need a journal/datastore (out of scope by design); the doctor remains the backstop for this
+now-shrunk window.
 
 **Privacy:** `/data/*.json` is git-ignored (real roster data is private); only `/data/samples/`
 and `.gitkeep` are tracked. `data/samples/assessment_form.example.json` is the batch-ingest template.
@@ -341,7 +351,18 @@ missing height-log entries. Scan logic is pure (`store/doctor.ts`).
 
 Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. Launched via
 `npm run dashboard` → **http://localhost:5173** (port overridable via `CC_DASHBOARD_PORT`; a
-`.claude/launch.json` config registers it for the preview tooling). Three views:
+`.claude/launch.json` config registers it for the preview tooling). It is now a **limited read-write
+surface** (Phase 2): GET routes render the read views + the forms; POST routes (`/athlete/new`,
+`/athlete/edit`, `/assessment/new`) parse `application/x-www-form-urlencoded` bodies, validate
+server-side, and write through the **same** `store/*` functions the CLIs use — the browser never
+recomputes a tier or assembles a session (boundary rule, BUILD_BRIEF §1). Form shaping, validation,
+and HTML rendering live in `dashboard/forms.ts` (pure, unit-tested); `dashboard/server.ts` holds the
+I/O, handlers, and routing. Writes redirect-after-POST (303 PRG); invalid input re-renders the form
+with per-field errors (never a crash or a bad record); all browser-sourced strings are `esc()`d (a
+real XSS surface now). Assessment entry preserves the **gut-call-before-reveal** flow (§3.7): the
+form captures the coach's gut-call and the computed tier is shown only on the post-save reveal page.
+
+Views:
 
 - **`/`** Roster — per athlete: tier badge, age, last-assessment date, re-assess flag (fires at
   ≥ 6 weeks / 42 days), height velocity (PHV-flagged), a volume-guardrail "Load" badge, current block.
@@ -360,8 +381,8 @@ Plain `node:http`, no deps, server-rendered HTML read live from the JSON store. 
 
 ## 13. Tests
 
-`npm test` runs the Node built-in test runner over `engine/**/*.test.ts` and `store/**/*.test.ts`
-via `--experimental-strip-types`. **100 tests, all passing.** Coverage:
+`npm test` runs the Node built-in test runner over `engine/**/*.test.ts`, `store/**/*.test.ts`, and
+`dashboard/**/*.test.ts` via `--experimental-strip-types`. **119 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
@@ -385,6 +406,13 @@ via `--experimental-strip-types`. **100 tests, all passing.** Coverage:
   (valid days, A=1·2·4 / C=1·2).
 - **`store/doctor.test.ts`** — height-log gap detection, matching, null-height skip, backfill.
 - **`store/query.test.ts`** — `resolveAthleteIn` found/not_found/ambiguous resolution.
+- **`store/json-store.test.ts`** — real-I/O write path: two overlapping appends both persist (write
+  serialization), many concurrent appends all land, and `appendAll`/`saveAssessment` commit the
+  assessment + height entry together (dual-write atomicity).
+- **`dashboard/forms.test.ts`** — server-side validation (missing name, nonsense/future dates,
+  out-of-range scores/load all rejected with per-field errors, no bad record), `esc()`/XSS (a
+  `<script>` in a name renders inert), the gut-call-before-reveal boundary (form shows no computed
+  tier; the reveal page does), and that the form path yields the exact record the CLI would.
 
 ---
 
