@@ -95,7 +95,12 @@ provenance.
 - **`WellnessLogEntry`** — `{athleteId, date, sleepHours?, soreness?, energy?, notes?}`. Brief
   weekly load/growth check (all fields optional).
 - **`BlockState`** — per-athlete rotation state: `blockStartDate`, `blockIndex` (0-based),
-  `slotVariants` (map of `"<day>:<slot>:<index>"` → exerciseId).
+  `slotVariants` (map of `"<day>:<slot>:<index>"` → exerciseId), and `activeSplit?`
+  (`SplitChoice`, optional/additive — the athlete's 2/3/4-day training frequency).
+- **`SplitChoice`** = `'2day' | '3day' | '4day'` — how many days of the split an athlete runs.
+  Independent of `Tier` (tier governs content/dose; split governs day count). Lives on
+  `BlockState` because switching split is a rotation event. `splitOf` (store/blocks) reads it,
+  defaulting to `4day` when absent.
 - **`WorkoutLogEntry`** — a served session snapshot: `servedForTier`, `sessionLabel`, `completed`,
   `coachNotes`.
 - **Visibility** — `Audience = 'coach' | 'athlete'`, `COACH_ONLY_FIELDS`
@@ -279,6 +284,16 @@ stored `slotVariants`; at a boundary the coach rotates deliberately.
   stored variant (jump fills on ceiling days flagged so they don't climb). Multi-family trunk pools
   cross-rotate automatically via the new block index at the next assembly.
 
+**Training split (2/3/4-day).** The day COUNT is a per-athlete coach choice (`BlockState.activeSplit`),
+not derived from the tier. `SPLIT_DAYS` maps each split to a subset of the four authored templates —
+`2day: [1,2]`, `3day: [1,2,4]`, `4day: [1,2,3,4]` (mirroring the seeded reference programs; the 3-day
+uses the lateral-rotational day 4, a one-line coaching tune to `[1,2,3]` if the accel/posterior day is
+preferred). `splitOf(state)` returns the split, **defaulting to `4day`** when block state is absent or
+predates the field (so legacy athletes and the no-block case show the full split). `switchSplit` (pure)
+applies a coach's switch with a per-switch block-state choice: **`fresh`** starts a new block (reset
+`blockIndex`/date, clear `slotVariants`) or **`carry`** keeps the block index/date/variants and only
+changes the split. The tier is untouched — it still governs the content/dose inside each day.
+
 ---
 
 ## 10. Persistence (`store/json-store.ts`)
@@ -361,18 +376,23 @@ I/O, handlers, and routing. Writes redirect-after-POST (303 PRG); invalid input 
 with per-field errors (never a crash or a bad record); all browser-sourced strings are `esc()`d (a
 real XSS surface now). Assessment entry preserves the **gut-call-before-reveal** flow (§3.7): the
 form captures the coach's gut-call and the computed tier is shown only on the post-save reveal page.
+It also carries the **split-switch** surface (Phase 3): a compact form on the athlete page
+(POST `/athlete/split`) changes the athlete's 2/3/4-day split and, per-switch, chooses to start a
+fresh block or carry the current one — written via `switchSplit` + `saveBlockState`.
 
 Views:
 
 - **`/`** Roster — per athlete: tier badge, age, last-assessment date, re-assess flag (fires at
-  ≥ 6 weeks / 42 days), height velocity (PHV-flagged), a volume-guardrail "Load" badge, current block.
+  ≥ 6 weeks / 42 days), height velocity (PHV-flagged), a volume-guardrail "Load" badge, current
+  block + split (e.g. `block 0 · 2d`).
 - **`/athlete?id=`** Individual — maturity estimate + standing/sitting height log, wellness log,
-  training-load guardrail findings, the athlete's **current plan** (tier-scoped, from
-  `library/plans.json` — S: full 4-day, A/B: 3-day 1·2·4, C: 2-day 1·2; a tier with no plan would
-  fall back to the full split) rendered as instant client-side day tabs (Day 1 default, no reload;
-  a day that fails to assemble is contained to its own panel) where each day is the fully
-  assembled session for that day, tier history (raw / base / final / gate / gut-call), per-test
-  score trends, workout log.
+  training-load guardrail findings, the athlete's **current plan** — the day COUNT comes from the
+  athlete's **active split** (`splitOf`, default 4-day; `SPLIT_DAYS` maps split → days), with the
+  tier still governing content/dose. Rendered as instant client-side day tabs (Day 1 default, no
+  reload; a day that fails to assemble is contained to its own panel), preceded by the split-switch
+  form. Plus tier history (raw / base / final / gate / gut-call), per-test score trends, workout log.
+  (`library/plans.json`/`planForTier` — the older tier→day-subset — is retained but no longer feeds
+  the preview; the split is now the day-count source.)
 - **`/validation`** — the threshold-tuning surface: calculated tier vs coach gut-call with an
   agreement %, a per-assessment match/DIFFERS table, and a gate-firing tally. This is where the
   score bands and gate thresholds get tuned against real athletes.
@@ -382,7 +402,7 @@ Views:
 ## 13. Tests
 
 `npm test` runs the Node built-in test runner over `engine/**/*.test.ts`, `store/**/*.test.ts`, and
-`dashboard/**/*.test.ts` via `--experimental-strip-types`. **119 tests, all passing.** Coverage:
+`dashboard/**/*.test.ts` via `--experimental-strip-types`. **127 tests, all passing.** Coverage:
 
 - **`engine/scoring.test.ts`** — band boundaries, every gate, and exhaustive invariants over all
   4096 score combinations (incl. the `S->A`-gate unreachability invariant).
@@ -406,13 +426,16 @@ Views:
   (valid days, A=1·2·4 / C=1·2).
 - **`store/doctor.test.ts`** — height-log gap detection, matching, null-height skip, backfill.
 - **`store/query.test.ts`** — `resolveAthleteIn` found/not_found/ambiguous resolution.
+- **`store/blocks.test.ts`** — the split accessor + switch: `splitOf` 4-day default, `SPLIT_DAYS`
+  mapping, and `switchSplit` fresh (resets rotation) vs carry (preserves index/date/variants), pure.
 - **`store/json-store.test.ts`** — real-I/O write path: two overlapping appends both persist (write
   serialization), many concurrent appends all land, and `appendAll`/`saveAssessment` commit the
   assessment + height entry together (dual-write atomicity).
 - **`dashboard/forms.test.ts`** — server-side validation (missing name, nonsense/future dates,
   out-of-range scores/load all rejected with per-field errors, no bad record), `esc()`/XSS (a
   `<script>` in a name renders inert), the gut-call-before-reveal boundary (form shows no computed
-  tier; the reveal page does), and that the form path yields the exact record the CLI would.
+  tier; the reveal page does), that the form path yields the exact record the CLI would, and the
+  split-switch form/validation (valid split+mode parsed; unknown split/mode rejected).
 
 ---
 

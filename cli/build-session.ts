@@ -26,6 +26,7 @@ import { resolveAthlete, currentTier } from '../store/query.ts';
 import { append } from '../store/json-store.ts';
 import {
   getOrInitBlockState, saveBlockState, rotateBlockState, dueForRotation, blockAgeDays,
+  splitOf, SPLIT_DAYS,
 } from '../store/blocks.ts';
 
 function arg(name: string): string | undefined {
@@ -125,6 +126,10 @@ async function main(): Promise<void> {
     slotVariants = state.slotVariants;
     if (dueForRotation(state)) {
       line(`⚠ ${athleteName} is ${blockAgeDays(state)} days into block ${blockIndex} — due to rotate (npm run session -- --athlete <id> --rotate).`);
+    }
+    const days = SPLIT_DAYS[splitOf(state)];
+    if (!days.includes(day)) {
+      line(`ℹ ${athleteName} is on the ${splitOf(state)} split (days ${days.join('/')}); day ${day} is outside it — building it anyway as a one-off.`);
     }
   }
 

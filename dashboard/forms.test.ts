@@ -12,6 +12,7 @@ import {
   validateAthleteForm, athleteFormPage, emptyAthleteValues,
   validateAssessmentForm, assessmentFormPage, assessmentRevealPage, emptyAssessmentValues,
   assessmentValuesFromParams,
+  validateSplitSwitch, splitSwitchForm,
   type AthleteFormValues,
 } from './forms.ts';
 import { buildAssessmentRecord, type FieldFormInput } from '../store/ingest.ts';
@@ -163,6 +164,27 @@ test('gut-call-before-reveal: the entry form never shows a computed tier', () =>
   // absent is an actual rendered tier value.)
   assert.ok(!html.includes('class="tier tier-'), 'no tier badge rendered next to the score inputs');
   assert.ok(html.includes('gut-call'), 'the gut-call field is present');
+});
+
+// --- split switch (Phase 3) ---
+
+test('split switch: a valid split + mode is parsed', () => {
+  const p = new URLSearchParams({ split: '2day', mode: 'fresh' });
+  assert.deepEqual(validateSplitSwitch(p), { split: '2day', mode: 'fresh' });
+});
+
+test('split switch: an unknown split or mode is rejected (null, never a bad write)', () => {
+  assert.equal(validateSplitSwitch(new URLSearchParams({ split: '5day', mode: 'fresh' })), null);
+  assert.equal(validateSplitSwitch(new URLSearchParams({ split: '3day', mode: 'wipe' })), null);
+  assert.equal(validateSplitSwitch(new URLSearchParams({ mode: 'carry' })), null);
+});
+
+test('split switch form pre-selects the athlete current split and defaults to a fresh block', () => {
+  const html = splitSwitchForm('ath-1', '3day');
+  assert.ok(html.includes('<option value="3day" selected>'), 'current split pre-selected');
+  assert.ok(!html.includes('<option value="2day" selected>'));
+  assert.ok(/name="mode" value="fresh" checked/.test(html), 'fresh is the default block treatment');
+  assert.ok(html.includes('action="/athlete/split?id=ath-1"'));
 });
 
 test('reveal page shows the computed tier (the reveal happens only after save)', () => {

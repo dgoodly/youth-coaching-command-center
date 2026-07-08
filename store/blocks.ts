@@ -9,13 +9,76 @@
  * difficulty — they stay light to protect the runs.
  */
 
-import type { BlockState, Tier } from '../engine/types.ts';
+import type { BlockState, SplitChoice, Tier } from '../engine/types.ts';
 import type { Exercise, DayTemplate } from '../engine/program.ts';
 import { slotKey, isAvailableAtTier } from '../engine/program.ts';
 import { readCollection, writeCollection } from './json-store.ts';
 
 /** Recommended block length before rotating (weeks). Tunable (see FEATURE_IDEAS.md). */
 export const BLOCK_WEEKS = 9;
+
+// ---------------------------------------------------------------------------
+// Training split (2/3/4-day) — which days of the authored templates an athlete runs
+// ---------------------------------------------------------------------------
+
+/**
+ * The day numbers each split runs, as a subset of the four authored day-templates. Mirrors the
+ * established tier-default day counts (2-day = lower+speed / upper+plyo; 3-day adds the
+ * lateral-rotational day; 4-day is the full split). This is the single source of the split→days
+ * mapping — the day-count no longer comes from the tier (that coupling moved to the coach's
+ * per-athlete split choice; tier still governs content/dose inside each day).
+ *
+ * (Coaching note: the 3-day reference program blends template days 3 and 4 into its third
+ * session; we approximate with day 4 — the established `[1,2,4]` mapping. To favour the
+ * accel/posterior day instead, change 3day to `[1,2,3]` here; it is a one-line coaching tune.)
+ */
+export const SPLIT_DAYS: Record<SplitChoice, number[]> = {
+  '2day': [1, 2],
+  '3day': [1, 2, 4],
+  '4day': [1, 2, 3, 4],
+};
+
+/** How a split switch treats the athlete's current rotation state. */
+export type SplitSwitchMode = 'fresh' | 'carry';
+
+/**
+ * The athlete's active split, defaulting to the full `4day` split when block state is absent or
+ * predates the field (legacy records). Centralises the default so no caller branches on it.
+ */
+export function splitOf(state: BlockState | null | undefined): SplitChoice {
+  return state?.activeSplit ?? '4day';
+}
+
+/** The day numbers the athlete's split runs (subset of the authored day-templates). */
+export function splitDays(state: BlockState | null | undefined): number[] {
+  return SPLIT_DAYS[splitOf(state)];
+}
+
+/**
+ * Apply a split switch to block state (pure). `mode` decides what happens to rotation:
+ *  - `fresh` → start a new block: reset `blockIndex` to 0 and the start date to now, and clear
+ *    `slotVariants` so the new split re-selects every variant from scratch.
+ *  - `carry` → keep the block index, start date, and stored variants; only the split changes.
+ *    Days dropped from the split leave their variants unused (harmless; a later switch back
+ *    restores them since the assembler only reads variants for active days).
+ */
+export function switchSplit(
+  state: BlockState,
+  newSplit: SplitChoice,
+  mode: SplitSwitchMode,
+  now: Date = new Date(),
+): BlockState {
+  if (mode === 'fresh') {
+    return {
+      athleteId: state.athleteId,
+      blockStartDate: now.toISOString().slice(0, 10),
+      blockIndex: 0,
+      slotVariants: {},
+      activeSplit: newSplit,
+    };
+  }
+  return { ...state, activeSplit: newSplit };
+}
 
 export async function getBlockState(athleteId: string): Promise<BlockState | null> {
   const all = await readCollection('block_state');

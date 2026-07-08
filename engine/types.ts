@@ -33,6 +33,18 @@ export type TierStage =
   | 'Proficient' // A
   | 'Advanced'; // S
 
+/**
+ * Weekly training frequency an athlete is programmed at — how many days of the split they run.
+ * Independent of `Tier`: tier governs movement selection / dose (content), split governs day
+ * count. A coach picks this per athlete (in-season load, access, multi-sport schedule); the same
+ * four authored day-templates are subset to fit (see `store/blocks.ts` SPLIT_DAYS). Defaults to
+ * `4day` (the full split) when unset — `splitOf` centralises that default.
+ */
+export type SplitChoice = '2day' | '3day' | '4day';
+
+/** All split choices, low → high frequency. */
+export const SPLIT_CHOICES: readonly SplitChoice[] = ['2day', '3day', '4day'] as const;
+
 export const TIER_STAGE: Record<Tier, TierStage> = {
   C: 'Foundational',
   B: 'Developing',
@@ -202,6 +214,13 @@ export interface BlockState {
   blockStartDate: string; // ISO date the current block began
   blockIndex: number; // 0-based; increments each rotation
   slotVariants: Record<string, string>; // slotKey -> exerciseId
+  /**
+   * The athlete's active training split (2/3/4-day). Additive & optional: absent on legacy
+   * records, which `splitOf` treats as `4day` (the full split). Lives here rather than on the
+   * profile because switching split is a rotation event — it resets or carries block state — and
+   * `slotVariants` are day-keyed, so split and rotation state stay coupled in one record.
+   */
+  activeSplit?: SplitChoice;
 }
 
 /**
@@ -296,4 +315,8 @@ export function isTestScore(n: unknown): n is TestScore {
 
 export function isTier(s: unknown): s is Tier {
   return s === 'C' || s === 'B' || s === 'A' || s === 'S';
+}
+
+export function isSplitChoice(s: unknown): s is SplitChoice {
+  return s === '2day' || s === '3day' || s === '4day';
 }

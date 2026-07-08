@@ -22,12 +22,15 @@ import { ageFromDob, createAthlete, updateAthlete, findAthlete } from '../store/
 import { readCollection } from '../store/json-store.ts';
 import { buildAssessmentRecord, saveAssessment } from '../store/ingest.ts';
 import {
-  loadExercises, loadDayTemplates, loadAvailableEquipment, planForTier,
+  splitOf, SPLIT_DAYS, getOrInitBlockState, saveBlockState, switchSplit,
+} from '../store/blocks.ts';
+import {
+  loadExercises, loadDayTemplates, loadAvailableEquipment,
 } from '../store/library.ts';
 import { assembleSession } from '../engine/assembler.ts';
 import { page, esc, tierBadge, table, sessionHtml, planTabs } from './render.ts';
 import {
-  SCORE_LABEL,
+  SCORE_LABEL, SPLIT_LABEL, SPLIT_SHORT, splitSwitchForm, validateSplitSwitch,
   emptyAthleteValues, athleteValuesFromParams, athleteValuesFromProfile, validateAthleteForm, athleteFormPage,
   emptyAssessmentValues, assessmentValuesFromParams, validateAssessmentForm, assessmentFormPage, assessmentRevealPage,
 } from './forms.ts';
@@ -75,7 +78,9 @@ async function rosterPage(): Promise<string> {
       guard.anyExceeded
         ? '<span class="flag">over</span>'
         : guard.anyWatch ? '<span class="pill">watch</span>' : '<span class="muted">—</span>',
-      block ? `<span class="pill">block ${block.blockIndex}</span>` : '<span class="muted">—</span>',
+      block
+        ? `<span class="pill">block ${block.blockIndex} · ${SPLIT_SHORT[splitOf(block)]}</span>`
+        : `<span class="muted">${SPLIT_SHORT[splitOf(block)]}</span>`,
     ]);
   }
 
@@ -102,19 +107,28 @@ function gutCell(a: Assessment): string {
 }
 
 /**
- * "Current plan" section: the tier-scoped plan the athlete is on, rendered as instant client-side
- * day tabs (Day 1 default). Each day is the fully assembled session for (tier + that day's template
- * + the athlete's block state). Tiers with no explicit plan fall back to the full 4-day split.
+ * "Current plan" section: the athlete's active training split (2/3/4-day, from `splitOf`),
+ * rendered as instant client-side day tabs (Day 1 default). Each day is the fully assembled
+ * session for (tier + that day's template + the athlete's block state). The day COUNT comes from
+ * the split (coach's per-athlete choice); the tier still governs the content/dose inside each day.
+ * A compact split-switch form sits above the tabs.
  */
 async function planSection(athleteId: string, tier: Tier | null, valgusWatch: boolean): Promise<string> {
-  if (!tier) return '<p class="empty">No assessment yet — assign a tier to see the athlete\'s plan.</p>';
-
-  const [exercises, templates, equipment, block, plan] = await Promise.all([
-    loadExercises(), loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId), planForTier(tier),
+  const [exercises, templates, equipment, block] = await Promise.all([
+    loadExercises(), loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId),
   ]);
-  const effective = plan ?? { tier, name: 'Full 4-day split', days: templates.map((t) => t.day).sort((a, b) => a - b) };
+  const split = splitOf(block);
+  const switchForm = splitSwitchForm(athleteId, split);
 
-  const panels = effective.days.map((day) => {
+  if (!tier) {
+    return `<p class="sub">Split: <b>${esc(SPLIT_LABEL[split])}</b></p>${switchForm}`
+      + '<p class="empty">No assessment yet — assign a tier to see the assembled plan.</p>';
+  }
+
+  // Only assemble days the split runs AND that have an authored template.
+  const days = SPLIT_DAYS[split].filter((d) => templates.some((t) => t.day === d));
+
+  const panels = days.map((day) => {
     const template = templates.find((t) => t.day === day);
     // Assembling a day can throw (e.g. a misconfigured template hits the hard sequencing guard).
     // Contain it to this one panel so the athlete page still renders instead of 500ing.
@@ -144,7 +158,8 @@ async function planSection(athleteId: string, tier: Tier | null, valgusWatch: bo
     }
   });
 
-  return `<p class="sub">On <b>${esc(effective.name)}</b> · ${effective.days.length} day${effective.days.length === 1 ? '' : 's'}/week · tier ${esc(tier)}${plan ? '' : ' <span class="muted">(no tier-specific plan defined — showing full split)</span>'}</p>`
+  return `<p class="sub">On <b>${esc(SPLIT_LABEL[split])}</b> · ${days.length} day${days.length === 1 ? '' : 's'}/week · tier ${esc(tier)}</p>`
+    + switchForm
     + planTabs(panels);
 }
 
@@ -406,6 +421,18 @@ async function handleAssessmentNew(athleteId: string, params: URLSearchParams, r
   sendHtml(res, 200, assessmentRevealPage(athlete, built.warnings, saved));
 }
 
+// --- split switch (Phase 3) ---
+
+async function handleSplitSwitch(id: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  if (!(await findAthlete(id))) return sendHtml(res, 404, notFoundPage());
+  const parsed = validateSplitSwitch(params);
+  if (!parsed) return sendHtml(res, 400, page('Bad request', '<h1>Invalid split choice</h1><p><a href="/">← Roster</a></p>'));
+  // getOrInit → apply the switch (fresh resets rotation, carry keeps it) → persist as one write.
+  const next = switchSplit(await getOrInitBlockState(id), parsed.split, parsed.mode);
+  await saveBlockState(next);
+  redirect(res, `/athlete?id=${encodeURIComponent(id)}`);
+}
+
 // ---------------------------------------------------------------------------
 // Server
 // ---------------------------------------------------------------------------
@@ -419,6 +446,7 @@ const server = createServer(async (req, res) => {
       const params = new URLSearchParams(await readBody(req));
       if (path === '/athlete/new') return await handleAthleteNew(params, res);
       if (path === '/athlete/edit') return await handleAthleteEdit(url.searchParams.get('id') ?? '', params, res);
+      if (path === '/athlete/split') return await handleSplitSwitch(url.searchParams.get('id') ?? '', params, res);
       if (path === '/assessment/new') return await handleAssessmentNew(url.searchParams.get('athleteId') ?? '', params, res);
       return sendHtml(res, 404, notFoundPage());
     }

@@ -12,9 +12,10 @@
  * `esc()`. No user string is ever interpolated raw.
  */
 
-import type { AthleteProfile, Assessment, Scores, TestScore, Tier } from '../engine/types.ts';
-import { SCORE_KEYS, isTier } from '../engine/types.ts';
+import type { AthleteProfile, Assessment, Scores, SplitChoice, TestScore, Tier } from '../engine/types.ts';
+import { SCORE_KEYS, SPLIT_CHOICES, isSplitChoice, isTier } from '../engine/types.ts';
 import type { NewAthleteInput } from '../store/athletes.ts';
+import { type SplitSwitchMode } from '../store/blocks.ts';
 import { type FieldFormInput, nextAssessmentDate } from '../store/ingest.ts';
 import {
   page, esc, tierBadge, textField, textAreaField, selectField, checkboxField,
@@ -267,6 +268,52 @@ export function assessmentFormPage(athlete: AthleteProfile, v: AssessmentFormVal
       </div>
     </form>`;
   return page('New assessment', body);
+}
+
+// ---------------------------------------------------------------------------
+// Training-split switch (Phase 3)
+// ---------------------------------------------------------------------------
+
+/** Human labels for each split. */
+export const SPLIT_LABEL: Record<SplitChoice, string> = {
+  '2day': '2-day (Tue · Fri)',
+  '3day': '3-day (Tue · Wed · Fri)',
+  '4day': '4-day (full split)',
+};
+
+/** Short badge code for compact places (roster). */
+export const SPLIT_SHORT: Record<SplitChoice, string> = { '2day': '2d', '3day': '3d', '4day': '4d' };
+
+/**
+ * Compact split-switch form for the athlete page: pick a split, then choose what to do with the
+ * current block (start fresh vs carry over) — a per-switch decision, not a fixed policy. The
+ * current split is pre-selected; "fresh" is the default block treatment.
+ */
+export function splitSwitchForm(athleteId: string, current: SplitChoice): string {
+  const opts = SPLIT_CHOICES
+    .map((s) => `<option value="${s}"${s === current ? ' selected' : ''}>${esc(SPLIT_LABEL[s])}</option>`)
+    .join('');
+  return `<form class="cc split-switch" method="post" action="/athlete/split?id=${encodeURIComponent(athleteId)}">
+      <div class="field">
+        <label for="f_split">Switch training split</label>
+        <select id="f_split" name="split">${opts}</select>
+      </div>
+      <div class="field">
+        <label>Current block on switch</label>
+        <div class="check"><input type="radio" id="f_mode_fresh" name="mode" value="fresh" checked><label for="f_mode_fresh">Start a fresh block — reset rotation &amp; variants</label></div>
+        <div class="check"><input type="radio" id="f_mode_carry" name="mode" value="carry"><label for="f_mode_carry">Carry the current block index &amp; variants over</label></div>
+      </div>
+      <div class="actions"><button class="btn" type="submit">Apply split</button></div>
+    </form>`;
+}
+
+/** Validate a split-switch POST. Returns the parsed choice or null (reject — never trust input). */
+export function validateSplitSwitch(params: URLSearchParams): { split: SplitChoice; mode: SplitSwitchMode } | null {
+  const split = params.get('split');
+  const mode = params.get('mode');
+  if (!isSplitChoice(split)) return null;
+  if (mode !== 'fresh' && mode !== 'carry') return null;
+  return { split, mode };
 }
 
 /** The post-save reveal — the FIRST time the computed tier is shown for this entry (§3.7). */
