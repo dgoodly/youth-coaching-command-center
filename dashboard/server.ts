@@ -28,7 +28,11 @@ import {
   loadExercises, loadDayTemplates, loadAvailableEquipment,
 } from '../store/library.ts';
 import { assembleSession } from '../engine/assembler.ts';
-import { page, esc, tierBadge, table, sessionHtml, planTabs } from './render.ts';
+import {
+  page, esc, tierBadge, table, sessionHtml, planTabs,
+  rosterTable, triageCards, statCard, statStrip, card, num, statusFlag, maturityMarker, bar,
+  type RosterRow, type TriageCard,
+} from './render.ts';
 import {
   SCORE_LABEL, SPLIT_LABEL, SPLIT_SHORT, splitSwitchForm, validateSplitSwitch,
   emptyAthleteValues, athleteValuesFromParams, athleteValuesFromProfile, validateAthleteForm, athleteFormPage,
@@ -37,19 +41,25 @@ import {
 
 const PORT = Number(process.env.CC_DASHBOARD_PORT ?? 5173);
 
-function dueCell(days: number): string {
+/** Re-assess cell: accent dot+text when due/never, quiet when recent. */
+function reassessCell(latest: Assessment | null): string {
+  if (!latest) return statusFlag('accent', 'no assessment');
+  const days = daysSince(latest.date);
   return days >= 42
-    ? `<span class="flag">DUE (${days}d)</span>`
-    : `<span class="ok">${days}d ago</span>`;
+    ? statusFlag('accent', `due · ${days}d`)
+    : statusFlag('quiet', `${days}d ago`);
 }
 
 // ---------------------------------------------------------------------------
-// Roster overview
+// Roster overview — a triage surface: who needs re-assessing, who's near PHV, who's over-loaded.
 // ---------------------------------------------------------------------------
 
 async function rosterPage(): Promise<string> {
   const athletes = await allAthletes();
-  const rows: string[][] = [];
+  const rows: RosterRow[] = [];
+  let needReassess = 0;
+  let nearPHVCount = 0;
+  let overLoad = 0;
 
   for (const a of athletes) {
     const latest = await latestAssessment(a.athleteId);
@@ -62,38 +72,58 @@ async function rosterPage(): Promise<string> {
       weeklyTrainingHours: a.weeklyTrainingHours, restDaysPerWeek: a.restDaysPerWeek,
     });
 
+    // Triage flags — the actionable-now states (drive the wash + the filter cards).
+    const reassess = !latest || daysSince(latest.date) >= 42;
+    const load: 'over' | 'watch' | null = guard.anyExceeded ? 'over' : guard.anyWatch ? 'watch' : null;
+    if (reassess) needReassess++;
+    if (maturity.nearPHV) nearPHVCount++;
+    if (load === 'over') overLoad++;
+
     const nameCell = `<a class="row" href="/athlete?id=${encodeURIComponent(a.athleteId)}">${esc(a.displayName)}</a>`
       + (a.valgusWatch ? ' <span class="pill">valgus</span>' : '');
-    rows.push([
-      nameCell,
-      age !== null ? String(age) : '<span class="muted">—</span>',
-      tierBadge(latest?.finalTier ?? null),
-      latest ? esc(latest.date) : '<span class="muted">never</span>',
-      latest ? dueCell(daysSince(latest.date)) : '<span class="flag">no assessment</span>',
-      maturity.nearPHV
-        ? `<span class="flag">PHV ${maturity.velocityCmPerYear?.toFixed(1)} cm/yr</span>`
-        : maturity.velocityCmPerYear !== null
-          ? `<span class="ok">${maturity.velocityCmPerYear.toFixed(1)} cm/yr</span>`
-          : '<span class="muted">—</span>',
-      guard.anyExceeded
-        ? '<span class="flag">over</span>'
-        : guard.anyWatch ? '<span class="pill">watch</span>' : '<span class="muted">—</span>',
-      block
-        ? `<span class="pill">block ${block.blockIndex} · ${SPLIT_SHORT[splitOf(block)]}</span>`
-        : `<span class="muted">${SPLIT_SHORT[splitOf(block)]}</span>`,
-    ]);
+    const velocityCell = maturity.velocityCmPerYear !== null
+      ? maturityMarker(`${maturity.velocityCmPerYear.toFixed(1)} cm/yr${maturity.nearPHV ? ' · PHV' : ''}`, maturity.nearPHV)
+      : '<span class="muted">—</span>';
+    const loadCell = load === 'over'
+      ? '<span class="load-over">over</span>'
+      : load === 'watch' ? '<span class="load-watch">watch</span>' : '<span class="muted">—</span>';
+
+    rows.push({
+      cells: [
+        nameCell,
+        age !== null ? num(String(age)) : '<span class="muted">—</span>',
+        tierBadge(latest?.finalTier ?? null),
+        latest ? num(latest.date) : '<span class="muted">never</span>',
+        reassessCell(latest),
+        velocityCell,
+        loadCell,
+        `<span class="pill data">block ${block ? block.blockIndex : 0} · ${SPLIT_SHORT[splitOf(block)]}</span>`,
+      ],
+      reassess,
+      nearPHV: maturity.nearPHV,
+      load,
+      urgent: reassess || load === 'over',
+    });
   }
+
+  const cards: TriageCard[] = [
+    { filter: 'all', count: athletes.length, label: 'All athletes' },
+    { filter: 'reassess', count: needReassess, label: 'Needs re-assessing', tone: 'accent' },
+    { filter: 'phv', count: nearPHVCount, label: 'Near PHV', tone: 'maturity' },
+    { filter: 'load-over', count: overLoad, label: 'Load over', tone: 'accent' },
+  ];
 
   const body = `<h1>Roster</h1>
     <p class="sub">${athletes.length} athlete${athletes.length === 1 ? '' : 's'} · tiers &amp; scores are coach-only (§3.3)</p>
-    <p><a class="btn" href="/athlete/new">+ New athlete</a></p>
-    ${table(
+    ${triageCards(cards)}
+    <p class="actions"><a class="btn" href="/athlete/new">+ New athlete</a></p>
+    ${rosterTable(
       ['Athlete', 'Age', 'Tier', 'Last assessment', 'Re-assess', 'Height velocity', 'Load', 'Block'],
       rows,
       'No athletes yet. Add one with `npm run enter`.',
     )}
-    <p class="muted">Re-assess flag fires at ≥ 6 weeks (spec §6). PHV flag = height velocity ≥ 7 cm/yr → dose pullback (dose only, not tier). Load = specialization/volume guardrails (weekly hours ≤ age · sport &lt; 16 h · ≥ 1–2 rest days).</p>`;
-  return page('Roster', body);
+    <p class="muted" style="margin-top:14px">Re-assess fires at ≥ 6 weeks (spec §6). Height velocity ≥ 7 cm/yr = near-PHV → dose pullback (dose only, not tier; shown in Midnight Green, a separate axis). Load = specialization/volume guardrails (weekly hours ≤ age · sport &lt; 16 h · ≥ 1–2 rest days).</p>`;
+  return page('Roster', body, 'roster');
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +133,10 @@ async function rosterPage(): Promise<string> {
 function gutCell(a: Assessment): string {
   if (!a.coachGutCall) return '<span class="muted">—</span>';
   const match = a.coachGutCall === a.finalTier;
-  return `${tierBadge(a.coachGutCall)} <span class="${match ? 'match' : 'differ'}">${match ? '✓' : '≠'}</span>`;
+  const verdict = match
+    ? '<span class="flag flag-quiet">match</span>'
+    : '<span class="flag flag-accent">differs</span>';
+  return `${tierBadge(a.coachGutCall)} ${verdict}`;
 }
 
 /**
@@ -177,8 +210,8 @@ async function athletePage(id: string): Promise<string> {
 
   // Tier history (newest first).
   const historyRows = [...assessments].reverse().map((as) => [
-    esc(as.date),
-    `${as.rawTotal}/18`,
+    num(as.date),
+    num(`${as.rawTotal}/18`),
     tierBadge(as.baseTier),
     tierBadge(as.finalTier),
     as.gateFired === 'none' ? '<span class="muted">none</span>' : `<code>${esc(as.gateFired)}</code>`,
@@ -193,7 +226,7 @@ async function athletePage(id: string): Promise<string> {
       SCORE_LABEL[k]!,
       ...assessments.map((as) => {
         const v = as.scores[k];
-        const cls = v <= 1 ? 'flag' : v >= 3 ? 'ok' : '';
+        const cls = v <= 1 ? 'num score-low' : v >= 3 ? 'num score-high' : 'num';
         return `<span class="${cls}">${v}</span>`;
       }),
     ]);
@@ -201,23 +234,23 @@ async function athletePage(id: string): Promise<string> {
   }
 
   const workoutRows = workouts.map((w) => [
-    esc(w.date), esc(w.sessionLabel), tierBadge(w.servedForTier),
-    w.completed ? '<span class="ok">done</span>' : '<span class="muted">planned</span>',
+    num(w.date), esc(w.sessionLabel), tierBadge(w.servedForTier),
+    w.completed ? statusFlag('quiet', 'done') : '<span class="muted">planned</span>',
     esc(w.coachNotes) || '<span class="muted">—</span>',
   ]);
 
   const heightRows = heights.map((hh) => [
-    esc(hh.date),
-    `${hh.heightCm} cm`,
-    hh.sittingHeightCm != null ? `${hh.sittingHeightCm} cm` : '<span class="muted">—</span>',
-    `<span class="pill">${esc(hh.source)}</span>`,
+    num(hh.date),
+    num(`${hh.heightCm} cm`),
+    hh.sittingHeightCm != null ? num(`${hh.sittingHeightCm} cm`) : '<span class="muted">—</span>',
+    `<span class="pill data">${esc(hh.source)}</span>`,
   ]);
 
   const wellnessRows = wellness.map((w) => [
-    esc(w.date),
-    w.sleepHours != null ? `${w.sleepHours} h` : '<span class="muted">—</span>',
-    w.soreness != null ? String(w.soreness) : '<span class="muted">—</span>',
-    w.energy != null ? String(w.energy) : '<span class="muted">—</span>',
+    num(w.date),
+    w.sleepHours != null ? num(`${w.sleepHours} h`) : '<span class="muted">—</span>',
+    w.soreness != null ? num(String(w.soreness)) : '<span class="muted">—</span>',
+    w.energy != null ? num(String(w.energy)) : '<span class="muted">—</span>',
     esc(w.notes ?? '') || '<span class="muted">—</span>',
   ]);
 
@@ -226,54 +259,70 @@ async function athletePage(id: string): Promise<string> {
     age, weeklySportHours: a.weeklySportHours,
     weeklyTrainingHours: a.weeklyTrainingHours, restDaysPerWeek: a.restDaysPerWeek,
   });
-  const GUARD_CLASS: Record<GuardrailStatus, string> = { ok: 'ok', watch: 'pill', exceeded: 'flag', unknown: 'muted' };
-  const guardRows = guard.findings.map((f) => [
-    `<span class="${GUARD_CLASS[f.status]}">${f.status}</span>`,
-    esc(f.message),
-  ]);
+  const guardCell: Record<GuardrailStatus, string> = {
+    ok: statusFlag('quiet', 'ok'),
+    watch: '<span class="load-watch">watch</span>',
+    exceeded: '<span class="load-over">exceeded</span>',
+    unknown: '<span class="muted">unknown</span>',
+  };
+  const guardRows = guard.findings.map((f) => [guardCell[f.status], esc(f.message)]);
 
   // Maturity-offset estimate line (Moore/Fransen), shown when computable.
   const estLine = maturity.maturityOffsetYears !== null
-    ? `<p>Maturity estimate: <b>${maturity.phvBand?.toUpperCase()}-PHV</b> · offset ${maturity.maturityOffsetYears >= 0 ? '+' : '−'}${Math.abs(maturity.maturityOffsetYears).toFixed(1)} yr · est. age at PHV ${maturity.estimatedAgeAtPHV!.toFixed(1)} <span class="muted">(${esc(maturity.method ?? '')})</span></p>`
+    ? `<p>Maturity estimate: <b>${esc(maturity.phvBand?.toUpperCase() ?? '')}-PHV</b> · offset ${num(`${maturity.maturityOffsetYears >= 0 ? '+' : '−'}${Math.abs(maturity.maturityOffsetYears).toFixed(1)} yr`)} · est. age at PHV ${num(maturity.estimatedAgeAtPHV!.toFixed(1))} <span class="muted">(${esc(maturity.method ?? '')})</span></p>`
     : `<p class="muted">Maturity estimate unavailable — ${esc(maturity.method ?? 'set DOB, sex, and (for boys) sitting height')}.</p>`;
+
+  const noteLine = maturity.nearPHV
+    ? `<p>${maturityMarker('near PHV', true)} ${esc(maturity.note)}</p>`
+    : `<p class="muted">${esc(maturity.note)}</p>`;
 
   const tier = await currentTierOf(id);
   const planHtml = await planSection(id, tier, a.valgusWatch);
 
+  // At-a-glance summary strip — the three axes kept visually distinct (tier ramp vs Midnight Green).
+  const maturityBand = maturity.phvBand ? `${maturity.phvBand.toUpperCase()}-PHV` : null;
+  const maturitySub = maturity.maturityOffsetYears !== null
+    ? `offset ${maturity.maturityOffsetYears >= 0 ? '+' : '−'}${Math.abs(maturity.maturityOffsetYears).toFixed(1)} yr`
+    : maturity.velocityCmPerYear !== null ? `${maturity.velocityCmPerYear.toFixed(1)} cm/yr` : 'needs 2 height entries';
+  const loadValue = guard.anyExceeded
+    ? '<span class="load-over">over</span>'
+    : guard.anyWatch ? '<span class="load-watch">watch</span>' : statusFlag('quiet', 'ok');
+  const summary = statStrip([
+    statCard('Current tier', tierBadge(tier), tier ? esc(TIER_STAGE[tier]) : 'No assessment on file'),
+    statCard('Maturity (dose axis)',
+      maturityBand ? maturityMarker(maturityBand, maturity.nearPHV) : '<span class="muted">—</span>',
+      maturitySub),
+    statCard('Training load', loadValue, guard.anyExceeded ? 'guardrail exceeded' : guard.anyWatch ? 'watch a guardrail' : 'within guardrails'),
+  ]);
+
   const body = `
-    <p><a href="/">← Roster</a></p>
+    <p class="sub"><a href="/">← Roster</a></p>
     <h1>${esc(a.displayName)} ${a.valgusWatch ? '<span class="pill">valgus watch</span>' : ''}</h1>
     <p class="sub">
-      ${age !== null ? `Age ${age} · ` : ''}${esc(a.sports.join(', ') || 'no sports listed')} ·
-      ${a.trainingMonths} mo training · current tier ${tierBadge(tier)}
+      ${age !== null ? `Age ${num(String(age))} · ` : ''}${esc(a.sports.join(', ') || 'no sports listed')} ·
+      ${num(String(a.trainingMonths))} mo training
     </p>
     <div class="actions">
       <a class="btn" href="/assessment/new?athleteId=${encodeURIComponent(a.athleteId)}">+ Enter assessment</a>
       <a class="btn secondary" href="/athlete/edit?id=${encodeURIComponent(a.athleteId)}">Edit athlete</a>
     </div>
 
-    <h2>Maturity (dose axis — independent of tier)</h2>
-    <p>${maturity.nearPHV ? '<span class="flag">⚠ ' : '<span class="ok">'}${esc(maturity.note)}</span></p>
-    ${estLine}
-    ${table(['Date', 'Standing', 'Sitting', 'Source'], heightRows, 'No height entries logged.')}
+    ${summary}
 
-    <h2>Wellness (weekly load / growth check)</h2>
-    ${table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged. Add with `npm run wellness`.')}
+    ${card('Current plan', planHtml)}
 
-    <h2>Training-load guardrails (specialization / volume)</h2>
-    ${table(['Status', 'Guardrail'], guardRows, 'No guardrail data.')}
+    ${card('Maturity — dose axis, independent of tier', `${noteLine}${estLine}
+      ${table(['Date', 'Standing', 'Sitting', 'Source'], heightRows, 'No height entries logged.')}`)}
 
-    <h2>Tier history</h2>
-    ${table(['Date', 'Raw', 'Base', 'Final', 'Gate', 'Gut-call'], historyRows, 'No assessments yet.')}
+    ${card('Tier history', table(['Date', 'Raw', 'Base', 'Final', 'Gate', 'Gut-call'], historyRows, 'No assessments yet.'))}
 
-    <h2>Score trends (per test, 0–3)</h2>
-    ${trends}
+    ${card('Score trends — per test, 0–3', trends)}
 
-    <h2>Current plan</h2>
-    ${planHtml}
+    ${card('Training-load guardrails — specialization / volume', table(['Status', 'Guardrail'], guardRows, 'No guardrail data.'))}
 
-    <h2>Workout log</h2>
-    ${table(['Date', 'Session', 'Tier', 'Status', 'Notes'], workoutRows, 'No sessions logged.')}
+    ${card('Wellness — weekly load / growth check', table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged. Add with `npm run wellness`.'))}
+
+    ${card('Workout log', table(['Date', 'Session', 'Tier', 'Status', 'Notes'], workoutRows, 'No sessions logged.'))}
   `;
   return page(a.displayName, body);
 }
@@ -299,44 +348,47 @@ async function validationPage(): Promise<string> {
   const compareRows = withGut.map((a) => {
     const match = a.coachGutCall === a.finalTier;
     return [
-      esc(a.date), esc(nameOf(a.athleteId)), `${a.rawTotal}/18`,
+      num(a.date), esc(nameOf(a.athleteId)), num(`${a.rawTotal}/18`),
       tierBadge(a.finalTier), tierBadge(a.coachGutCall),
-      match ? '<span class="match">match</span>' : '<span class="differ">DIFFERS</span>',
+      match ? statusFlag('quiet', 'match') : statusFlag('accent', 'DIFFERS'),
       a.gateFired === 'none' ? '<span class="muted">—</span>' : `<code>${esc(a.gateFired)}</code>`,
     ];
   });
 
-  // Gate-firing tally.
+  // Gate-firing tally, rendered as bars (this is an analysis screen — deltas over tables).
   const gateCounts = new Map<string, number>();
   for (const a of assessments) gateCounts.set(a.gateFired, (gateCounts.get(a.gateFired) ?? 0) + 1);
-  const gateRows = [...gateCounts.entries()]
-    .sort((x, y) => y[1] - x[1])
-    .map(([g, n]) => [g === 'none' ? '<span class="muted">none</span>' : `<code>${esc(g)}</code>`, String(n)]);
+  const sortedGates = [...gateCounts.entries()].sort((x, y) => y[1] - x[1]);
+  const maxGate = sortedGates.reduce((m, [, n]) => Math.max(m, n), 0);
+  const gateRows = sortedGates.map(([g, n]) => [
+    g === 'none' ? '<span class="muted">none</span>' : `<code>${esc(g)}</code>`,
+    bar(maxGate ? (n / maxGate) * 100 : 0, String(n), g !== 'none'),
+  ]);
 
   const agreement = withGut.length ? Math.round((matches / withGut.length) * 100) : 0;
 
+  const summary = statStrip([
+    statCard('With a gut-call', num(String(withGut.length)), `of ${assessments.length} assessment${assessments.length === 1 ? '' : 's'}`),
+    statCard('Agreement', `${num(String(agreement))}%`, `${matches} match · ${differs} differ`),
+    statCard('Agreement rate', bar(agreement, `${agreement}%`, agreement < 60), 'computed vs coach gut-call'),
+  ]);
+
   const body = `
     <h1>Validation</h1>
-    <p class="sub">Calculated tier vs coach gut-call, and which gates fire. This is the surface that
-      tunes the score bands &amp; gate thresholds against real athletes (BUILD_BRIEF §3.7).</p>
+    <p class="sub">Calculated tier vs coach gut-call, and which gates fire — the surface that tunes the
+      score bands &amp; gate thresholds against real athletes (BUILD_BRIEF §3.7).</p>
 
-    <h2>Agreement</h2>
-    <p>${withGut.length} assessment${withGut.length === 1 ? '' : 's'} with a gut-call ·
-       <span class="match">${matches} match</span> ·
-       <span class="differ">${differs} differ</span> ·
-       <b>${agreement}% agreement</b></p>
+    ${summary}
 
-    <h2>Calculated vs gut-call</h2>
-    ${table(['Date', 'Athlete', 'Raw', 'Calculated', 'Gut-call', 'Verdict', 'Gate'], compareRows,
-      'No gut-calls captured yet — enter assessments with a gut-call for validation data.')}
-
-    <h2>Gate-firing tally</h2>
-    ${table(['Gate', 'Count'], gateRows, 'No assessments yet.')}
-    <p class="muted">If a gate fires far more/less than a coach expects, that is a signal to tune its
+    ${card('Gate-firing tally', `${table(['Gate', 'Count'], gateRows, 'No assessments yet.')}
+      <p class="muted" style="margin-bottom:0">If a gate fires far more/less than expected, that is a signal to tune its
       threshold (spec §4 / §8). <code>capC</code> = squat/drop-stick &lt; 2 · <code>capA</code> =
-      drop-stick = 2 · <code>S-&gt;A</code> = S without a perfect stick.</p>
+      drop-stick = 2 · <code>S-&gt;A</code> = S without a perfect stick.</p>`)}
+
+    ${card('Calculated vs gut-call', table(['Date', 'Athlete', 'Raw', 'Calculated', 'Gut-call', 'Verdict', 'Gate'], compareRows,
+      'No gut-calls captured yet — enter assessments with a gut-call for validation data.'))}
   `;
-  return page('Validation', body);
+  return page('Validation', body, 'validation');
 }
 
 // ---------------------------------------------------------------------------
