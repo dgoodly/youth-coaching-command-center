@@ -13,7 +13,8 @@ import {
   validateAssessmentForm, assessmentFormPage, assessmentRevealPage, emptyAssessmentValues,
   assessmentValuesFromParams,
   validateSplitSwitch, splitSwitchForm,
-  type AthleteFormValues,
+  validateLogForm, logFormPage, emptyLogValues, logValuesFromParams, resolveMetrics,
+  type AthleteFormValues, type LogFormValues, type LogFormContext,
 } from './forms.ts';
 import { buildAssessmentRecord, type FieldFormInput } from '../store/ingest.ts';
 import type { AthleteProfile, Scores } from '../engine/types.ts';
@@ -196,4 +197,85 @@ test('reveal page shows the computed tier (the reveal happens only after save)',
   const html = assessmentRevealPage(mkAthlete(), built.warnings, built.assessment);
   assert.ok(/Computed tier/i.test(html));
   assert.ok(html.includes('class="tier tier-A"'));
+});
+
+// --- per-set workout logging (Phase C) ---
+
+/** Build LogFormValues from row objects (metricId → raw string). */
+function logValues(over: Partial<LogFormValues> & { sets: LogFormValues['sets'] }): LogFormValues {
+  return { date: '2026-07-09', ...over };
+}
+function row(values: Record<string, string>, note = ''): LogFormValues['sets'][number] {
+  return { values, note };
+}
+
+test('log: a squat log (load + reps) parses to typed sets, oldest-first indexed', () => {
+  const { sets, errors } = validateLogForm(['load', 'reps'], logValues({
+    sets: [row({ load: '40', reps: '5' }), row({ load: '42.5', reps: '5' }, 'felt heavy')],
+  }));
+  assert.deepEqual(errors, {});
+  assert.ok(sets);
+  assert.deepEqual(sets!.map((s) => s.setIndex), [1, 2]);
+  assert.deepEqual(sets![0]!.values, { load: 40, reps: 5 });
+  assert.equal(sets![1]!.values.load, 42.5, 'decimal load kept');
+  assert.equal(sets![1]!.note, 'felt heavy');
+});
+
+test('log: fully-empty rows are skipped (added-then-blank), but at least one set is required', () => {
+  const ok = validateLogForm(['load', 'reps'], logValues({
+    sets: [row({ load: '40', reps: '5' }), row({ load: '', reps: '' })],
+  }));
+  assert.deepEqual(ok.sets!.map((s) => s.setIndex), [1], 'blank trailing row dropped');
+
+  const none = validateLogForm(['load', 'reps'], logValues({ sets: [row({ load: '', reps: '' })] }));
+  assert.equal(none.sets, null);
+  assert.ok(none.errors._sets, 'requires at least one non-empty set');
+});
+
+test('log: server-side typing rejects a negative sprint time and a non-integer rep count', () => {
+  const neg = validateLogForm(['time_s'], logValues({ sets: [row({ time_s: '-1' })] }));
+  assert.equal(neg.sets, null);
+  assert.match(neg.errors.set0!, /negative/);
+
+  const frac = validateLogForm(['load', 'reps'], logValues({ sets: [row({ load: '40', reps: '4.5' })] }));
+  assert.equal(frac.sets, null);
+  assert.match(frac.errors.set0!, /whole number/);
+});
+
+test('log: a future log date is rejected', () => {
+  const r = validateLogForm(['reps'], logValues({ date: '2999-01-01', sets: [row({ reps: '10' })] }));
+  assert.equal(r.sets, null);
+  assert.ok(r.errors.date);
+});
+
+test('log form renders exactly the inputs an exercise declares (metrics-driven, not hardcoded)', () => {
+  const squatCtx: LogFormContext = {
+    athleteId: 'ath-1', day: 1, exerciseId: 'l_goblet_squat', exerciseName: 'Goblet Squat',
+    targetText: '3 × 8 (rest 90s)', prescribedReps: 8, metrics: resolveMetrics(['load', 'reps']),
+  };
+  const squatHtml = logFormPage(mkAthlete(), squatCtx, emptyLogValues(3, ['load', 'reps']), {});
+  assert.ok(squatHtml.includes('name="set0_load"'), 'squat shows a load input');
+  assert.ok(squatHtml.includes('name="set0_reps"'), 'squat shows a reps input');
+  assert.ok(!squatHtml.includes('name="set0_time_s"'), 'squat does NOT show a time input');
+  assert.ok(squatHtml.includes('3 × 8 (rest 90s)'), 'prescribed target shown');
+  // Three prescribed sets → three rows pre-rendered.
+  assert.ok(squatHtml.includes('name="set2_load"'), 'three set rows from the prescription');
+
+  const plankCtx: LogFormContext = {
+    athleteId: 'ath-1', day: 1, exerciseId: 't_plank', exerciseName: 'Plank Hold',
+    targetText: '3 × 20s', metrics: resolveMetrics(['duration_s']),
+  };
+  const plankHtml = logFormPage(mkAthlete(), plankCtx, emptyLogValues(3, ['duration_s']), {});
+  assert.ok(plankHtml.includes('name="set0_duration_s"'), 'plank shows a hold-duration input');
+  assert.ok(!plankHtml.includes('name="set0_load"'), 'plank does NOT show a load input');
+});
+
+test('log: logValuesFromParams round-trips submitted rows (for error re-render)', () => {
+  const p = new URLSearchParams({ date: '2026-07-09', setCount: '2',
+    set0_load: '40', set0_reps: '5', set0_note: 'ok', set1_load: '45', set1_reps: '5', set1_note: '' });
+  const v = logValuesFromParams(p, ['load', 'reps']);
+  assert.equal(v.date, '2026-07-09');
+  assert.equal(v.sets.length, 2);
+  assert.deepEqual(v.sets[0]!.values, { load: '40', reps: '5' });
+  assert.equal(v.sets[0]!.note, 'ok');
 });

@@ -14,6 +14,7 @@
 
 import type { AthleteProfile, Assessment, Scores, SplitChoice, TestScore, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, SPLIT_CHOICES, TIER_STAGE, isSplitChoice, isTier } from '../engine/types.ts';
+import { type Metric, metricById, validateSetValues } from '../engine/metrics.ts';
 import type { NewAthleteInput } from '../store/athletes.ts';
 import { type SplitSwitchMode } from '../store/blocks.ts';
 import { type FieldFormInput, nextAssessmentDate } from '../store/ingest.ts';
@@ -324,6 +325,179 @@ export function validateSplitSwitch(params: URLSearchParams): { split: SplitChoi
   if (!isSplitChoice(split)) return null;
   if (mode !== 'fresh' && mode !== 'carry') return null;
   return { split, mode };
+}
+
+// ---------------------------------------------------------------------------
+// Per-set workout logging form (Phase C)
+// ---------------------------------------------------------------------------
+
+/** Upper bound on set rows parsed from one submission (guards a hostile/huge setCount). */
+const MAX_SET_ROWS = 50;
+
+/** One set row as raw strings: metricId → raw input, plus an optional note. */
+export interface SetRowValues {
+  values: Record<string, string>;
+  note: string;
+}
+
+export interface LogFormValues {
+  date: string;
+  sets: SetRowValues[];
+}
+
+/** A validated set ready to persist — typed values in canonical units + a 1-based index. */
+export interface ParsedSet {
+  setIndex: number;
+  values: Record<string, number>;
+  note?: string;
+}
+
+/** Non-input context the form needs: which exercise, its metrics, and the prescribed target. */
+export interface LogFormContext {
+  athleteId: string;
+  day: number;
+  exerciseId: string;
+  exerciseName: string;
+  /** Human target line, e.g. "3 × 8 (rest 90s)". */
+  targetText: string;
+  /** Prescribed reps for the reps-input placeholder (may be a distance string like "15yd"). */
+  prescribedReps?: number | string;
+  /** Resolved metric descriptors, in the exercise's declared order. */
+  metrics: Metric[];
+}
+
+/** Resolve an exercise's metric ids to descriptors, dropping any that don't resolve (defensive). */
+export function resolveMetrics(metricIds: string[]): Metric[] {
+  return metricIds.map(metricById).filter((m): m is Metric => m !== undefined);
+}
+
+/** An empty log form: today's date and `prescribedSets` blank rows (at least one). */
+export function emptyLogValues(prescribedSets: number, metricIds: string[]): LogFormValues {
+  const rows = Math.max(1, Math.min(MAX_SET_ROWS, prescribedSets || 1));
+  const sets: SetRowValues[] = [];
+  for (let i = 0; i < rows; i++) {
+    sets.push({ values: Object.fromEntries(metricIds.map((m) => [m, ''])), note: '' });
+  }
+  return { date: todayIso(), sets };
+}
+
+/** Rebuild the submitted rows from params so a rejected form re-renders with entries intact. */
+export function logValuesFromParams(p: URLSearchParams, metricIds: string[]): LogFormValues {
+  const count = Math.max(0, Math.min(MAX_SET_ROWS, Number(p.get('setCount')) || 0));
+  const sets: SetRowValues[] = [];
+  for (let i = 0; i < count; i++) {
+    const values = Object.fromEntries(metricIds.map((m) => [m, (p.get(`set${i}_${m}`) ?? '').trim()]));
+    sets.push({ values, note: (p.get(`set${i}_note`) ?? '').trim() });
+  }
+  return { date: (p.get('date') ?? '').trim(), sets };
+}
+
+/**
+ * Validate a logging submission. Well-formed INPUT only (date shape + per-metric typing via the
+ * shared `validateSetValues`) — it never touches the store or snapshots the prescription; the
+ * server does that. Fully-empty rows are skipped (the coach added a row and left it blank, or cut
+ * a set short); at least one non-empty set is required.
+ */
+export function validateLogForm(
+  metricIds: string[], v: LogFormValues,
+): { sets: ParsedSet[] | null; errors: FieldErrors } {
+  const errors: FieldErrors = {};
+
+  if (!isIsoDate(v.date)) errors.date = 'Use a valid date (YYYY-MM-DD).';
+  else if (v.date > todayIso()) errors.date = 'Log date is in the future.';
+
+  const parsed: ParsedSet[] = [];
+  let anyRow = false;
+  v.sets.forEach((row, i) => {
+    const values: Record<string, number> = {};
+    let hasValue = false;
+    for (const m of metricIds) {
+      const raw = (row.values[m] ?? '').trim();
+      if (raw === '') continue;
+      hasValue = true;
+      values[m] = Number(raw); // NaN if non-numeric — validateSetValues flags it below
+    }
+    if (!hasValue) return; // fully-empty row → skip (a note alone isn't a set)
+    anyRow = true;
+    const logical = parsed.length + 1;
+    const rowErrs = validateSetValues(metricIds, values);
+    if (rowErrs.length) {
+      errors[`set${i}`] = `Set ${logical}: ${rowErrs.join('; ')}`;
+      return;
+    }
+    parsed.push({ setIndex: logical, values, ...(row.note ? { note: row.note } : {}) });
+  });
+
+  if (!anyRow) errors._sets = 'Log at least one set — enter a value in a row.';
+
+  if (Object.keys(errors).length > 0) return { sets: null, errors };
+  return { sets: parsed, errors };
+}
+
+/**
+ * One set row. `idxName` is the stable field-name index (`set{idxName}_load`…); `displayNum` is the
+ * visible set number (renumbered client-side as rows are added/removed). Rendered both for the live
+ * rows and — with `__i__`/`__n__` placeholder tokens — as the JS clone template for "+ Add set".
+ */
+function setRow(idxName: string, displayNum: string, ctx: LogFormContext, row: SetRowValues | undefined, errors: FieldErrors): string {
+  const cells = ctx.metrics.map((m) => {
+    const raw = row?.values[m.id] ?? '';
+    const step = m.input === 'integer' ? '1' : 'any';
+    const ph = m.id === 'reps' && ctx.prescribedReps != null ? ` placeholder="${esc(String(ctx.prescribedReps))}"` : '';
+    return `<label class="setcell"><span class="setcell-lab">${esc(m.label)} <span class="unit">${esc(m.unit)}</span></span>`
+      + `<input type="number" name="set${esc(idxName)}_${esc(m.id)}" value="${esc(raw)}" min="0" step="${step}" inputmode="decimal"${ph}></label>`;
+  }).join('');
+  const err = errors[`set${idxName}`] ? `<span class="fieldErr">${esc(errors[`set${idxName}`])}</span>` : '';
+  return `<div class="setrow" data-row="${esc(idxName)}">`
+    + `<span class="setnum">Set <b class="setnum-n">${esc(displayNum)}</b></span>`
+    + `<div class="setcells">${cells}</div>`
+    + `<label class="setcell setnote"><span class="setcell-lab">Note</span>`
+    + `<input type="text" name="set${esc(idxName)}_note" value="${esc(row?.note ?? '')}" placeholder="optional"></label>`
+    + `<button type="button" class="btn secondary setremove" onclick="ccRemoveSet(this)">Remove</button>`
+    + err
+    + `</div>`;
+}
+
+/** Inline JS: add a set (clone the template), remove a set (clear+hide), renumber visible rows. */
+function logFormJs(): string {
+  return `<script>
+function ccRenum(){var n=0;document.querySelectorAll('#setrows .setrow').forEach(function(r){if(r.classList.contains('hidden'))return;n++;var b=r.querySelector('.setnum-n');if(b)b.textContent=n;});}
+function ccAddSet(){var c=document.getElementById('setCount');var i=parseInt(c.value||'0',10);
+  var tpl=document.getElementById('setrowtpl').innerHTML.replace(/__i__/g,i).replace(/__n__/g,i+1);
+  var wrap=document.createElement('div');wrap.innerHTML=tpl.trim();var row=wrap.firstElementChild;
+  document.getElementById('setrows').appendChild(row);c.value=i+1;ccRenum();}
+function ccRemoveSet(btn){var row=btn.closest('.setrow');row.classList.add('hidden');
+  row.querySelectorAll('input').forEach(function(inp){inp.value='';});ccRenum();}
+</script>`;
+}
+
+/** The per-exercise logging form: prescribed target up top, one input row per set, add/remove. */
+export function logFormPage(athlete: AthleteProfile, ctx: LogFormContext, v: LogFormValues, errors: FieldErrors): string {
+  const back = `/athlete?id=${encodeURIComponent(athlete.athleteId)}`;
+  const action = `/log/new?athleteId=${encodeURIComponent(ctx.athleteId)}&day=${encodeURIComponent(String(ctx.day))}&exerciseId=${encodeURIComponent(ctx.exerciseId)}`;
+  const rows = v.sets.map((row, i) => setRow(String(i), String(i + 1), ctx, row, errors)).join('');
+  const template = setRow('__i__', '__n__', ctx, undefined, {});
+  const metricList = ctx.metrics.map((m) => `${m.label} (${m.unit})`).join(' · ') || 'no metrics';
+  const body = `
+    <p class="sub"><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
+    <h1>Log — ${esc(ctx.exerciseName)}</h1>
+    <p class="sub">Day ${esc(String(ctx.day))} · prescribed <b>${esc(ctx.targetText)}</b> · logging ${esc(metricList)}</p>
+    ${errorBanner(Object.values(errors))}
+    <form class="cc log-form" method="post" action="${esc(action)}">
+      ${card('When', textField('date', 'Date', v.date, errors, { type: 'date' }))}
+      ${card('Sets — actuals against the prescribed target', `
+        <div id="setrows">${rows}</div>
+        <input type="hidden" name="setCount" id="setCount" value="${esc(String(v.sets.length))}">
+        <div class="actions"><button type="button" class="btn secondary" onclick="ccAddSet()">+ Add set</button></div>
+        <template id="setrowtpl">${template}</template>
+      `)}
+      <div class="actions">
+        <button class="btn" type="submit">Save log</button>
+        <a class="btn secondary" href="${esc(back)}">Cancel</a>
+      </div>
+      ${logFormJs()}
+    </form>`;
+  return page(`Log — ${ctx.exerciseName}`, body);
 }
 
 /** The post-save reveal — the FIRST time the computed tier is shown for this entry (§3.7). */

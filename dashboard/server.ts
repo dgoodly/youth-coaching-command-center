@@ -10,23 +10,26 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
-import type { Assessment, Tier } from '../engine/types.ts';
+import type { Assessment, AthleteProfile, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, TIER_STAGE } from '../engine/types.ts';
 import { computeMaturity } from '../engine/maturity.ts';
 import { checkVolumeGuardrails, type GuardrailStatus } from '../engine/guardrails.ts';
 import {
   allAthletes, assessmentsFor, latestAssessment, heightLogFor, workoutLogFor, wellnessLogFor,
-  blockStateFor, daysSince, dueForReassessment,
+  setLogFor, blockStateFor, daysSince, dueForReassessment,
 } from '../store/query.ts';
 import { ageFromDob, createAthlete, updateAthlete, findAthlete } from '../store/athletes.ts';
 import { readCollection } from '../store/json-store.ts';
 import { buildAssessmentRecord, saveAssessment } from '../store/ingest.ts';
+import { getOrCreateWorkout, setWorkoutCompleted } from '../store/workout.ts';
+import { saveSetLog, type NewSetLog } from '../store/setlog.ts';
 import {
   splitOf, SPLIT_DAYS, getOrInitBlockState, saveBlockState, switchSplit,
 } from '../store/blocks.ts';
 import {
   loadExercises, loadDayTemplates, loadAvailableEquipment,
 } from '../store/library.ts';
+import { tierDose, doseLabel, type Exercise } from '../engine/program.ts';
 import { assembleSession } from '../engine/assembler.ts';
 import {
   page, esc, tierBadge, table, sessionHtml, planTabs,
@@ -37,6 +40,7 @@ import {
   SCORE_LABEL, SPLIT_LABEL, SPLIT_SHORT, splitSwitchForm, validateSplitSwitch,
   emptyAthleteValues, athleteValuesFromParams, athleteValuesFromProfile, validateAthleteForm, athleteFormPage,
   emptyAssessmentValues, assessmentValuesFromParams, validateAssessmentForm, assessmentFormPage, assessmentRevealPage,
+  emptyLogValues, logValuesFromParams, validateLogForm, logFormPage, resolveMetrics, type LogFormContext,
 } from './forms.ts';
 
 const PORT = Number(process.env.CC_DASHBOARD_PORT ?? 5173);
@@ -139,6 +143,15 @@ function gutCell(a: Assessment): string {
   return `${tierBadge(a.coachGutCall)} ${verdict}`;
 }
 
+/** Inline mark-done / reopen control for a session row (the coach's explicit completion action). */
+function completeToggleForm(workoutId: string, completed: boolean): string {
+  const target = completed ? '0' : '1';
+  const label = completed ? 'Reopen' : 'Mark done';
+  return `<form class="inlineform" method="post" action="/workout/complete?workoutId=${encodeURIComponent(workoutId)}">`
+    + `<input type="hidden" name="completed" value="${target}">`
+    + `<button class="btn secondary mini" type="submit">${label}</button></form>`;
+}
+
 /**
  * "Current plan" section: the athlete's active training split (2/3/4-day, from `splitOf`),
  * rendered as instant client-side day tabs (Day 1 default). Each day is the fully assembled
@@ -182,6 +195,11 @@ async function planSection(athleteId: string, tier: Tier | null, valgusWatch: bo
             `d${it.exercise.difficulty}`,
           ].filter((x): x is string => x !== null),
           cue: it.exercise.cue,
+          // Loggable movements (those that declare metrics) get a per-exercise "Log" link;
+          // warm-up/funnel/cooldown/non-throw motor-skill declare none and get nothing.
+          ...(it.exercise.metrics.length > 0
+            ? { logHref: `/log/new?athleteId=${encodeURIComponent(athleteId)}&day=${day}&exerciseId=${encodeURIComponent(it.exercise.id)}` }
+            : {}),
         })),
       }));
       const note = `<p class="panel-note">${esc(session.label)} · sprint: ${esc(session.sprintEmphasis)}</p>`;
@@ -205,6 +223,7 @@ async function athletePage(id: string): Promise<string> {
   const heights = await heightLogFor(id);
   const workouts = await workoutLogFor(id);
   const wellness = await wellnessLogFor(id);
+  const setEntries = await setLogFor(id);
   const maturity = computeMaturity(heights, { dob: a.dob, sex: a.sex });
   const age = ageFromDob(a.dob);
 
@@ -233,11 +252,26 @@ async function athletePage(id: string): Promise<string> {
     trends = table(['Test', ...dateHeaders], rows);
   }
 
-  const workoutRows = workouts.map((w) => [
-    num(w.date), esc(w.sessionLabel), tierBadge(w.servedForTier),
-    w.completed ? statusFlag('quiet', 'done') : '<span class="muted">planned</span>',
-    esc(w.coachNotes) || '<span class="muted">—</span>',
-  ]);
+  // Set counts per session — the "has data / in progress" signal (distinct from `completed`,
+  // which is only ever the coach's explicit "done"). A half-logged session must NOT read as done.
+  const setsByWorkout = new Map<string, number>();
+  for (const s of setEntries) setsByWorkout.set(s.workoutId, (setsByWorkout.get(s.workoutId) ?? 0) + 1);
+
+  const workoutRows = workouts.map((w) => {
+    const n = setsByWorkout.get(w.workoutId) ?? 0;
+    const status = w.completed
+      ? statusFlag('quiet', 'done')
+      : n > 0
+        ? statusFlag('accent', 'in progress')
+        : '<span class="muted">planned</span>';
+    return [
+      num(w.date), esc(w.sessionLabel), tierBadge(w.servedForTier),
+      status,
+      n > 0 ? num(String(n)) : '<span class="muted">—</span>',
+      esc(w.coachNotes) || '<span class="muted">—</span>',
+      completeToggleForm(w.workoutId, w.completed),
+    ];
+  });
 
   const heightRows = heights.map((hh) => [
     num(hh.date),
@@ -322,7 +356,8 @@ async function athletePage(id: string): Promise<string> {
 
     ${card('Wellness — weekly load / growth check', table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged. Add with `npm run wellness`.'))}
 
-    ${card('Workout log', table(['Date', 'Session', 'Tier', 'Status', 'Notes'], workoutRows, 'No sessions logged.'))}
+    ${card('Workout log', `${table(['Date', 'Session', 'Tier', 'Status', 'Sets', 'Notes', ''], workoutRows, 'No sessions logged.')}
+      <p class="muted" style="margin-bottom:0"><b>In progress</b> = sets logged but not yet marked done. <b>Done</b> is an explicit coach action, not a side effect of logging.</p>`)}
   `;
   return page(a.displayName, body);
 }
@@ -485,6 +520,86 @@ async function handleSplitSwitch(id: string, params: URLSearchParams, res: Serve
   redirect(res, `/athlete?id=${encodeURIComponent(id)}`);
 }
 
+// --- per-set workout logging (Phase C) ---
+
+/** A helper page for the log-flow guard rails (no tier yet, unknown exercise, etc.). */
+function logGuardPage(athleteId: string, heading: string, msg: string): string {
+  const back = athleteId ? `/athlete?id=${encodeURIComponent(athleteId)}` : '/';
+  return page('Log', `<p class="sub"><a href="${esc(back)}">← Back</a></p><h1>${esc(heading)}</h1><p>${esc(msg)}</p>`);
+}
+
+/** Build the non-input context the log form needs (metrics, prescribed target) — pure-ish. */
+function logContext(athleteId: string, day: number, exercise: Exercise, tier: Tier): LogFormContext {
+  const dose = tierDose(exercise, tier);
+  return {
+    athleteId, day, exerciseId: exercise.id, exerciseName: exercise.name,
+    targetText: doseLabel(exercise, tier),
+    ...(dose ? { prescribedReps: dose.reps } : {}),
+    metrics: resolveMetrics(exercise.metrics),
+  };
+}
+
+/**
+ * Resolve the shared pre-conditions for both the GET form and the POST handler: athlete exists,
+ * has a tier, the exercise exists and is loggable, and `day` is an integer. Returns either a ready
+ * bundle or an error page to send.
+ */
+async function resolveLogTarget(
+  athleteId: string, dayStr: string, exerciseId: string,
+): Promise<{ ok: true; athlete: AthleteProfile; day: number; exercise: Exercise; tier: Tier }
+  | { ok: false; code: number; html: string }> {
+  const athlete = await findAthlete(athleteId);
+  if (!athlete) return { ok: false, code: 404, html: notFoundPage() };
+  const day = Number(dayStr);
+  if (!Number.isInteger(day)) return { ok: false, code: 404, html: notFoundPage() };
+  const tier = await currentTierOf(athleteId);
+  if (!tier) return { ok: false, code: 400, html: logGuardPage(athleteId, 'No tier on file', 'Enter an assessment before logging a session — the prescribed target comes from the athlete’s tier.') };
+  const exercise = (await loadExercises()).find((e) => e.id === exerciseId);
+  if (!exercise) return { ok: false, code: 404, html: notFoundPage() };
+  if (exercise.metrics.length === 0) return { ok: false, code: 400, html: logGuardPage(athleteId, 'Not a logged movement', `${exercise.name} isn’t individually logged (warm-up / funnel / cooldown / motor-skill).`) };
+  return { ok: true, athlete, day, exercise, tier };
+}
+
+async function logNewFormPage(athleteId: string, dayStr: string, exerciseId: string): Promise<{ code: number; html: string }> {
+  const r = await resolveLogTarget(athleteId, dayStr, exerciseId);
+  if (!r.ok) return { code: r.code, html: r.html };
+  const dose = tierDose(r.exercise, r.tier);
+  const values = emptyLogValues(dose?.sets ?? 1, r.exercise.metrics);
+  return { code: 200, html: logFormPage(r.athlete, logContext(athleteId, r.day, r.exercise, r.tier), values, {}) };
+}
+
+async function handleLogNew(athleteId: string, dayStr: string, exerciseId: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  const r = await resolveLogTarget(athleteId, dayStr, exerciseId);
+  if (!r.ok) return sendHtml(res, r.code, r.html);
+
+  const ctx = logContext(athleteId, r.day, r.exercise, r.tier);
+  const values = logValuesFromParams(params, r.exercise.metrics);
+  const { sets, errors } = validateLogForm(r.exercise.metrics, values);
+  if (!sets) return sendHtml(res, 400, logFormPage(r.athlete, ctx, values, errors));
+
+  // Snapshot the prescription as it is NOW, so a later dose edit can't rewrite this history.
+  const dose = tierDose(r.exercise, r.tier);
+  const prescribed = dose ? { sets: dose.sets, reps: dose.reps, rest_sec: dose.rest_sec } : undefined;
+
+  // Atomic find-or-create of the session record (completed stays false — logging never marks done).
+  const workout = await getOrCreateWorkout({ athleteId, date: values.date, sessionLabel: `Day ${r.day}` }, r.tier);
+
+  const inputs: NewSetLog[] = sets.map((s) => ({
+    workoutId: workout.workoutId, athleteId, exerciseId,
+    setIndex: s.setIndex, values: s.values,
+    ...(prescribed ? { prescribed } : {}),
+    ...(s.note ? { note: s.note } : {}),
+  }));
+  await saveSetLog(inputs);
+  redirect(res, `/athlete?id=${encodeURIComponent(athleteId)}`);
+}
+
+async function handleWorkoutComplete(workoutId: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  const updated = await setWorkoutCompleted(workoutId, params.get('completed') === '1');
+  if (!updated) return sendHtml(res, 404, notFoundPage());
+  redirect(res, `/athlete?id=${encodeURIComponent(updated.athleteId)}`);
+}
+
 // ---------------------------------------------------------------------------
 // Server
 // ---------------------------------------------------------------------------
@@ -500,6 +615,8 @@ const server = createServer(async (req, res) => {
       if (path === '/athlete/edit') return await handleAthleteEdit(url.searchParams.get('id') ?? '', params, res);
       if (path === '/athlete/split') return await handleSplitSwitch(url.searchParams.get('id') ?? '', params, res);
       if (path === '/assessment/new') return await handleAssessmentNew(url.searchParams.get('athleteId') ?? '', params, res);
+      if (path === '/log/new') return await handleLogNew(url.searchParams.get('athleteId') ?? '', url.searchParams.get('day') ?? '', url.searchParams.get('exerciseId') ?? '', params, res);
+      if (path === '/workout/complete') return await handleWorkoutComplete(url.searchParams.get('workoutId') ?? '', params, res);
       return sendHtml(res, 404, notFoundPage());
     }
 
@@ -509,6 +626,10 @@ const server = createServer(async (req, res) => {
     else if (path === '/athlete/new') html = await athleteNewFormPage();
     else if (path === '/athlete/edit') html = await athleteEditFormPage(url.searchParams.get('id') ?? '');
     else if (path === '/assessment/new') html = await assessmentNewFormPage(url.searchParams.get('athleteId') ?? '');
+    else if (path === '/log/new') {
+      const { code, html: logHtml } = await logNewFormPage(url.searchParams.get('athleteId') ?? '', url.searchParams.get('day') ?? '', url.searchParams.get('exerciseId') ?? '');
+      return sendHtml(res, code, logHtml);
+    }
     else if (path === '/validation') html = await validationPage();
     else return sendHtml(res, 404, notFoundPage());
 

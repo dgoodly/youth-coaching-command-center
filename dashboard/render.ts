@@ -225,6 +225,32 @@ const CSS = `
   ul.ex li { padding: 8px 2px; border-bottom: 1px solid var(--cc-border-faint); }
   ul.ex li:last-child { border-bottom: 0; }
   ul.ex .cue { font-size: 12px; color: var(--cc-muted); }
+  /* "Log ›" affordance — quiet by default, warms to the accent on hover (it's an action). */
+  a.loglink { font: 600 11px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
+    color: var(--cc-muted); text-decoration: none; padding: 2px 7px; border: 1px solid var(--cc-border);
+    border-radius: var(--cc-r-badge); white-space: nowrap; }
+  a.loglink:hover { color: var(--cc-accent); border-color: var(--cc-accent); }
+
+  /* — Per-set logging form (Phase C) — */
+  form.log-form { max-width: 760px; }
+  .setrow { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 10px 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--cc-border-faint); }
+  .setrow:last-of-type { border-bottom: 0; }
+  /* Flatten the metric cells into the row's flex flow so Set-number, metrics, note and remove sit
+     on one baseline-aligned line (and wrap together as units on narrow screens). */
+  .setcells { display: contents; }
+  .setnum { align-self: flex-end; padding-bottom: 9px; min-width: 42px;
+    font: 600 11px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--cc-muted); }
+  .setnum b { font-family: var(--cc-font-mono); color: var(--cc-ink); font-size: 13px; }
+  .setcell { display: flex; flex-direction: column; gap: 4px; }
+  .setcell-lab { font: 600 10px/1.2 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
+    color: var(--cc-muted); }
+  .setcell-lab .unit { color: var(--cc-quiet); font-weight: 500; }
+  .setcell input { width: 90px; }
+  .setcell.setnote { flex: 1; min-width: 140px; }
+  .setcell.setnote input { width: 100%; }
+  .setremove { align-self: flex-end; padding: 8px 10px; font-size: 11px; }
+  .setrow .fieldErr { flex-basis: 100%; }
 
   /* — Buttons: primary is solid Gunmetal (accent stays reserved). One filled per screen. — */
   .btn { display: inline-block; background: var(--cc-ink); color: var(--cc-bg); border: 1px solid var(--cc-ink);
@@ -233,6 +259,8 @@ const CSS = `
   .btn:hover { background: #1a242b; }
   .btn.secondary { background: transparent; color: var(--cc-ink); border-color: var(--cc-border); }
   .btn.secondary:hover { border-color: var(--cc-ink); }
+  .btn.mini { padding: 5px 10px; font-size: 11px; }
+  .inlineform { display: inline; margin: 0; }
   .actions { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
 
   /* — Forms — */
@@ -401,9 +429,10 @@ export function bar(pct: number, valueText: string, accent = false): string {
 }
 
 // One block (warm-up / jump / lift / …) of an assembled session — its title + exercise items.
+// `logHref` is present only on loggable exercises (those that declare metrics) → a "Log" link.
 interface RenderBlock {
   title: string;
-  items: { name: string; doseText: string; tags: string[]; cue: string }[];
+  items: { name: string; doseText: string; tags: string[]; cue: string; logHref?: string }[];
 }
 
 /** Render one assembled session (its blocks + exercises) to HTML for a plan-day panel. */
@@ -414,7 +443,8 @@ export function sessionHtml(blocks: RenderBlock[]): string {
         .map((it) => {
           const tags = it.tags.length ? ` <span class="pill data">${esc(it.tags.join(' · '))}</span>` : '';
           const cue = it.cue ? `<br><span class="cue">${esc(it.cue)}</span>` : '';
-          return `<li><b>${esc(it.name)}</b> <span class="num muted">${esc(it.doseText)}</span>${tags}${cue}</li>`;
+          const log = it.logHref ? ` <a class="loglink" href="${esc(it.logHref)}">Log ›</a>` : '';
+          return `<li><b>${esc(it.name)}</b> <span class="num muted">${esc(it.doseText)}</span>${tags}${log}${cue}</li>`;
         })
         .join('');
       return `<div class="blk"><h4>${esc(b.title)}</h4><ul class="ex">${items}</ul></div>`;
