@@ -13,13 +13,13 @@
  */
 
 import type { AthleteProfile, Assessment, Scores, SplitChoice, TestScore, Tier } from '../engine/types.ts';
-import { SCORE_KEYS, SPLIT_CHOICES, isSplitChoice, isTier } from '../engine/types.ts';
+import { SCORE_KEYS, SPLIT_CHOICES, TIER_STAGE, isSplitChoice, isTier } from '../engine/types.ts';
 import type { NewAthleteInput } from '../store/athletes.ts';
 import { type SplitSwitchMode } from '../store/blocks.ts';
 import { type FieldFormInput, nextAssessmentDate } from '../store/ingest.ts';
 import {
   page, esc, tierBadge, textField, textAreaField, selectField, checkboxField,
-  errorBanner, okBanner, type FieldErrors,
+  errorBanner, card, statStrip, statCard, num, statusFlag, type FieldErrors,
 } from './render.ts';
 
 export const SCORE_LABEL: Record<string, string> = {
@@ -143,23 +143,26 @@ export function athleteFormPage(
   const back = mode === 'edit' && athleteId ? `/athlete?id=${encodeURIComponent(athleteId)}` : '/';
   const heading = mode === 'new' ? 'New athlete' : `Edit ${v.displayName || 'athlete'}`;
   const body = `
-    <p><a href="${esc(back)}">← Back</a></p>
+    <p class="sub"><a href="${esc(back)}">← Back</a></p>
     <h1>${esc(heading)}</h1>
     ${errorBanner(Object.values(errors))}
     <form class="cc" method="post" action="${esc(action)}">
-      ${textField('displayName', 'Display name', v.displayName, errors, { placeholder: 'e.g. Maya R.' })}
-      ${textField('dob', 'Date of birth', v.dob, errors, { type: 'date', hint: 'Optional — drives age and the maturity estimate.' })}
-      ${selectField('sex', 'Sex (maturity estimate only)', v.sex, [['', '—'], ['M', 'M'], ['F', 'F']], errors, 'Used only for the Moore/Fransen maturity offset — never affects tier (§3.1).')}
-      ${textField('sports', 'Sports', v.sports, errors, { placeholder: 'soccer, track', hint: 'Comma-separated.' })}
-      ${textField('trainingMonths', 'Training months', v.trainingMonths, errors, { type: 'number', min: 0, hint: 'Context, not a scored point.' })}
-      ${checkboxField('valgusWatch', 'Valgus watch — prioritise knee-cave-safe options in assembly', v.valgusWatch)}
-      <h2>Training load (optional — feeds the volume guardrails)</h2>
-      <div class="scores">
-        ${textField('weeklySportHours', 'Weekly sport hrs', v.weeklySportHours, errors, { type: 'number', min: 0, step: '0.5' })}
-        ${textField('weeklyTrainingHours', 'Weekly training hrs', v.weeklyTrainingHours, errors, { type: 'number', min: 0, step: '0.5' })}
-        ${textField('restDaysPerWeek', 'Rest days/week', v.restDaysPerWeek, errors, { type: 'number', min: 0, max: 7 })}
-      </div>
-      ${textAreaField('notes', 'Notes', v.notes, errors)}
+      ${card('Athlete', `
+        ${textField('displayName', 'Display name', v.displayName, errors, { placeholder: 'e.g. Maya R.' })}
+        ${textField('dob', 'Date of birth', v.dob, errors, { type: 'date', hint: 'Optional — drives age and the maturity estimate.' })}
+        ${selectField('sex', 'Sex (maturity estimate only)', v.sex, [['', '—'], ['M', 'M'], ['F', 'F']], errors, 'Used only for the Moore/Fransen maturity offset — never affects tier (§3.1).')}
+        ${textField('sports', 'Sports', v.sports, errors, { placeholder: 'soccer, track', hint: 'Comma-separated.' })}
+        ${textField('trainingMonths', 'Training months', v.trainingMonths, errors, { type: 'number', min: 0, hint: 'Context, not a scored point.' })}
+        ${checkboxField('valgusWatch', 'Valgus watch — prioritise knee-cave-safe options in assembly', v.valgusWatch)}
+      `)}
+      ${card('Training load — optional (feeds the volume guardrails)', `
+        <div class="scores">
+          ${textField('weeklySportHours', 'Weekly sport hrs', v.weeklySportHours, errors, { type: 'number', min: 0, step: '0.5' })}
+          ${textField('weeklyTrainingHours', 'Weekly training hrs', v.weeklyTrainingHours, errors, { type: 'number', min: 0, step: '0.5' })}
+          ${textField('restDaysPerWeek', 'Rest days/week', v.restDaysPerWeek, errors, { type: 'number', min: 0, max: 7 })}
+        </div>
+      `)}
+      ${card('Notes', textAreaField('notes', 'Notes', v.notes, errors))}
       <div class="actions">
         <button class="btn" type="submit">${mode === 'new' ? 'Create athlete' : 'Save changes'}</button>
         <a class="btn secondary" href="${esc(back)}">Cancel</a>
@@ -243,25 +246,32 @@ export function assessmentFormPage(athlete: AthleteProfile, v: AssessmentFormVal
     .map((k) => textField(k, SCORE_LABEL[k] ?? k, v.scores[k], errors, { type: 'number', min: 0, max: 3 }))
     .join('');
   const body = `
-    <p><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
+    <p class="sub"><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
     <h1>New assessment — ${esc(athlete.displayName)}</h1>
     <p class="sub">Enter the six scores and your gut-call. The computed tier is revealed only <b>after</b> you save,
       so the gut-call stays an independent read (clean validation data, §3.7).</p>
     ${errorBanner(Object.values(errors))}
     <form class="cc" method="post" action="/assessment/new?athleteId=${encodeURIComponent(athlete.athleteId)}">
-      ${textField('date', 'Date', v.date, errors, { type: 'date' })}
-      ${textField('tester', 'Tester', v.tester, errors, { placeholder: 'e.g. Coach D' })}
-      <h2>Scores (0–3)</h2>
-      <div class="scores">${scoreFields}</div>
-      ${checkboxField('broadLandingFailed', 'Broad-jump landing was uncontrolled (CAP rule → broad capped at 1)', v.broadLandingFailed)}
-      ${selectField('coachGutCall', 'Your gut-call tier — enter BEFORE saving', v.coachGutCall, [['', '— no gut-call —'], ['S', 'S'], ['A', 'A'], ['B', 'B'], ['C', 'C']], errors, 'Your independent read, captured before the computed tier is shown. This is the threshold-tuning signal (validation view).')}
-      <h2>Growth &amp; context (optional)</h2>
-      <div class="scores">
-        ${textField('heightCm', 'Standing height (cm)', v.heightCm, errors, { type: 'number', min: 0, step: '0.1' })}
-        ${textField('sittingHeightCm', 'Sitting height (cm)', v.sittingHeightCm, errors, { type: 'number', min: 0, step: '0.1' })}
-      </div>
-      ${textAreaField('videoRefs', 'Video refs', v.videoRefs, errors, 'One per line or comma-separated.')}
-      ${textAreaField('notes', 'Notes', v.notes, errors)}
+      ${card('When', `
+        ${textField('date', 'Date', v.date, errors, { type: 'date' })}
+        ${textField('tester', 'Tester', v.tester, errors, { placeholder: 'e.g. Coach D' })}
+      `)}
+      ${card('Scores & gut-call', `
+        <h4>Six tests (0–3)</h4>
+        <div class="scores">${scoreFields}</div>
+        ${checkboxField('broadLandingFailed', 'Broad-jump landing was uncontrolled (CAP rule → broad capped at 1)', v.broadLandingFailed)}
+        ${selectField('coachGutCall', 'Your gut-call tier — enter BEFORE saving', v.coachGutCall, [['', '— no gut-call —'], ['S', 'S'], ['A', 'A'], ['B', 'B'], ['C', 'C']], errors, 'Your independent read, captured before the computed tier is shown. This is the threshold-tuning signal (validation view).')}
+      `)}
+      ${card('Growth & context — optional', `
+        <div class="scores">
+          ${textField('heightCm', 'Standing height (cm)', v.heightCm, errors, { type: 'number', min: 0, step: '0.1' })}
+          ${textField('sittingHeightCm', 'Sitting height (cm)', v.sittingHeightCm, errors, { type: 'number', min: 0, step: '0.1' })}
+        </div>
+      `)}
+      ${card('Notes & video', `
+        ${textAreaField('videoRefs', 'Video refs', v.videoRefs, errors, 'One per line or comma-separated.')}
+        ${textAreaField('notes', 'Notes', v.notes, errors)}
+      `)}
       <div class="actions">
         <button class="btn" type="submit">Save &amp; reveal tier</button>
         <a class="btn secondary" href="${esc(back)}">Cancel</a>
@@ -321,19 +331,29 @@ export function assessmentRevealPage(athlete: AthleteProfile, warnings: string[]
   const back = `/athlete?id=${encodeURIComponent(athlete.athleteId)}`;
   const gut = a.coachGutCall;
   const match = gut !== null && gut === a.finalTier;
-  const gutLine = gut !== null
-    ? `Your gut-call was ${tierBadge(gut)} — computed ${tierBadge(a.finalTier)} ${match ? '<span class="match">✓ match</span>' : '<span class="differ">≠ differs</span>'}`
-    : `No gut-call recorded — computed ${tierBadge(a.finalTier)}.`;
   const gateHtml = a.gateFired === 'none' ? '<span class="muted">none</span>' : `<code>${esc(a.gateFired)}</code>`;
   const warnHtml = warnings.length
     ? `<div class="banner err"><b>Warnings:</b><ul>${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>`
     : '';
+  // Hero reveal: computed tier, the gut-call verdict (the validation signal), and the raw math.
+  const gutSub = gut !== null
+    ? (match ? 'matched the engine' : 'differs — validation signal')
+    : 'no gut-call recorded';
+  const summary = statStrip([
+    statCard('Computed tier', tierBadge(a.finalTier), esc(TIER_STAGE[a.finalTier])),
+    statCard('Your gut-call',
+      gut !== null
+        ? `${tierBadge(gut)} ${match ? statusFlag('quiet', 'match') : statusFlag('accent', 'differs')}`
+        : '<span class="muted">—</span>',
+      gutSub),
+    statCard('Raw score', num(`${a.rawTotal}/18`), `base ${tierBadge(a.baseTier)} · gate ${gateHtml}`),
+  ]);
   const body = `
-    <p><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
+    <p class="sub"><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
     <h1>Assessment saved</h1>
-    ${okBanner(`<b>Computed tier: ${tierBadge(a.finalTier)}</b> · base ${tierBadge(a.baseTier)} · raw ${a.rawTotal}/18 · gate ${gateHtml}<br>${gutLine}`)}
     ${warnHtml}
-    <p>Suggested re-assessment: <b>${esc(nextAssessmentDate(a.date))}</b> (+5 weeks).</p>
+    ${summary}
+    <p>Suggested re-assessment: <b>${num(nextAssessmentDate(a.date))}</b> (+5 weeks).</p>
     <div class="actions">
       <a class="btn" href="${esc(back)}">View athlete</a>
       <a class="btn secondary" href="/assessment/new?athleteId=${encodeURIComponent(athlete.athleteId)}">Enter another</a>
