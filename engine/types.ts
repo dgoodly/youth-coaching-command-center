@@ -274,6 +274,51 @@ export interface WorkoutLogEntry {
   coachNotes: string;
 }
 
+/**
+ * Snapshot of an exercise's PRESCRIBED target, copied onto a set record at log time
+ * (PHASE_PLAN_workout_logging.md §"performance + reliability"). Stored — never re-joined to the
+ * live assembler output — so a later library/dose edit can't silently rewrite what an athlete was
+ * actually prescribed months ago. `reps` mirrors the library `TierDose.reps`, which may be a
+ * number OR a string ("15yd", "6 ea").
+ */
+export interface PrescribedSnapshot {
+  sets?: number;
+  reps?: number | string;
+  rest_sec?: number;
+}
+
+/**
+ * One logged SET of one exercise in one session — the per-set actuals record
+ * (PHASE_PLAN_workout_logging.md). Granularity is PER SET by design (set 1 and set 2 are
+ * separate records); it is the only shape that supports typed, comparable PRs/trends.
+ *
+ * `values` keys off the exercise's declared `metrics` (engine/metrics.ts) — no fixed
+ * weight/time/distance columns — so a new measurement is additive (a catalog entry), never a
+ * schema migration. Each value is stored in that metric's CANONICAL unit (load in lb, etc.);
+ * mixing units within a metric's history breaks every trend silently, so conversion (if ever
+ * needed) happens at display, never at storage.
+ *
+ * This is build #1's schema AND the future app's — durable core, like the rest of this file.
+ */
+export interface SetLogEntry {
+  setLogId: string; // uuid
+  /** Links to the session this set belongs to (WorkoutLogEntry.workoutId). */
+  workoutId: string;
+  athleteId: string; // uuid
+  /** Library exercise id (Exercise.id) — the movement this set logs. */
+  exerciseId: string;
+  /** 1-based set number within the exercise. */
+  setIndex: number;
+  /** Typed actuals keyed by metric id, e.g. `{ load: 42.5, reps: 3 }`. Canonical units. */
+  values: Record<string, number>;
+  /** The target as it was at log time (see {@link PrescribedSnapshot}) — stored, not re-joined. */
+  prescribed?: PrescribedSnapshot;
+  /** Optional subjective load, RPE 1–10. Additive/reserved — safe to omit (defer per plan). */
+  rpe?: number;
+  note?: string;
+  loggedAt: string; // ISO datetime
+}
+
 // ---------------------------------------------------------------------------
 // Visibility — §3.3, baked in now so it is never retrofitted
 // ---------------------------------------------------------------------------

@@ -6,8 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { resolveAthleteIn } from './query.ts';
-import type { AthleteProfile } from '../engine/types.ts';
+import { resolveAthleteIn, groupSetsByExercise } from './query.ts';
+import type { AthleteProfile, SetLogEntry } from '../engine/types.ts';
 
 function mkAthlete(over: Partial<AthleteProfile> & { athleteId: string; displayName: string }): AthleteProfile {
   return {
@@ -52,4 +52,22 @@ test('exact name wins over a substring collision (Jordan Ellis vs Jordan Nguyen)
   const r = resolveAthleteIn(roster, 'Jordan Ellis');
   assert.equal(r.status, 'found');
   assert.equal(r.status === 'found' && r.athlete.athleteId, 'id-1');
+});
+
+function mkSet(exerciseId: string, setIndex: number): SetLogEntry {
+  return { setLogId: `${exerciseId}-${setIndex}`, workoutId: 'w1', athleteId: 'a1', exerciseId,
+    setIndex, values: {}, loggedAt: '2026-07-09T12:00:00.000Z' };
+}
+
+test('groupSetsByExercise groups by exercise, preserving first-seen order (Phase B)', () => {
+  const grouped = groupSetsByExercise([
+    mkSet('squat', 1), mkSet('broad', 1), mkSet('squat', 2), mkSet('broad', 2), mkSet('squat', 3),
+  ]);
+  assert.deepEqual([...grouped.keys()], ['squat', 'broad'], 'first-seen exercise order');
+  assert.deepEqual(grouped.get('squat')!.map((s) => s.setIndex), [1, 2, 3], 'all squat sets, in order');
+  assert.deepEqual(grouped.get('broad')!.map((s) => s.setIndex), [1, 2]);
+});
+
+test('groupSetsByExercise on an empty list yields an empty map (Phase B)', () => {
+  assert.equal(groupSetsByExercise([]).size, 0);
 });

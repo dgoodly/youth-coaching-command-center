@@ -21,6 +21,7 @@ import type {
   AthleteProfile,
   BlockState,
   HeightLogEntry,
+  SetLogEntry,
   WellnessLogEntry,
   WorkoutLogEntry,
 } from '../engine/types.ts';
@@ -38,6 +39,7 @@ export interface Collections {
   height_log: HeightLogEntry[];
   wellness_log: WellnessLogEntry[];
   workout_log: WorkoutLogEntry[];
+  set_log: SetLogEntry[];
   block_state: BlockState[];
 }
 
@@ -47,6 +49,7 @@ const FILES: Record<keyof Collections, string> = {
   height_log: 'height_log.json',
   wellness_log: 'wellness_log.json',
   workout_log: 'workout_log.json',
+  set_log: 'set_log.json',
   block_state: 'block_state.json',
 };
 

@@ -4,7 +4,7 @@
  */
 
 import type {
-  Assessment, AthleteProfile, HeightLogEntry, WellnessLogEntry, WorkoutLogEntry, BlockState, Tier,
+  Assessment, AthleteProfile, HeightLogEntry, SetLogEntry, WellnessLogEntry, WorkoutLogEntry, BlockState, Tier,
 } from '../engine/types.ts';
 import { readCollection } from './json-store.ts';
 
@@ -77,6 +77,50 @@ export async function workoutLogFor(athleteId: string): Promise<WorkoutLogEntry[
 export async function wellnessLogFor(athleteId: string): Promise<WellnessLogEntry[]> {
   const all = await readCollection('wellness_log');
   return all.filter((w) => w.athleteId === athleteId).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/**
+ * Chronological comparator for set records: oldest → newest by `loggedAt`, then by `setIndex`
+ * so sets within one session stay in the order they were performed (set 1 before set 2). This is
+ * the order PR/trend math (Phase D) walks.
+ */
+function bySetChronology(a: SetLogEntry, b: SetLogEntry): number {
+  return a.loggedAt.localeCompare(b.loggedAt) || a.setIndex - b.setIndex;
+}
+
+/** Group set records by `exerciseId` (pure), preserving first-seen order and per-set order within. */
+export function groupSetsByExercise(sets: SetLogEntry[]): Map<string, SetLogEntry[]> {
+  const map = new Map<string, SetLogEntry[]>();
+  for (const s of sets) {
+    const list = map.get(s.exerciseId);
+    if (list) list.push(s);
+    else map.set(s.exerciseId, [s]);
+  }
+  return map;
+}
+
+/** All logged sets for an athlete, oldest → newest (chronological). */
+export async function setLogFor(athleteId: string): Promise<SetLogEntry[]> {
+  const all = await readCollection('set_log');
+  return all.filter((s) => s.athleteId === athleteId).sort(bySetChronology);
+}
+
+/**
+ * An athlete's logged sets for ONE exercise, oldest → newest — the input to per-exercise trends
+ * and PRs (Phase D).
+ */
+export async function setLogForExercise(athleteId: string, exerciseId: string): Promise<SetLogEntry[]> {
+  return (await setLogFor(athleteId)).filter((s) => s.exerciseId === exerciseId);
+}
+
+/**
+ * All sets logged in one session (workout), grouped by exercise id — how the session review /
+ * "what did we actually do today" surface reads the log back.
+ */
+export async function setLogForWorkout(workoutId: string): Promise<Map<string, SetLogEntry[]>> {
+  const all = await readCollection('set_log');
+  const sets = all.filter((s) => s.workoutId === workoutId).sort(bySetChronology);
+  return groupSetsByExercise(sets);
 }
 
 /** Current block state for an athlete, or null. */

@@ -73,3 +73,39 @@ export function isMetricId(s: unknown): s is MetricId {
 export function metricById(id: string): Metric | undefined {
   return isMetricId(id) ? METRIC_CATALOG[id] : undefined;
 }
+
+/**
+ * Validate a set's typed actuals against the metrics an exercise DECLARES (`Exercise.metrics`).
+ * Pure — the single durable rule the write path and the logging form (Phase C) both enforce, so
+ * validation stays derivable from the catalog rather than hand-coded per form. Returns a list of
+ * human-readable errors (`[]` = valid):
+ *   - every value key must be one of `allowed` (no stray "columns" the exercise isn't measured by);
+ *   - each value must be a finite, non-negative number (a negative load/time/rep is nonsense);
+ *   - `integer`-input metrics (reps, contacts) must be whole numbers.
+ * A MISSING metric is allowed — a coach may log load now and reps later; absence is not invalid.
+ */
+export function validateSetValues(
+  allowed: readonly string[],
+  values: Record<string, unknown>,
+): string[] {
+  const errors: string[] = [];
+  const allowedSet = new Set(allowed);
+  for (const [key, val] of Object.entries(values)) {
+    if (!allowedSet.has(key)) {
+      errors.push(`metric "${key}" is not one this exercise is logged by`);
+      continue;
+    }
+    const m = metricById(key);
+    if (!m) {
+      errors.push(`unknown metric "${key}"`);
+      continue;
+    }
+    if (typeof val !== 'number' || !Number.isFinite(val)) {
+      errors.push(`${m.label} must be a number`);
+      continue;
+    }
+    if (val < 0) errors.push(`${m.label} cannot be negative`);
+    if (m.input === 'integer' && !Number.isInteger(val)) errors.push(`${m.label} must be a whole number`);
+  }
+  return errors;
+}
