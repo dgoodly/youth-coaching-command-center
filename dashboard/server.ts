@@ -10,13 +10,13 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
-import type { Assessment, AthleteProfile, Tier } from '../engine/types.ts';
+import type { Assessment, AthleteProfile, SetLogEntry, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, TIER_STAGE } from '../engine/types.ts';
 import { computeMaturity } from '../engine/maturity.ts';
 import { checkVolumeGuardrails, type GuardrailStatus } from '../engine/guardrails.ts';
 import {
   allAthletes, assessmentsFor, latestAssessment, heightLogFor, workoutLogFor, wellnessLogFor,
-  setLogFor, blockStateFor, daysSince, dueForReassessment,
+  setLogFor, setLogForExercise, groupSetsByExercise, blockStateFor, daysSince, dueForReassessment,
 } from '../store/query.ts';
 import { ageFromDob, createAthlete, updateAthlete, findAthlete } from '../store/athletes.ts';
 import { readCollection } from '../store/json-store.ts';
@@ -31,8 +31,9 @@ import {
 } from '../store/library.ts';
 import { tierDose, doseLabel, type Exercise } from '../engine/program.ts';
 import { assembleSession } from '../engine/assembler.ts';
+import { computeExerciseProgress, type ExerciseProgress, type MetricProgress } from '../engine/progress.ts';
 import {
-  page, esc, tierBadge, table, sessionHtml, planTabs,
+  page, esc, tierBadge, table, sessionHtml, planTabs, sparkline,
   rosterTable, triageCards, statCard, statStrip, card, num, statusFlag, maturityMarker, bar,
   type RosterRow, type TriageCard,
 } from './render.ts';
@@ -152,6 +153,36 @@ function completeToggleForm(workoutId: string, completed: boolean): string {
     + `<button class="btn secondary mini" type="submit">${label}</button></form>`;
 }
 
+/** One exercise's PR + per-session trend row for the Progress card (only metrics with data show). */
+function progressExerciseHtml(name: string, prog: ExerciseProgress): string {
+  const rows = prog.metrics.filter((m) => m.best !== null).map((m) => {
+    const values = m.series.map((pt) => pt.value);
+    const pr = `<span class="prog-pr">PR <b>${esc(String(m.best))} ${esc(m.unit)}</b></span>`;
+    const last = m.last !== null ? `<span class="prog-last">last ${esc(String(m.last))} ${esc(m.unit)}</span>` : '';
+    const spark = sparkline(values, `${m.label}: ${values.join(' → ')} ${m.unit}`);
+    return `<div class="prog-metric"><span class="prog-lab">${esc(m.label)}</span>${pr}${last}${spark}</div>`;
+  }).join('');
+  if (!rows) return '';
+  return `<div class="prog-ex"><div class="prog-ex-head"><b>${esc(name)}</b>`
+    + `<span class="sessions">${prog.sessionCount} session${prog.sessionCount === 1 ? '' : 's'}</span></div>${rows}</div>`;
+}
+
+/** "Progress & PRs" card body — one row per logged exercise, most recently trained first. */
+function progressCardBody(setEntries: SetLogEntry[], exercises: Exercise[]): string {
+  const groups = groupSetsByExercise(setEntries);
+  if (groups.size === 0) return '<p class="empty">No sets logged yet — use “Log” on a plan exercise to start tracking PRs.</p>';
+  const byId = new Map(exercises.map((e) => [e.id, e]));
+  const rows: { html: string; lastAt: number }[] = [];
+  for (const [exId, sets] of groups) {
+    const ex = byId.get(exId);
+    if (!ex) continue;
+    const html = progressExerciseHtml(ex.name, computeExerciseProgress(exId, ex.metrics, sets));
+    if (html) rows.push({ html, lastAt: Math.max(...sets.map((s) => Date.parse(s.loggedAt))) });
+  }
+  rows.sort((a, b) => b.lastAt - a.lastAt);
+  return rows.map((r) => r.html).join('') || '<p class="empty">No logged metrics yet.</p>';
+}
+
 /**
  * "Current plan" section: the athlete's active training split (2/3/4-day, from `splitOf`),
  * rendered as instant client-side day tabs (Day 1 default). Each day is the fully assembled
@@ -224,6 +255,7 @@ async function athletePage(id: string): Promise<string> {
   const workouts = await workoutLogFor(id);
   const wellness = await wellnessLogFor(id);
   const setEntries = await setLogFor(id);
+  const exerciseLib = await loadExercises();
   const maturity = computeMaturity(heights, { dob: a.dob, sex: a.sex });
   const age = ageFromDob(a.dob);
 
@@ -355,6 +387,8 @@ async function athletePage(id: string): Promise<string> {
     ${card('Training-load guardrails — specialization / volume', table(['Status', 'Guardrail'], guardRows, 'No guardrail data.'))}
 
     ${card('Wellness — weekly load / growth check', table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged. Add with `npm run wellness`.'))}
+
+    ${card('Progress & PRs — per exercise, coach-only', progressCardBody(setEntries, exerciseLib))}
 
     ${card('Workout log', `${table(['Date', 'Session', 'Tier', 'Status', 'Sets', 'Notes', ''], workoutRows, 'No sessions logged.')}
       <p class="muted" style="margin-bottom:0"><b>In progress</b> = sets logged but not yet marked done. <b>Done</b> is an explicit coach action, not a side effect of logging.</p>`)}
@@ -528,15 +562,22 @@ function logGuardPage(athleteId: string, heading: string, msg: string): string {
   return page('Log', `<p class="sub"><a href="${esc(back)}">← Back</a></p><h1>${esc(heading)}</h1><p>${esc(msg)}</p>`);
 }
 
-/** Build the non-input context the log form needs (metrics, prescribed target) — pure-ish. */
-function logContext(athleteId: string, day: number, exercise: Exercise, tier: Tier): LogFormContext {
+/** Build the non-input context the log form needs (metrics, prescribed target, priors) — pure-ish. */
+function logContext(athleteId: string, day: number, exercise: Exercise, tier: Tier, priors: MetricProgress[]): LogFormContext {
   const dose = tierDose(exercise, tier);
   return {
     athleteId, day, exerciseId: exercise.id, exerciseName: exercise.name,
     targetText: doseLabel(exercise, tier),
     ...(dose ? { prescribedReps: dose.reps } : {}),
     metrics: resolveMetrics(exercise.metrics),
+    priors,
   };
+}
+
+/** The athlete's prior progress for this exercise — feeds the "last time / PR" prompt. */
+async function priorsFor(athleteId: string, exercise: Exercise): Promise<MetricProgress[]> {
+  const sets = await setLogForExercise(athleteId, exercise.id);
+  return computeExerciseProgress(exercise.id, exercise.metrics, sets).metrics;
 }
 
 /**
@@ -565,17 +606,20 @@ async function logNewFormPage(athleteId: string, dayStr: string, exerciseId: str
   if (!r.ok) return { code: r.code, html: r.html };
   const dose = tierDose(r.exercise, r.tier);
   const values = emptyLogValues(dose?.sets ?? 1, r.exercise.metrics);
-  return { code: 200, html: logFormPage(r.athlete, logContext(athleteId, r.day, r.exercise, r.tier), values, {}) };
+  const ctx = logContext(athleteId, r.day, r.exercise, r.tier, await priorsFor(athleteId, r.exercise));
+  return { code: 200, html: logFormPage(r.athlete, ctx, values, {}) };
 }
 
 async function handleLogNew(athleteId: string, dayStr: string, exerciseId: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
   const r = await resolveLogTarget(athleteId, dayStr, exerciseId);
   if (!r.ok) return sendHtml(res, r.code, r.html);
 
-  const ctx = logContext(athleteId, r.day, r.exercise, r.tier);
   const values = logValuesFromParams(params, r.exercise.metrics);
   const { sets, errors } = validateLogForm(r.exercise.metrics, values);
-  if (!sets) return sendHtml(res, 400, logFormPage(r.athlete, ctx, values, errors));
+  if (!sets) {
+    const ctx = logContext(athleteId, r.day, r.exercise, r.tier, await priorsFor(athleteId, r.exercise));
+    return sendHtml(res, 400, logFormPage(r.athlete, ctx, values, errors));
+  }
 
   // Snapshot the prescription as it is NOW, so a later dose edit can't rewrite this history.
   const dose = tierDose(r.exercise, r.tier);

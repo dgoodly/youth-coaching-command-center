@@ -252,6 +252,27 @@ const CSS = `
   .setremove { align-self: flex-end; padding: 8px 10px; font-size: 11px; }
   .setrow .fieldErr { flex-basis: 100%; }
 
+  /* — Progress & PRs (Phase D) — */
+  .prog-ex { padding: 12px 0; border-bottom: 1px solid var(--cc-border-faint); }
+  .prog-ex:first-child { padding-top: 0; }
+  .prog-ex:last-child { border-bottom: 0; padding-bottom: 0; }
+  .prog-ex-head { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; }
+  .prog-ex-head b { font: 600 14px/1.2 var(--cc-font-body); }
+  .prog-ex-head .sessions { font-size: 12px; color: var(--cc-muted); }
+  .prog-metric { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 3px 0; }
+  .prog-lab { font: 600 10px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
+    color: var(--cc-muted); min-width: 66px; }
+  .prog-pr { font-family: var(--cc-font-mono); font-size: 12px; color: var(--cc-ink); }
+  .prog-pr b { color: var(--cc-accent); }           /* the PR value — the one number that matters */
+  .prog-last { font-family: var(--cc-font-mono); font-size: 12px; color: var(--cc-muted); }
+  .spark { color: var(--cc-ink); flex: none; }
+  /* "Last time / PR" prompt inside the log form. */
+  .prior { display: flex; gap: 14px; flex-wrap: wrap; margin: 0 0 4px; font-size: 12px; }
+  .prior .prior-lab { font-weight: 600; color: var(--cc-muted); text-transform: uppercase;
+    letter-spacing: .05em; font-size: 10px; }
+  .prior .prior-val { font-family: var(--cc-font-mono); color: var(--cc-ink); }
+  .prior .prior-val b { color: var(--cc-accent); }
+
   /* — Buttons: primary is solid Gunmetal (accent stays reserved). One filled per screen. — */
   .btn { display: inline-block; background: var(--cc-ink); color: var(--cc-bg); border: 1px solid var(--cc-ink);
     padding: 9px 18px; border-radius: var(--cc-r-btn); font: 600 13px/1 var(--cc-font-body);
@@ -426,6 +447,28 @@ export function bar(pct: number, valueText: string, accent = false): string {
   const w = Math.max(0, Math.min(100, pct));
   return `<div class="bar"><span class="bar-track"><span class="bar-fill${accent ? ' accent' : ''}" style="width:${w}%"></span></span>`
     + `<span class="bar-val">${esc(valueText)}</span></div>`;
+}
+
+/**
+ * Inline sparkline (SVG polyline) of a value series over time — the per-exercise trend. Colour is
+ * `currentColor`, so the container decides the hue (kept on-system). Fewer than two points has no
+ * line to draw. `title` gives a non-visual readout (accessibility + hover).
+ */
+export function sparkline(values: number[], title = ''): string {
+  if (values.length < 2) return '<span class="muted">—</span>';
+  const w = 92, h = 22, pad = 3;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = pad + (i * (w - 2 * pad)) / (values.length - 1);
+    const y = h - pad - ((v - min) / range) * (h - 2 * pad); // higher value = higher on screen
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const [lx, ly] = pts[pts.length - 1]!.split(',');
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img"${title ? ` aria-label="${esc(title)}"` : ' aria-hidden="true"'}>`
+    + (title ? `<title>${esc(title)}</title>` : '')
+    + `<polyline points="${pts.join(' ')}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`
+    + `<circle cx="${lx}" cy="${ly}" r="2.2" fill="currentColor"/></svg>`;
 }
 
 // One block (warm-up / jump / lift / …) of an assembled session — its title + exercise items.

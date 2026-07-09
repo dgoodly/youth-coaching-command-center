@@ -15,6 +15,7 @@
 import type { AthleteProfile, Assessment, Scores, SplitChoice, TestScore, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, SPLIT_CHOICES, TIER_STAGE, isSplitChoice, isTier } from '../engine/types.ts';
 import { type Metric, metricById, validateSetValues } from '../engine/metrics.ts';
+import { type MetricProgress } from '../engine/progress.ts';
 import type { NewAthleteInput } from '../store/athletes.ts';
 import { type SplitSwitchMode } from '../store/blocks.ts';
 import { type FieldFormInput, nextAssessmentDate } from '../store/ingest.ts';
@@ -364,6 +365,20 @@ export interface LogFormContext {
   prescribedReps?: number | string;
   /** Resolved metric descriptors, in the exercise's declared order. */
   metrics: Metric[];
+  /** Prior progress per metric (last-session value + PR) — the target to beat. Optional. */
+  priors?: MetricProgress[];
+}
+
+/** "Last time / PR" prompt from prior logs — the target to beat. Empty on a first-ever log. */
+function priorPrompt(priors: MetricProgress[] | undefined): string {
+  const withData = (priors ?? []).filter((p) => p.best !== null);
+  if (withData.length === 0) return '';
+  const rows = withData.map((p) => {
+    const last = p.last !== null ? `<span class="prior-val">last ${esc(String(p.last))} ${esc(p.unit)}</span>` : '';
+    const pr = `<span class="prior-val">PR <b>${esc(String(p.best))} ${esc(p.unit)}</b></span>`;
+    return `<div class="prior"><span class="prior-lab">${esc(p.label)}</span>${last}${pr}</div>`;
+  }).join('');
+  return card('Last time · PR — the target to beat', rows);
 }
 
 /** Resolve an exercise's metric ids to descriptors, dropping any that don't resolve (defensive). */
@@ -482,6 +497,7 @@ export function logFormPage(athlete: AthleteProfile, ctx: LogFormContext, v: Log
     <p class="sub"><a href="${esc(back)}">← ${esc(athlete.displayName)}</a></p>
     <h1>Log — ${esc(ctx.exerciseName)}</h1>
     <p class="sub">Day ${esc(String(ctx.day))} · prescribed <b>${esc(ctx.targetText)}</b> · logging ${esc(metricList)}</p>
+    ${priorPrompt(ctx.priors)}
     ${errorBanner(Object.values(errors))}
     <form class="cc log-form" method="post" action="${esc(action)}">
       ${card('When', textField('date', 'Date', v.date, errors, { type: 'date' }))}
