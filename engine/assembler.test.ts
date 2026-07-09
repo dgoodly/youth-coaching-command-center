@@ -34,7 +34,7 @@ function makeExercise(over: Partial<Exercise> & { id: string }): Exercise {
     name: over.id, slot: 'jump', pattern: 'horizontal_jump', plane: 'sagittal',
     laterality: 'bilateral', min_tier: 'C', difficulty: 1, variation_family: 'fam',
     stick: false, valgus_relevant: false, equipment: ['none'], dose: { all: 'x' },
-    cue: '', progression_to: null, regression_to: null, notes: '', ...over,
+    metrics: [], cue: '', progression_to: null, regression_to: null, notes: '', ...over,
   };
 }
 
@@ -176,7 +176,7 @@ test('valgus watch prefers a stick option near the family floor (selectFill bran
   const base: Omit<Exercise, 'id' | 'name' | 'difficulty' | 'stick'> = {
     slot: 'jump', pattern: 'p', plane: 'sagittal', laterality: 'bilateral', min_tier: 'C',
     variation_family: 'tf', valgus_relevant: false, equipment: ['none'], dose: { all: 'x' },
-    cue: '', progression_to: null, regression_to: null, notes: '',
+    metrics: [], cue: '', progression_to: null, regression_to: null, notes: '',
   };
   const plain: Exercise = { ...base, id: 'x_plain', name: 'plain', difficulty: 2, stick: false };
   const stick: Exercise = { ...base, id: 'x_stick', name: 'stick', difficulty: 3, stick: true };

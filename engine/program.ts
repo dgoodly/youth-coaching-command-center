@@ -87,6 +87,13 @@ export interface Exercise {
   valgus_relevant: boolean;
   equipment: string[];
   dose: Dose;
+  /**
+   * Ordered metric ids this movement is LOGGED by (see engine/metrics.ts) — drives the per-set
+   * logging form and PR direction. `[]` for slots that are not individually logged (warm-up
+   * base, both funnels, cooldown, and motor-skill enrichment): a settled decision, not a missing
+   * tag. Every id must resolve in the metric catalog (validated in store/library.ts).
+   */
+  metrics: string[];
   cue: string;
   progression_to: string | null;
   regression_to: string | null;

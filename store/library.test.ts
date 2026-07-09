@@ -12,7 +12,17 @@ import { join } from 'node:path';
 
 import { loadLibrary, loadExercises, equipmentAvailable, byFamily, validate, loadPlans, loadDayTemplates, planForTier } from './library.ts';
 import { isAvailableAtTier, tierDose, isAllDose, SLOT_ORDER, type Exercise } from '../engine/program.ts';
+import { isMetricId } from '../engine/metrics.ts';
 import { TIERS } from '../engine/types.ts';
+
+/**
+ * Metric-tagging policy by slot (METRIC_TAGGING_WORKSHEET.md). LIFT/SPRINT/JUMP/TRUNK log every
+ * member; warm-up/funnels/cooldown log none. `motor_skill` is MIXED — only the two med-ball throws
+ * are loggable (ball weight = `load`); throw-catch and locomotor drills are not.
+ */
+const LOGGED_SLOTS = new Set(['lift', 'sprint', 'jump', 'trunk']);
+const NON_LOGGED_SLOTS = new Set(['warmup_base', 'funnel_linear', 'funnel_cod', 'cooldown']);
+const LOGGABLE_MOTOR_SKILL = new Set(['m_rot_scoop_toss', 'm_rot_shuffle_throw']);
 
 const lib = await loadLibrary();
 const ex = lib.exercises;
@@ -23,7 +33,7 @@ function makeExercise(over: Partial<Exercise> & { id: string }): Exercise {
     name: over.id, slot: 'trunk', pattern: 'anti_extension', plane: 'sagittal',
     laterality: 'bilateral', min_tier: 'C', difficulty: 1, variation_family: 'fam',
     stick: false, valgus_relevant: false, equipment: ['none'], dose: { all: 'x' },
-    cue: '', progression_to: null, regression_to: null, notes: '', ...over,
+    metrics: [], cue: '', progression_to: null, regression_to: null, notes: '', ...over,
   };
 }
 
@@ -146,6 +156,60 @@ test('the shipped library has valid laterality and numeric dose values everywher
       }
     }
   }
+});
+
+test('validate rejects an unresolvable metric id, accepts [] and known ids (Phase A)', () => {
+  assert.throws(
+    () => validate([makeExercise({ id: 'x', metrics: ['distnace_cm'] })]),
+    /unknown metric "distnace_cm"/,
+    'a typo in a metric id fails loudly',
+  );
+  assert.throws(
+    () => validate([makeExercise({ id: 'x', metrics: 'load' as never })]),
+    /metrics must be an array/,
+    'a non-array metrics field fails',
+  );
+  assert.doesNotThrow(() => validate([makeExercise({ id: 'x', metrics: [] })]), 'empty is valid (non-logged)');
+  assert.doesNotThrow(() => validate([makeExercise({ id: 'x', metrics: ['load', 'reps'] })]), 'known ids pass');
+});
+
+test('shipped library: metric-tagging matches the per-slot policy, incl. mixed motor_skill (Phase A)', () => {
+  const bad: string[] = [];
+  for (const e of ex) {
+    const n = e.metrics.length;
+    if (LOGGED_SLOTS.has(e.slot)) {
+      if (n === 0) bad.push(`${e.id} (${e.slot}) has no metrics`);
+    } else if (NON_LOGGED_SLOTS.has(e.slot)) {
+      if (n > 0) bad.push(`${e.id} (${e.slot}) unexpectedly has metrics`);
+    } else if (e.slot === 'motor_skill') {
+      const shouldLog = LOGGABLE_MOTOR_SKILL.has(e.id);
+      if (shouldLog && n === 0) bad.push(`${e.id} (motor_skill) should be loggable but has none`);
+      if (!shouldLog && n > 0) bad.push(`${e.id} (motor_skill) should be non-logged but has metrics`);
+    } else {
+      bad.push(`${e.id} unknown slot ${e.slot}`);
+    }
+  }
+  assert.deepEqual(bad, [], bad.join('; '));
+});
+
+test('shipped library: the two loggable motor-skill throws log ball weight (load) (Phase A)', () => {
+  for (const id of LOGGABLE_MOTOR_SKILL) {
+    const e = ex.find((x) => x.id === id);
+    assert.ok(e, `${id} exists`);
+    assert.deepEqual(e!.metrics, ['load'], `${id} logs ball weight only`);
+  }
+  // Med-ball trunk moves log load too (weight, not reps) — worksheet decision.
+  for (const id of ['t_mb_slam', 't_mb_throw']) {
+    assert.deepEqual(ex.find((x) => x.id === id)!.metrics, ['load'], `${id} logs ball weight`);
+  }
+});
+
+test('shipped library: every referenced metric id resolves in the catalog (Phase A)', () => {
+  const unresolved: string[] = [];
+  for (const e of ex) {
+    for (const m of e.metrics) if (!isMetricId(m)) unresolved.push(`${e.id} → "${m}"`);
+  }
+  assert.deepEqual(unresolved, [], `unresolved metric ids: ${unresolved.join(', ')}`);
 });
 
 test('validate warns (does not throw) on a cross-family progression link', () => {

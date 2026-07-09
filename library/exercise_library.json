@@ -47,7 +47,8 @@
       "cue": "Step through, pull knee to chest",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_high_knee_run",
@@ -70,7 +71,8 @@
       "cue": "Pump arms, knees up, chest tall, soft steps",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_hurdler_walk",
@@ -93,7 +95,8 @@
       "cue": "Grab top of foot, push hips forward, pause",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_butt_kick_run",
@@ -116,7 +119,8 @@
       "cue": "Fire hamstrings, heel to glute, soft quick steps",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_figure4_walk",
@@ -139,7 +143,8 @@
       "cue": "Pull foot toward opposite hip, chest lifted",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_straight_leg_march",
@@ -162,7 +167,8 @@
       "cue": "Lift straight leg to opposite hand, abs lift",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_walking_lunge",
@@ -185,7 +191,8 @@
       "cue": "Drop back knee low, mobilize the hip",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_reverse_lunge",
@@ -208,7 +215,8 @@
       "cue": "Balance and control, no stutter-step",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_lateral_lunge",
@@ -231,7 +239,8 @@
       "cue": "Push hips back, sink into foot, drive up",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_waiters_bow",
@@ -254,7 +263,8 @@
       "cue": "Kick leg out, toes up, dive chest down",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_prisoner_squat",
@@ -277,7 +287,8 @@
       "cue": "Hands behind head, chest lifted, elbows wide",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_oh_toe_touch",
@@ -300,7 +311,8 @@
       "cue": "Reach overhead, sink hips back, touch opposite toe",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_fire_hydrant",
@@ -323,7 +335,8 @@
       "cue": "Lift knee to hip height, open the hip",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "wb_hip_circle",
@@ -346,7 +359,8 @@
       "cue": "Extend leg behind, keep knee lifted high",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Base layer — runs every session, does not rotate."
+      "notes": "Base layer — runs every session, does not rotate.",
+      "metrics": []
     },
     {
       "id": "fl_sl_foot_iso",
@@ -369,7 +383,8 @@
       "cue": "Absorb the ground quietly, minimal bounce",
       "progression_to": "fl_a_skip",
       "regression_to": null,
-      "notes": "Opens the linear funnel."
+      "notes": "Opens the linear funnel.",
+      "metrics": []
     },
     {
       "id": "fl_power_skip_height",
@@ -392,7 +407,8 @@
       "cue": "Punch the knee up, drive vertical, stay tall",
       "progression_to": "fl_power_b_skip",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "fl_horizontal_skip",
@@ -415,7 +431,8 @@
       "cue": "Push forward, cover ground",
       "progression_to": "fl_straight_leg_bound",
       "regression_to": "fl_power_skip_height",
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "fl_a_skip",
@@ -438,7 +455,8 @@
       "cue": "Tall torso, clean arms, foot lands under hip",
       "progression_to": "fl_b_skip",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "fl_b_skip",
@@ -461,7 +479,8 @@
       "cue": "Thigh ~90°, paw straight down, ankle flexed",
       "progression_to": "fl_power_b_skip",
       "regression_to": "fl_a_skip",
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "fl_power_b_skip",
@@ -484,7 +503,8 @@
       "cue": "More force through the down leg, bigger separation",
       "progression_to": null,
       "regression_to": "fl_b_skip",
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "fl_straight_leg_bound",
@@ -507,7 +527,8 @@
       "cue": "Long stride, soft knee, claw the ground back",
       "progression_to": null,
       "regression_to": "fl_horizontal_skip",
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "fc_bilat_shuffle",
@@ -530,7 +551,8 @@
       "cue": "Low stance, don't cross the feet",
       "progression_to": null,
       "regression_to": null,
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "fc_sl_lateral",
@@ -553,7 +575,8 @@
       "cue": "Balance on one leg, foot/ankle control",
       "progression_to": "fc_lateral_power_shuffle",
       "regression_to": "fc_bilat_shuffle",
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "fc_line_hops",
@@ -576,7 +599,8 @@
       "cue": "Quick foot contacts, light and reactive",
       "progression_to": "fc_lateral_power_shuffle",
       "regression_to": null,
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "fc_lateral_power_shuffle",
@@ -599,7 +623,8 @@
       "cue": "Sit into hips, push off OUTSIDE leg, wide + low",
       "progression_to": "fc_karaoke_power",
       "regression_to": "fc_bilat_shuffle",
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "fc_karaoke_power",
@@ -622,7 +647,8 @@
       "cue": "Big bounds, full range, rotate through hips",
       "progression_to": null,
       "regression_to": "fc_karaoke_speed",
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "fc_karaoke_speed",
@@ -645,7 +671,8 @@
       "cue": "Quick high knees, torso upright",
       "progression_to": "fc_karaoke_power",
       "regression_to": null,
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "fc_backward_run",
@@ -668,7 +695,8 @@
       "cue": "Kinesthetic awareness, quick controlled steps",
       "progression_to": null,
       "regression_to": null,
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "fc_backpedal",
@@ -691,7 +719,8 @@
       "cue": "Restore balance/symmetry, stay low",
       "progression_to": null,
       "regression_to": null,
-      "notes": "CoD funnel doubles as knee-tracking prep."
+      "notes": "CoD funnel doubles as knee-tracking prep.",
+      "metrics": []
     },
     {
       "id": "j_pogo_linear",
@@ -733,7 +762,10 @@
       "cue": "Stiff ankles, quick ground contact",
       "progression_to": "j_pogo_sl",
       "regression_to": null,
-      "notes": "Ground-up tendon prep; opens speed sessions."
+      "notes": "Ground-up tendon prep; opens speed sessions.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_pogo_lateral",
@@ -775,7 +807,10 @@
       "cue": "Quick, stiff, side to side",
       "progression_to": "j_pogo_sl",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_pogo_sl",
@@ -817,7 +852,10 @@
       "cue": "Stiff ankle, knee stacked over the toes",
       "progression_to": null,
       "regression_to": "j_pogo_linear",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_vertical_stick",
@@ -859,7 +897,11 @@
       "cue": "Extend everything, land quiet, knees out",
       "progression_to": "j_box_jump",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "height_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_box_jump",
@@ -901,7 +943,11 @@
       "cue": "Swing arms, soft landing, step down (don't jump down)",
       "progression_to": "j_sl_stick_box",
       "regression_to": "j_vertical_stick",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "height_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_seated_box",
@@ -943,7 +989,11 @@
       "cue": "From a dead stop — pure concentric power",
       "progression_to": "j_sl_stick_box",
       "regression_to": "j_box_jump",
-      "notes": "Removes stretch-shortening; teaches starting power."
+      "notes": "Removes stretch-shortening; teaches starting power.",
+      "metrics": [
+        "height_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_sl_stick_box",
@@ -985,7 +1035,11 @@
       "cue": "Stick silent, knee out over 2nd–3rd toe",
       "progression_to": null,
       "regression_to": "j_box_jump",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "height_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_broad_submax",
@@ -1027,7 +1081,11 @@
       "cue": "Warm the pattern, land soft, knees out",
       "progression_to": "j_broad_stick",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_broad_stick",
@@ -1069,7 +1127,11 @@
       "cue": "Jump far, land soft, knees out, freeze",
       "progression_to": "j_broad_consec",
       "regression_to": "j_broad_submax",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_mb_broad",
@@ -1111,7 +1173,11 @@
       "cue": "Drive the ball, jump out and up, stick the landing",
       "progression_to": "j_approach_broad",
       "regression_to": "j_broad_stick",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_broad_consec",
@@ -1153,7 +1219,11 @@
       "cue": "Reactive — minimal ground time between jumps",
       "progression_to": "j_approach_broad",
       "regression_to": "j_broad_stick",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_approach_broad",
@@ -1195,7 +1265,11 @@
       "cue": "Convert speed into the jump, explode on the plant, stick",
       "progression_to": null,
       "regression_to": "j_broad_consec",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_sl_hops_fwd",
@@ -1237,7 +1311,11 @@
       "cue": "Hop, stick, reset — knee out every landing",
       "progression_to": "j_bounds_consec",
       "regression_to": "j_hop_stick_fwd",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_sl_broad",
@@ -1279,7 +1357,11 @@
       "cue": "Single-leg distance, stick and own it",
       "progression_to": "j_sl_bounds_consec",
       "regression_to": "j_sl_hops_fwd",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_bounds_consec",
@@ -1321,7 +1403,10 @@
       "cue": "Big scissor, claw the ground behind you",
       "progression_to": "j_sl_bounds_consec",
       "regression_to": "j_sl_hops_fwd",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_sl_bounds_consec",
@@ -1363,7 +1448,10 @@
       "cue": "Same-leg repeated bounds — high force, controlled",
       "progression_to": "j_rle_sl_bound",
       "regression_to": "j_bounds_consec",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_rle_sl_bound",
@@ -1405,7 +1493,10 @@
       "cue": "Rear foot elevated start — max single-leg force",
       "progression_to": null,
       "regression_to": "j_sl_bounds_consec",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_skater_bound",
@@ -1447,7 +1538,11 @@
       "cue": "Push wide off the outside foot, stick and hold",
       "progression_to": "j_lateral_bound_stick",
       "regression_to": "j_lat_step_stick",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_lateral_bound_stick",
@@ -1489,7 +1584,11 @@
       "cue": "Push wide, stick and hold — no knee cave",
       "progression_to": "j_lat_hurdle_box",
       "regression_to": "j_skater_bound",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_lat_hurdle_consec",
@@ -1531,7 +1630,11 @@
       "cue": "Stay low, quick off the ground",
       "progression_to": "j_lat_hurdle_box",
       "regression_to": "j_lateral_bound_stick",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_lat_hurdle_box",
@@ -1574,7 +1677,11 @@
       "cue": "Quick sideways into one big lateral push",
       "progression_to": null,
       "regression_to": "j_lat_hurdle_consec",
-      "notes": "Contrast chain."
+      "notes": "Contrast chain.",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_90_rotational",
@@ -1616,7 +1723,11 @@
       "cue": "Turn in the air, land balanced and quiet",
       "progression_to": "j_sl_multidir",
       "regression_to": "j_quarter_turn_hop",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_sl_multidir",
@@ -1658,7 +1769,11 @@
       "cue": "Hop to each point, stick every landing, knee stacked",
       "progression_to": null,
       "regression_to": "j_90_rotational",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_hurdle_low",
@@ -1700,7 +1815,10 @@
       "cue": "Get off the ground fast, soft knees",
       "progression_to": "j_hurdle_consec",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_hurdle_consec",
@@ -1742,7 +1860,10 @@
       "cue": "No pause — minimize ground contact time",
       "progression_to": "j_hurdle_box",
       "regression_to": "j_hurdle_low",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_hurdle_box",
@@ -1785,7 +1906,10 @@
       "cue": "Low-quick hops into one big explosion",
       "progression_to": "j_sl_hurdle_consec",
       "regression_to": "j_hurdle_consec",
-      "notes": "Contrast chain."
+      "notes": "Contrast chain.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_sl_hurdle_consec",
@@ -1827,7 +1951,10 @@
       "cue": "Single-leg, quick off the ground, controlled knee",
       "progression_to": null,
       "regression_to": "j_hurdle_consec",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "j_depth_drop_hold",
@@ -1869,7 +1996,11 @@
       "cue": "Step off, land soft and silent, freeze 2s",
       "progression_to": "j_depth_to_hurdle",
       "regression_to": null,
-      "notes": "Teaches absorption before reactive depth work."
+      "notes": "Teaches absorption before reactive depth work.",
+      "metrics": [
+        "height_cm",
+        "contacts"
+      ]
     },
     {
       "id": "j_depth_to_hurdle",
@@ -1912,7 +2043,11 @@
       "cue": "Absorb soft, then attack the hurdles",
       "progression_to": "j_depth_to_sprint",
       "regression_to": "j_depth_drop_hold",
-      "notes": "Contrast chain, S-tier reserve."
+      "notes": "Contrast chain, S-tier reserve.",
+      "metrics": [
+        "height_cm",
+        "contacts"
+      ]
     },
     {
       "id": "j_depth_to_sprint",
@@ -1954,7 +2089,11 @@
       "cue": "Land, absorb, GO — instant transition to sprint",
       "progression_to": null,
       "regression_to": "j_depth_to_hurdle",
-      "notes": "Highest-demand reactive plyo; never downstream of other max plyo."
+      "notes": "Highest-demand reactive plyo; never downstream of other max plyo.",
+      "metrics": [
+        "height_cm",
+        "contacts"
+      ]
     },
     {
       "id": "s_falling_start",
@@ -1996,7 +2135,10 @@
       "cue": "Fall from the ankles, let gravity load the first step",
       "progression_to": "s_half_kneel_start",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_half_kneel_start",
@@ -2038,7 +2180,10 @@
       "cue": "Knee in line with toe, fire out flat and low like diving",
       "progression_to": "s_ground_start",
       "regression_to": "s_falling_start",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_ground_start",
@@ -2080,7 +2225,10 @@
       "cue": "Push the ground away, drive out hard",
       "progression_to": "s_3point_start",
       "regression_to": "s_half_kneel_start",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_3point_start",
@@ -2122,7 +2270,10 @@
       "cue": "Weight forward, aggressive low first step",
       "progression_to": null,
       "regression_to": "s_ground_start",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_resisted_heavy",
@@ -2164,7 +2315,10 @@
       "cue": "Effort drill — stay low, punch the ground back",
       "progression_to": "s_resisted_light",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_resisted_light",
@@ -2206,7 +2360,10 @@
       "cue": "Lighter load, longer push — stay aggressive",
       "progression_to": null,
       "regression_to": "s_resisted_heavy",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_shuffle_to_sprint",
@@ -2248,7 +2405,10 @@
       "cue": "Plant the outside foot, redirect, go",
       "progression_to": "s_pogo_to_sprint",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_pogo_to_sprint",
@@ -2290,7 +2450,10 @@
       "cue": "Stiff lateral pogos into an explosive redirect",
       "progression_to": null,
       "regression_to": "s_shuffle_to_sprint",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_buildup",
@@ -2332,7 +2495,10 @@
       "cue": "Smooth acceleration, tall finish",
       "progression_to": "s_flying_sprint",
       "regression_to": null,
-      "notes": "MAX-V family: never downstream of a heavy plyo block. Sub-maximal build-up (ramp to ~90%), kept short so it primes rather than drifting into flat-out speed-endurance."
+      "notes": "MAX-V family: never downstream of a heavy plyo block. Sub-maximal build-up (ramp to ~90%), kept short so it primes rather than drifting into flat-out speed-endurance.",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_flying_sprint",
@@ -2374,7 +2540,10 @@
       "cue": "Don't sprint the build-up — max effort through the fly zone, run tall",
       "progression_to": "s_flying_volume",
       "regression_to": "s_buildup",
-      "notes": "MAX-V family. ~20yd build into a ~20-25yd (≈10-30m) maximal fly zone — NOT a flat-out long run."
+      "notes": "MAX-V family. ~20yd build into a ~20-25yd (≈10-30m) maximal fly zone — NOT a flat-out long run.",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_flying_volume",
@@ -2416,7 +2585,10 @@
       "cue": "Same flying structure — max effort through the fly zone. The progression is MORE exposures, never a longer run",
       "progression_to": null,
       "regression_to": "s_flying_sprint",
-      "notes": "MAX-V family, top rung. Progresses s_flying_sprint by ADDING quality fly reps/exposures (ramp high-speed volume ~5%/week), NOT by extending flat-out distance — the deprecated 40-60yd 'sprint with intent' is intentionally gone (hamstring-risk / speed-endurance drift)."
+      "notes": "MAX-V family, top rung. Progresses s_flying_sprint by ADDING quality fly reps/exposures (ramp high-speed volume ~5%/week), NOT by extending flat-out distance — the deprecated 40-60yd 'sprint with intent' is intentionally gone (hamstring-risk / speed-endurance drift).",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_mirror_drill",
@@ -2458,7 +2630,10 @@
       "cue": "Read the hips, react — first step fast",
       "progression_to": "s_reactive_cuts",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_5105_shuttle",
@@ -2500,7 +2675,10 @@
       "cue": "Chop the feet, sit the hips, knee out on the plant",
       "progression_to": "s_reactive_cuts",
       "regression_to": "s_mirror_drill",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "s_reactive_cuts",
@@ -2542,7 +2720,10 @@
       "cue": "Don't guess — react. Sharp plant, knee out, explode out",
       "progression_to": null,
       "regression_to": "s_5105_shuttle",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "time_s"
+      ]
     },
     {
       "id": "l_bw_squat",
@@ -2584,7 +2765,10 @@
       "cue": "Chest up, sit between knees, knees track over toes",
       "progression_to": "l_box_squat",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_box_squat",
@@ -2626,7 +2810,10 @@
       "cue": "Push hips back, touch the box, drive up",
       "progression_to": "l_goblet_squat",
       "regression_to": "l_bw_squat",
-      "notes": "Use if knees shoot forward on the squat."
+      "notes": "Use if knees shoot forward on the squat.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_goblet_squat",
@@ -2669,7 +2856,11 @@
       "cue": "Front load = proud chest, knees track OUT",
       "progression_to": "l_front_squat",
       "regression_to": "l_box_squat",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "l_front_squat",
@@ -2711,7 +2902,11 @@
       "cue": "Upright torso, elbows high, controlled",
       "progression_to": null,
       "regression_to": "l_goblet_squat",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "l_split_squat",
@@ -2753,7 +2948,10 @@
       "cue": "Down the back knee, front knee tracks the toe",
       "progression_to": "l_decel_stepup",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_decel_stepup",
@@ -2795,7 +2993,10 @@
       "cue": "Pockets straight down, kiss the heel — own the eccentric",
       "progression_to": "l_rle_split_squat",
       "regression_to": "l_split_squat",
-      "notes": "Eccentric emphasis — control the lowering."
+      "notes": "Eccentric emphasis — control the lowering.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_rle_split_squat",
@@ -2838,7 +3039,11 @@
       "cue": "Rear foot elevated, vertical shin, knee tracks toe",
       "progression_to": "l_sl_squat_box",
       "regression_to": "l_decel_stepup",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "l_sl_squat_box",
@@ -2880,7 +3085,10 @@
       "cue": "Control all the way down to the box, knee tracks toe",
       "progression_to": "l_pistol",
       "regression_to": "l_rle_split_squat",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_pistol",
@@ -2922,7 +3130,10 @@
       "cue": "Full single-leg squat, controlled, knee over toe",
       "progression_to": null,
       "regression_to": "l_sl_squat_box",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_bw_hinge",
@@ -2964,7 +3175,10 @@
       "cue": "Push hips back, flat back, feel the hamstrings",
       "progression_to": "l_kb_rdl",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_kb_rdl",
@@ -3007,7 +3221,11 @@
       "cue": "Hips back, load close, flat back, drive to stand",
       "progression_to": "l_sl_rdl",
       "regression_to": "l_bw_hinge",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "l_sl_rdl",
@@ -3050,7 +3268,11 @@
       "cue": "Flat back, hips square, control the movement",
       "progression_to": "l_kb_swing",
       "regression_to": "l_kb_rdl",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "l_kb_swing",
@@ -3092,7 +3314,11 @@
       "cue": "Hips drive the swing — snap the hips, arms along for the ride",
       "progression_to": null,
       "regression_to": "l_sl_rdl",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "l_buddy_curl",
@@ -3134,7 +3360,10 @@
       "cue": "Control the way down — fight gravity the whole way",
       "progression_to": "l_nordic_full",
       "regression_to": "l_glute_bridge",
-      "notes": "Eccentric emphasis; start with the lowering only."
+      "notes": "Eccentric emphasis; start with the lowering only.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_nordic_full",
@@ -3176,7 +3405,10 @@
       "cue": "Lower fully under control, pull yourself back up",
       "progression_to": null,
       "regression_to": "l_buddy_curl",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_hr_pushup",
@@ -3218,7 +3450,10 @@
       "cue": "Elbows in, chest to floor, hands off at the bottom",
       "progression_to": "l_pushup_ecc",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_pushup_ecc",
@@ -3260,7 +3495,10 @@
       "cue": "Slow down-phase, controlled, full range",
       "progression_to": "l_db_press",
       "regression_to": "l_hr_pushup",
-      "notes": "Eccentric emphasis."
+      "notes": "Eccentric emphasis.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_db_press",
@@ -3303,7 +3541,11 @@
       "cue": "Smooth and controlled both directions",
       "progression_to": null,
       "regression_to": "l_pushup_ecc",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "l_pullup_volume",
@@ -3345,7 +3587,10 @@
       "cue": "Dead hang to chin-over. Chase monthly total reps",
       "progression_to": "l_pullup_iso",
       "regression_to": "l_band_row",
-      "notes": "Trained for volume; chase reps month over month."
+      "notes": "Trained for volume; chase reps month over month.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_pullup_iso",
@@ -3387,7 +3632,10 @@
       "cue": "Hold chin over the bar, then lower slow",
       "progression_to": null,
       "regression_to": "l_pullup_volume",
-      "notes": "ISO + eccentric emphasis."
+      "notes": "ISO + eccentric emphasis.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_lateral_lunge",
@@ -3429,7 +3677,10 @@
       "cue": "Push hips back, sink into the foot, knee tracks toe",
       "progression_to": "l_cossack",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_cossack",
@@ -3471,7 +3722,10 @@
       "cue": "Sit into one hip, other leg long, knee tracks the toe",
       "progression_to": null,
       "regression_to": "l_lateral_lunge",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_sled_march",
@@ -3513,7 +3767,11 @@
       "cue": "Biggest step possible, drive and step through",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "distance_cm"
+      ]
     },
     {
       "id": "l_sled_drag",
@@ -3555,7 +3813,11 @@
       "cue": "Sink the hips, lean back, pull",
       "progression_to": null,
       "regression_to": null,
-      "notes": "Backward drag is quad/knee-friendly — good for knee health."
+      "notes": "Backward drag is quad/knee-friendly — good for knee health.",
+      "metrics": [
+        "load",
+        "distance_cm"
+      ]
     },
     {
       "id": "l_farmer_carry",
@@ -3598,7 +3860,11 @@
       "cue": "Stand tall, don't lean, walk with purpose",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load",
+        "distance_cm"
+      ]
     },
     {
       "id": "l_wall_sit",
@@ -3640,7 +3906,10 @@
       "cue": "Thighs parallel, knees out, quiet and still",
       "progression_to": "l_rle_lunge_iso",
       "regression_to": null,
-      "notes": "Iso — low soreness cost, great for youth."
+      "notes": "Iso — low soreness cost, great for youth.",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "l_rle_lunge_iso",
@@ -3682,7 +3951,10 @@
       "cue": "Hold the bottom, knee tracks toe, own the position",
       "progression_to": null,
       "regression_to": "l_wall_sit",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "t_dead_bug",
@@ -3724,7 +3996,10 @@
       "cue": "Lower back glued to the floor",
       "progression_to": "t_hollow_hold",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "t_hollow_hold",
@@ -3766,7 +4041,10 @@
       "cue": "Lower back pressed flat, hold without shaking",
       "progression_to": null,
       "regression_to": "t_dead_bug",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "t_plank",
@@ -3808,7 +4086,10 @@
       "cue": "Straight line head to heels, breathe",
       "progression_to": "t_hollow_hold",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "t_plank_reach",
@@ -3850,7 +4131,10 @@
       "cue": "Reach without letting the hips rotate",
       "progression_to": null,
       "regression_to": "t_pallof",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "t_pallof",
@@ -3892,7 +4176,10 @@
       "cue": "Resist the twist — brace, don't bend",
       "progression_to": "t_tk_pallof",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "t_tk_pallof",
@@ -3934,7 +4221,10 @@
       "cue": "No leaning, brace hard, press straight out",
       "progression_to": null,
       "regression_to": "t_pallof",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "t_mb_throw",
@@ -3976,7 +4266,10 @@
       "cue": "Power from the hips, turn through the ball",
       "progression_to": "t_mb_slam",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load"
+      ]
     },
     {
       "id": "t_mb_slam",
@@ -4018,7 +4311,10 @@
       "cue": "Explosive — hips lead, finish through hard",
       "progression_to": null,
       "regression_to": "t_mb_throw",
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "load"
+      ]
     },
     {
       "id": "t_suitcase_carry",
@@ -4061,7 +4357,10 @@
       "cue": "One side loaded — don't let the torso tip",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "duration_s"
+      ]
     },
     {
       "id": "cd_quad",
@@ -4084,7 +4383,8 @@
       "cue": "Relax, decompress, breathe",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "cd_hamstring",
@@ -4107,7 +4407,8 @@
       "cue": "Relax, decompress, breathe",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "cd_hip_flexor",
@@ -4130,7 +4431,8 @@
       "cue": "Relax, decompress, breathe",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "cd_calf",
@@ -4153,7 +4455,8 @@
       "cue": "Relax, decompress, breathe",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "cd_tspine",
@@ -4176,7 +4479,8 @@
       "cue": "Relax, decompress, breathe",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "cd_childs_pose",
@@ -4199,7 +4503,8 @@
       "cue": "Relax, decompress, breathe",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "cd_breathing",
@@ -4222,7 +4527,8 @@
       "cue": "Relax, decompress, breathe",
       "progression_to": null,
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": []
     },
     {
       "id": "l_glute_bridge",
@@ -4264,7 +4570,10 @@
       "cue": "Squeeze the glutes, drive hips up, pause at the top",
       "progression_to": "l_buddy_curl",
       "regression_to": null,
-      "notes": "C-tier posterior-chain entry point for the hamstring family."
+      "notes": "C-tier posterior-chain entry point for the hamstring family.",
+      "metrics": [
+        "reps"
+      ]
     },
     {
       "id": "l_band_row",
@@ -4306,7 +4615,11 @@
       "cue": "Squeeze shoulder blades together, elbows tight to the ribs",
       "progression_to": "l_pullup_volume",
       "regression_to": null,
-      "notes": "C-tier pulling entry point — no pull-up-bar strength required yet."
+      "notes": "C-tier pulling entry point — no pull-up-bar strength required yet.",
+      "metrics": [
+        "load",
+        "reps"
+      ]
     },
     {
       "id": "j_hop_stick_fwd",
@@ -4348,7 +4661,11 @@
       "cue": "Two feet in, two feet out — jump forward, stick, freeze",
       "progression_to": "j_sl_hops_fwd",
       "regression_to": null,
-      "notes": "Bilateral bridge into the single-leg horizontal-jump family — primes the pattern before the SL gate."
+      "notes": "Bilateral bridge into the single-leg horizontal-jump family — primes the pattern before the SL gate.",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_lat_step_stick",
@@ -4390,7 +4707,11 @@
       "cue": "Step wide, land soft, knee stacked over foot",
       "progression_to": "j_skater_bound",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "id": "j_quarter_turn_hop",
@@ -4432,7 +4753,11 @@
       "cue": "Quarter turn in the air, land quiet, knees soft",
       "progression_to": "j_90_rotational",
       "regression_to": null,
-      "notes": ""
+      "notes": "",
+      "metrics": [
+        "distance_cm",
+        "reps"
+      ]
     },
     {
       "slot": "motor_skill",
@@ -4474,7 +4799,8 @@
       },
       "cue": "Soft hands, eyes to the ball, catch out in front",
       "progression_to": "m_reaction_catch",
-      "regression_to": null
+      "regression_to": null,
+      "metrics": []
     },
     {
       "slot": "motor_skill",
@@ -4516,7 +4842,8 @@
       },
       "cue": "React late on purpose — track, adjust, secure it",
       "progression_to": null,
-      "regression_to": "m_partner_toss"
+      "regression_to": "m_partner_toss",
+      "metrics": []
     },
     {
       "slot": "motor_skill",
@@ -4559,7 +4886,10 @@
       },
       "cue": "Wind from the hips, throw through the middle, not the arms",
       "progression_to": "m_rot_shuffle_throw",
-      "regression_to": null
+      "regression_to": null,
+      "metrics": [
+        "load"
+      ]
     },
     {
       "slot": "motor_skill",
@@ -4602,7 +4932,10 @@
       },
       "cue": "Move, plant, then rotate and throw — sequence from the ground up",
       "progression_to": null,
-      "regression_to": "m_rot_scoop_toss"
+      "regression_to": "m_rot_scoop_toss",
+      "metrics": [
+        "load"
+      ]
     },
     {
       "slot": "motor_skill",
@@ -4644,7 +4977,8 @@
       },
       "cue": "Flat back, knees under hips, opposite hand/foot — stay quiet",
       "progression_to": "m_crawl_complex",
-      "regression_to": null
+      "regression_to": null,
+      "metrics": []
     },
     {
       "slot": "motor_skill",
@@ -4686,7 +5020,8 @@
       },
       "cue": "Flow between patterns, change direction on your own cue, control it",
       "progression_to": null,
-      "regression_to": "m_bear_crawl"
+      "regression_to": "m_bear_crawl",
+      "metrics": []
     }
   ]
 }

@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { Exercise, Library, Slot, DayTemplate, WorkoutPlan } from '../engine/program.ts';
 import { SLOT_ORDER, isAllDose } from '../engine/program.ts';
+import { isMetricId } from '../engine/metrics.ts';
 import { isTier, type Tier } from '../engine/types.ts';
 
 // Re-exported so store consumers keep a single import surface; the implementation now lives in
@@ -94,6 +95,15 @@ export function validate(exercises: Exercise[]): void {
       }
     }
     if (!Array.isArray(e.equipment)) throw new Error(`library: "${e.id}" equipment must be an array.`);
+    // Metrics: same loud-fail discipline as progression links — every referenced metric id must
+    // resolve in the catalog (a typo like `distnace_cm` would otherwise render a broken log form
+    // and silently drop the value). `[]` is valid — it declares a non-logged slot.
+    if (!Array.isArray(e.metrics)) {
+      throw new Error(`library: "${e.id}" metrics must be an array (use [] for non-logged slots).`);
+    }
+    for (const m of e.metrics) {
+      if (!isMetricId(m)) throw new Error(`library: "${e.id}" references unknown metric "${m}".`);
+    }
   }
   // Progression / regression links must resolve to real ids.
   const byId = new Map(exercises.map((e) => [e.id, e]));
