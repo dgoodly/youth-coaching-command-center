@@ -29,7 +29,7 @@ import {
 import {
   loadExercises, loadDayTemplates, loadAvailableEquipment,
 } from '../store/library.ts';
-import { tierDose, doseLabel, type Exercise } from '../engine/program.ts';
+import { tierDose, doseLabel, isAvailableAtTier, type Exercise } from '../engine/program.ts';
 import { assembleSession } from '../engine/assembler.ts';
 import { computeExerciseProgress, type ExerciseProgress, type MetricProgress } from '../engine/progress.ts';
 import {
@@ -190,9 +190,9 @@ function progressCardBody(setEntries: SetLogEntry[], exercises: Exercise[]): str
  * the split (coach's per-athlete choice); the tier still governs the content/dose inside each day.
  * A compact split-switch form sits above the tabs.
  */
-async function planSection(athleteId: string, tier: Tier | null, valgusWatch: boolean): Promise<string> {
-  const [exercises, templates, equipment, block] = await Promise.all([
-    loadExercises(), loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId),
+async function planSection(athleteId: string, tier: Tier | null, valgusWatch: boolean, exercises: Exercise[]): Promise<string> {
+  const [templates, equipment, block] = await Promise.all([
+    loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId),
   ]);
   const split = splitOf(block);
   const switchForm = splitSwitchForm(athleteId, split);
@@ -343,7 +343,7 @@ async function athletePage(id: string): Promise<string> {
     : `<p class="muted">${esc(maturity.note)}</p>`;
 
   const tier = await currentTierOf(id);
-  const planHtml = await planSection(id, tier, a.valgusWatch);
+  const planHtml = await planSection(id, tier, a.valgusWatch, exerciseLib);
 
   // At-a-glance summary strip — the three axes kept visually distinct (tier ramp vs Midnight Green).
   const maturityBand = maturity.phvBand ? `${maturity.phvBand.toUpperCase()}-PHV` : null;
@@ -598,6 +598,13 @@ async function resolveLogTarget(
   const exercise = (await loadExercises()).find((e) => e.id === exerciseId);
   if (!exercise) return { ok: false, code: 404, html: notFoundPage() };
   if (exercise.metrics.length === 0) return { ok: false, code: 400, html: logGuardPage(athleteId, 'Not a logged movement', `${exercise.name} isn’t individually logged (warm-up / funnel / cooldown / motor-skill).`) };
+  // Gate at the FORM layer with the same rule the assembler uses (min_tier + the 0-set "not
+  // prescribed at this tier" convention). The Log link only appears on assembled — hence available —
+  // exercises, but a stale/hand-built URL (e.g. after the athlete re-tiers down) must not let a
+  // movement that isn't prescribed at this tier be logged. Mirror `isAvailableAtTier`, don't re-check.
+  if (!isAvailableAtTier(exercise, tier)) {
+    return { ok: false, code: 400, html: logGuardPage(athleteId, 'Not prescribed at this tier', `${exercise.name} isn’t in tier ${tier}’s program, so there’s no target to log against.`) };
+  }
   return { ok: true, athlete, day, exercise, tier };
 }
 
