@@ -1,0 +1,90 @@
+[
+  {
+    "assessmentId": "e5217599-3e8a-4e84-b65f-02e2d2ce358a",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "date": "2026-06-15",
+    "tester": "Parent",
+    "scores": {
+      "squat": 2,
+      "dropStick": 3,
+      "balance": 3,
+      "pushup": 2,
+      "broad": 2,
+      "pogo": 3
+    },
+    "rawTotal": 15,
+    "baseTier": "A",
+    "finalTier": "A",
+    "gateFired": "none",
+    "coachGutCall": "A",
+    "heightCm": 152,
+    "videoRefs": [],
+    "notes": "First assessment."
+  },
+  {
+    "assessmentId": "d37a8c6b-e98d-4127-afe4-520ccbd913a6",
+    "athleteId": "48337e41-a056-4572-bb1b-8bd67554b733",
+    "date": "2026-06-20",
+    "tester": "Parent",
+    "scores": {
+      "squat": 1,
+      "dropStick": 2,
+      "balance": 1,
+      "pushup": 1,
+      "broad": 1,
+      "pogo": 2
+    },
+    "rawTotal": 8,
+    "baseTier": "B",
+    "finalTier": "C",
+    "gateFired": "capC",
+    "coachGutCall": "B",
+    "heightCm": 140,
+    "videoRefs": [],
+    "notes": "First assessment."
+  },
+  {
+    "assessmentId": "bf6b2ca1-7dd9-4c61-baab-4b28f8b96c50",
+    "athleteId": "6f0ab098-e4e3-4fa0-ba87-f1fb386d679d",
+    "date": "2026-06-01",
+    "tester": "Parent",
+    "scores": {
+      "squat": 2,
+      "dropStick": 2,
+      "balance": 2,
+      "pushup": 2,
+      "broad": 2,
+      "pogo": 2
+    },
+    "rawTotal": 12,
+    "baseTier": "B",
+    "finalTier": "B",
+    "gateFired": "none",
+    "coachGutCall": "B",
+    "heightCm": 162,
+    "videoRefs": [],
+    "notes": "Maturity-monitoring demo."
+  },
+  {
+    "assessmentId": "d2640d91-2973-406e-b862-3346ad18b487",
+    "athleteId": "f92a6509-a1a7-43ec-a68a-58b9852c9937",
+    "date": "2026-06-01",
+    "tester": "Parent",
+    "scores": {
+      "squat": 2,
+      "dropStick": 3,
+      "balance": 2,
+      "pushup": 2,
+      "broad": 2,
+      "pogo": 2
+    },
+    "rawTotal": 13,
+    "baseTier": "A",
+    "finalTier": "A",
+    "gateFired": "none",
+    "coachGutCall": "B",
+    "heightCm": 150,
+    "videoRefs": [],
+    "notes": ""
+  }
+]

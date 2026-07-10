@@ -1,0 +1,61 @@
+[
+  {
+    "athleteId": "6f0ab098-e4e3-4fa0-ba87-f1fb386d679d",
+    "blockStartDate": "2026-07-06",
+    "blockIndex": 0,
+    "slotVariants": {
+      "1:jump:0": "j_pogo_linear",
+      "1:jump:1": "j_vertical_stick",
+      "1:sprint:0": "s_buildup",
+      "1:lift:0": "l_box_squat",
+      "1:lift:1": "l_split_squat",
+      "1:lift:2": "l_buddy_curl",
+      "1:lift:3": "l_lateral_lunge",
+      "1:trunk:0": "t_pallof",
+      "1:motor_skill:0": "m_reaction_catch",
+      "2:jump:0": "j_pogo_linear",
+      "2:jump:1": "j_hurdle_low",
+      "2:jump:2": "j_sl_hops_fwd",
+      "2:jump:3": "j_skater_bound",
+      "2:sprint:0": "s_falling_start",
+      "2:sprint:1": "s_resisted_heavy",
+      "2:lift:0": "l_pullup_volume",
+      "2:lift:1": "l_hr_pushup",
+      "2:trunk:0": "t_mb_throw",
+      "2:motor_skill:0": "m_crawl_complex"
+    }
+  },
+  {
+    "athleteId": "f92a6509-a1a7-43ec-a68a-58b9852c9937",
+    "blockStartDate": "2026-07-06",
+    "blockIndex": 0,
+    "slotVariants": {
+      "4:jump:0": "j_pogo_sl",
+      "4:jump:1": "j_skater_bound",
+      "4:jump:2": "j_90_rotational",
+      "4:sprint:0": "s_5105_shuttle",
+      "4:lift:0": "l_decel_stepup",
+      "4:lift:1": "l_hr_pushup",
+      "4:lift:2": "l_pullup_volume",
+      "4:lift:3": "l_wall_sit",
+      "4:trunk:0": "t_mb_slam",
+      "4:motor_skill:0": "m_partner_toss",
+      "4:motor_skill:1": "m_rot_scoop_toss",
+      "4:motor_skill:2": "m_bear_crawl"
+    }
+  },
+  {
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "blockStartDate": "2026-07-08",
+    "blockIndex": 0,
+    "slotVariants": {},
+    "activeSplit": "2day"
+  },
+  {
+    "athleteId": "48337e41-a056-4572-bb1b-8bd67554b733",
+    "blockStartDate": "2026-07-09",
+    "blockIndex": 0,
+    "slotVariants": {},
+    "activeSplit": "2day"
+  }
+]

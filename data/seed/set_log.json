@@ -1,0 +1,251 @@
+[
+  {
+    "setLogId": "ac2db231-f145-49e7-9a67-1d063e5bdf8c",
+    "workoutId": "c077fece-0593-450c-9e57-d576a0817aa6",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 1,
+    "values": {
+      "load": 55,
+      "reps": 6
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-06-18T17:30:00.000Z"
+  },
+  {
+    "setLogId": "d3474bfb-d32f-4c88-aa00-4dee19dbe0e1",
+    "workoutId": "c077fece-0593-450c-9e57-d576a0817aa6",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 2,
+    "values": {
+      "load": 55,
+      "reps": 6
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-06-18T17:30:00.000Z"
+  },
+  {
+    "setLogId": "08630bc5-5d98-4c86-ae1b-5caf4642335e",
+    "workoutId": "c077fece-0593-450c-9e57-d576a0817aa6",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 3,
+    "values": {
+      "load": 57.5,
+      "reps": 5
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-06-18T17:30:00.000Z"
+  },
+  {
+    "setLogId": "d5513472-5035-4a54-a1ae-6b5fa5938995",
+    "workoutId": "c077fece-0593-450c-9e57-d576a0817aa6",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "s_flying_sprint",
+    "setIndex": 1,
+    "values": {
+      "time_s": 2.62
+    },
+    "prescribed": {
+      "sets": 5,
+      "reps": "15/20",
+      "rest_sec": 180
+    },
+    "loggedAt": "2026-06-18T17:30:00.000Z"
+  },
+  {
+    "setLogId": "8c4d91e1-fb63-44cb-bc92-d8bb066b0796",
+    "workoutId": "c077fece-0593-450c-9e57-d576a0817aa6",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "s_flying_sprint",
+    "setIndex": 2,
+    "values": {
+      "time_s": 2.6
+    },
+    "prescribed": {
+      "sets": 5,
+      "reps": "15/20",
+      "rest_sec": 180
+    },
+    "loggedAt": "2026-06-18T17:30:00.000Z"
+  },
+  {
+    "setLogId": "cdf8541b-d59c-4748-a31c-23e09e03b2aa",
+    "workoutId": "bdbd89fd-3706-41ec-84fc-a802bc24e199",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 1,
+    "values": {
+      "load": 57.5,
+      "reps": 6
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-07-02T17:30:00.000Z"
+  },
+  {
+    "setLogId": "ca9b99a2-0aa6-4600-871e-6938bd78dcb5",
+    "workoutId": "bdbd89fd-3706-41ec-84fc-a802bc24e199",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 2,
+    "values": {
+      "load": 60,
+      "reps": 6
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-07-02T17:30:00.000Z"
+  },
+  {
+    "setLogId": "5f715c35-37b3-42d7-8a18-c876c8ed8944",
+    "workoutId": "bdbd89fd-3706-41ec-84fc-a802bc24e199",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 3,
+    "values": {
+      "load": 60,
+      "reps": 5
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-07-02T17:30:00.000Z"
+  },
+  {
+    "setLogId": "caa74d7a-9c41-4d6a-8b2d-8a597316ac55",
+    "workoutId": "bdbd89fd-3706-41ec-84fc-a802bc24e199",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "s_flying_sprint",
+    "setIndex": 1,
+    "values": {
+      "time_s": 2.55
+    },
+    "prescribed": {
+      "sets": 5,
+      "reps": "15/20",
+      "rest_sec": 180
+    },
+    "loggedAt": "2026-07-02T17:30:00.000Z"
+  },
+  {
+    "setLogId": "0c8f5272-9209-46c8-8ac2-cbe6080a8039",
+    "workoutId": "bdbd89fd-3706-41ec-84fc-a802bc24e199",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "s_flying_sprint",
+    "setIndex": 2,
+    "values": {
+      "time_s": 2.52
+    },
+    "prescribed": {
+      "sets": 5,
+      "reps": "15/20",
+      "rest_sec": 180
+    },
+    "loggedAt": "2026-07-02T17:30:00.000Z"
+  },
+  {
+    "setLogId": "bbd71738-eebf-47cc-a2e2-f124abbe087c",
+    "workoutId": "26ddcafa-bc28-4308-bc3f-92002f1828bf",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 1,
+    "values": {
+      "load": 60,
+      "reps": 6
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-07-09T17:30:00.000Z"
+  },
+  {
+    "setLogId": "486e2d4a-efb6-4256-adb1-193397d714c4",
+    "workoutId": "26ddcafa-bc28-4308-bc3f-92002f1828bf",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 2,
+    "values": {
+      "load": 62.5,
+      "reps": 6
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-07-09T17:30:00.000Z"
+  },
+  {
+    "setLogId": "e7f18578-83f8-46e9-919c-cfb5c580543b",
+    "workoutId": "26ddcafa-bc28-4308-bc3f-92002f1828bf",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "l_front_squat",
+    "setIndex": 3,
+    "values": {
+      "load": 62.5,
+      "reps": 4
+    },
+    "prescribed": {
+      "sets": 3,
+      "reps": 6,
+      "rest_sec": 90
+    },
+    "loggedAt": "2026-07-09T17:30:00.000Z"
+  },
+  {
+    "setLogId": "5ce05db3-ca87-463d-b339-7f18bbf4cacd",
+    "workoutId": "26ddcafa-bc28-4308-bc3f-92002f1828bf",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "s_flying_sprint",
+    "setIndex": 1,
+    "values": {
+      "time_s": 2.5
+    },
+    "prescribed": {
+      "sets": 5,
+      "reps": "15/20",
+      "rest_sec": 180
+    },
+    "loggedAt": "2026-07-09T17:30:00.000Z"
+  },
+  {
+    "setLogId": "3e1fc25a-7faa-48f7-a4c5-76cd370b4457",
+    "workoutId": "26ddcafa-bc28-4308-bc3f-92002f1828bf",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "exerciseId": "s_flying_sprint",
+    "setIndex": 2,
+    "values": {
+      "time_s": 2.48
+    },
+    "prescribed": {
+      "sets": 5,
+      "reps": "15/20",
+      "rest_sec": 180
+    },
+    "loggedAt": "2026-07-09T17:30:00.000Z"
+  }
+]

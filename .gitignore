@@ -3,6 +3,8 @@ node_modules/
 .DS_Store
 
 # Local athlete data is private — never commit real roster/assessment data.
-# Seed/sample data lives under /data/samples and IS tracked (see below).
+# Only the working files in the data/ ROOT are ignored (this pattern doesn't match subfolders),
+# so committed SAMPLE data under data/seed/ and data/samples/ stays tracked on purpose
+# (data/seed is applied by `npm run seed`). Never put real roster data in those folders.
 /data/*.json
 !/data/.gitkeep

@@ -21,6 +21,25 @@ core (data model, scoring engine, program assembler) clean; the dashboard can be
 Local files only (JSON or SQLite); a few dozen athletes max. See the brief for the full
 phased sequence and the explicit "do not build yet" list.
 
+## Running it
+Requires Node ≥ 22 (uses native TypeScript execution — no build step).
+
+```sh
+npm install
+npm run seed        # populate the store with sample (non-real) data — see below
+npm run dashboard   # serve the coach dashboard at http://localhost:5173
+```
+
+Other scripts: `npm test` · `npm run typecheck` · `npm run enter` (assessment) ·
+`npm run session` (build a session) · `npm run wellness` · `npm run doctor` (data integrity).
+
+### Sample data
+Real athlete data lives in `data/*.json` and is **gitignored — it is never committed**. A
+committed sample set lives in `data/seed/`; `npm run seed` copies it into the working store so a
+fresh clone comes up populated (a small roster across tiers, assessments, height/maturity history,
+and a few logged sessions with PRs and trends). It refuses to overwrite an existing store unless
+you pass `-- --force`. The seed is entirely fictional — do not put real roster data in `data/seed/`.
+
 ## Recommended additions as you go
 - **`FEATURE_IDEAS.md`** — append to it whenever you (the coach) wish the dashboard did
   something. These become validated feature requests for the future app.

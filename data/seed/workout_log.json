@@ -1,0 +1,29 @@
+[
+  {
+    "workoutId": "c077fece-0593-450c-9e57-d576a0817aa6",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "date": "2026-06-18",
+    "servedForTier": "A",
+    "sessionLabel": "Day 1",
+    "completed": true,
+    "coachNotes": ""
+  },
+  {
+    "workoutId": "bdbd89fd-3706-41ec-84fc-a802bc24e199",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "date": "2026-07-02",
+    "servedForTier": "A",
+    "sessionLabel": "Day 1",
+    "completed": true,
+    "coachNotes": ""
+  },
+  {
+    "workoutId": "26ddcafa-bc28-4308-bc3f-92002f1828bf",
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "date": "2026-07-09",
+    "servedForTier": "A",
+    "sessionLabel": "Day 1",
+    "completed": false,
+    "coachNotes": ""
+  }
+]

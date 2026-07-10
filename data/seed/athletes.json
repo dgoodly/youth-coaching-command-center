@@ -1,0 +1,51 @@
+[
+  {
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "displayName": "Jordan Ellis",
+    "dob": null,
+    "sports": [],
+    "trainingMonths": 0,
+    "valgusWatch": false,
+    "createdAt": "2026-07-02T01:38:29.423Z",
+    "notes": ""
+  },
+  {
+    "athleteId": "48337e41-a056-4572-bb1b-8bd67554b733",
+    "displayName": "Casey Nguyen",
+    "dob": null,
+    "sports": [],
+    "trainingMonths": 0,
+    "valgusWatch": false,
+    "createdAt": "2026-07-02T01:38:36.833Z",
+    "notes": "",
+    "sex": null,
+    "weeklySportHours": null,
+    "weeklyTrainingHours": null,
+    "restDaysPerWeek": null
+  },
+  {
+    "athleteId": "6f0ab098-e4e3-4fa0-ba87-f1fb386d679d",
+    "displayName": "Sam Rivera",
+    "dob": "2013-03-01",
+    "sex": "M",
+    "sports": [],
+    "trainingMonths": 0,
+    "valgusWatch": false,
+    "createdAt": "2026-07-04T18:57:47.843Z",
+    "notes": ""
+  },
+  {
+    "athleteId": "f92a6509-a1a7-43ec-a68a-58b9852c9937",
+    "displayName": "Alex Park",
+    "dob": "2015-04-01",
+    "sex": "F",
+    "sports": [],
+    "trainingMonths": 0,
+    "valgusWatch": false,
+    "weeklySportHours": 18,
+    "weeklyTrainingHours": 4,
+    "restDaysPerWeek": 0,
+    "createdAt": "2026-07-04T19:12:15.697Z",
+    "notes": ""
+  }
+]

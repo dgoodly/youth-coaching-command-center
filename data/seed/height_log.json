@@ -1,0 +1,27 @@
+[
+  {
+    "athleteId": "a2732bc5-13c7-42f1-99bb-f068142fcd87",
+    "date": "2026-06-15",
+    "heightCm": 152,
+    "source": "assessment"
+  },
+  {
+    "athleteId": "48337e41-a056-4572-bb1b-8bd67554b733",
+    "date": "2026-06-20",
+    "heightCm": 140,
+    "source": "assessment"
+  },
+  {
+    "athleteId": "6f0ab098-e4e3-4fa0-ba87-f1fb386d679d",
+    "date": "2026-06-01",
+    "heightCm": 162,
+    "sittingHeightCm": 84,
+    "source": "assessment"
+  },
+  {
+    "athleteId": "f92a6509-a1a7-43ec-a68a-58b9852c9937",
+    "date": "2026-06-01",
+    "heightCm": 150,
+    "source": "assessment"
+  }
+]
