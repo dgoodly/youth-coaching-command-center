@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { splitOf, splitDays, switchSplit, SPLIT_DAYS } from './blocks.ts';
+import { splitOf, splitDays, switchSplit, SPLIT_DAYS, nextDayInSplit } from './blocks.ts';
 import type { BlockState } from '../engine/types.ts';
 
 function mkBlock(over: Partial<BlockState> = {}): BlockState {
@@ -56,4 +56,20 @@ test('switchSplit does not mutate the input state', () => {
   const snapshot = JSON.parse(JSON.stringify(before));
   switchSplit(before, '2day', 'fresh', new Date('2026-07-07T00:00:00Z'));
   assert.deepEqual(before, snapshot, 'input unchanged (pure)');
+});
+
+test('nextDayInSplit advances to the next authored day and wraps at the end', () => {
+  assert.equal(nextDayInSplit(1, [1, 2, 3, 4]), 2);
+  assert.equal(nextDayInSplit(3, [1, 2, 3, 4]), 4);
+  assert.equal(nextDayInSplit(4, [1, 2, 3, 4]), 1, 'wraps past the last day');
+  assert.equal(nextDayInSplit(2, [1, 2]), 1, '2-day split wraps 2 -> 1');
+  assert.equal(nextDayInSplit(2, [1, 2, 4]), 4, '3-day split skips the unrun day 3');
+  assert.equal(nextDayInSplit(4, [1, 2, 4]), 1, '3-day split wraps 4 -> 1');
+});
+
+test('nextDayInSplit clamps a day the current split no longer runs', () => {
+  // Split shrank 4day -> 2day under a session last on day 4: no day > 4, so wrap to 1.
+  assert.equal(nextDayInSplit(4, [1, 2]), 1);
+  // Split is 3day [1,2,4]; a stale day-3 session clamps forward to the next real day, 4.
+  assert.equal(nextDayInSplit(3, [1, 2, 4]), 4);
 });

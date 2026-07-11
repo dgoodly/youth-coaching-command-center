@@ -55,6 +55,19 @@ export function splitDays(state: BlockState | null | undefined): number[] {
 }
 
 /**
+ * The next day to run after `lastDay`, within `days` (a split's ascending day list), wrapping at
+ * the end. This doubles as the CLAMP for a split change: it returns the first authored day strictly
+ * greater than `lastDay`, or wraps to the first day when none is greater — so a `lastDay` the
+ * current split no longer runs (e.g. day 4 after a 4→2-day switch, or the dropped day 3 of a 3-day
+ * split) still resolves to a valid day instead of one that doesn't exist. `days` is assumed
+ * non-empty and ascending, which every `SPLIT_DAYS` entry is. Pure — the track screen's default-day
+ * arithmetic (PHASE_PLAN_track_workout_screen.md Step 3).
+ */
+export function nextDayInSplit(lastDay: number, days: number[]): number {
+  return days.find((d) => d > lastDay) ?? days[0]!;
+}
+
+/**
  * Apply a split switch to block state (pure). `mode` decides what happens to rotation:
  *  - `fresh` → start a new block: reset `blockIndex` to 0 and the start date to now, and clear
  *    `slotVariants` so the new split re-selects every variant from scratch.

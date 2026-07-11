@@ -20,7 +20,7 @@ import type { NewSetLog } from './setlog.ts';
 const dir = await mkdtemp(join(tmpdir(), 'cc-setlog-'));
 process.env.CC_DATA_DIR = dir;
 const { writeCollection, readCollection } = await import('./json-store.ts');
-const { saveSetLog, toSetLogEntry } = await import('./setlog.ts');
+const { saveSetLog, toSetLogEntry, upsertSet, removeSet } = await import('./setlog.ts');
 const { setLogFor, setLogForExercise, setLogForWorkout } = await import('./query.ts');
 
 after(async () => {
@@ -86,6 +86,43 @@ test('setLogForWorkout groups a session\'s sets by exercise, in set order', asyn
   assert.deepEqual([...byExercise.keys()], ['l_goblet_squat', 'j_broad_stick'], 'first-seen exercise order');
   assert.deepEqual(byExercise.get('l_goblet_squat')!.map((s) => s.setIndex), [1, 2], 'squat sets ordered');
   assert.equal(byExercise.get('j_broad_stick')!.length, 1);
+});
+
+test('upsertSet creates a set when none exists at that identity', async () => {
+  const saved = await upsertSet(set({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 1, values: { load: 40, reps: 5 } }));
+  assert.ok(saved.setLogId, 'generated an id');
+  const all = await readCollection('set_log');
+  assert.equal(all.length, 1);
+  assert.deepEqual(all[0]!.values, { load: 40, reps: 5 });
+});
+
+test('upsertSet REPLACES a set at the same (workout, exercise, setIndex) — no duplicate', async () => {
+  const first = await upsertSet(set({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 1, values: { load: 40, reps: 5 } }));
+  const second = await upsertSet(set({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 1, values: { load: 45, reps: 5 } }));
+  const all = await readCollection('set_log');
+  assert.equal(all.length, 1, 're-saving the same set does not append a duplicate');
+  assert.deepEqual(all[0]!.values, { load: 45, reps: 5 }, 'actuals replaced');
+  assert.equal(second.setLogId, first.setLogId, 'identity preserved across the replace');
+  assert.equal(second.loggedAt, first.loggedAt, 'original timestamp preserved — the set keeps its place in history');
+});
+
+test('upsertSet keys on identity: different setIndex / exercise / workout are distinct records', async () => {
+  await upsertSet(set({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 1, values: { load: 40, reps: 5 } }));
+  await upsertSet(set({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 2, values: { load: 40, reps: 5 } }));
+  await upsertSet(set({ workoutId: 'w1', exerciseId: 's_falling_start', setIndex: 1, values: { time_s: 2.4 } }));
+  await upsertSet(set({ workoutId: 'w2', exerciseId: 'l_goblet_squat', setIndex: 1, values: { load: 20, reps: 5 } }));
+  assert.equal((await readCollection('set_log')).length, 4);
+});
+
+test('removeSet deletes only the identified set and is idempotent for a never-logged row', async () => {
+  await upsertSet(set({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 1, values: { load: 40, reps: 5 } }));
+  await upsertSet(set({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 2, values: { load: 42, reps: 5 } }));
+  await removeSet({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 2 });
+  const all = await readCollection('set_log');
+  assert.deepEqual(all.map((s) => s.setIndex), [1], 'only set 2 removed');
+  // Removing a set that was never logged (an untouched pre-fill) writes nothing — the honest-log rule.
+  await removeSet({ workoutId: 'w1', exerciseId: 'l_goblet_squat', setIndex: 9 });
+  assert.equal((await readCollection('set_log')).length, 1, 'no-op on a non-existent set');
 });
 
 test('concurrent logs from two exercises both persist (write serialization)', async () => {

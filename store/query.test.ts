@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { resolveAthleteIn, groupSetsByExercise } from './query.ts';
+import { resolveAthleteIn, groupSetsByExercise, resolveTrackDay, parseDayLabel, type TrackSession } from './query.ts';
 import type { AthleteProfile, SetLogEntry } from '../engine/types.ts';
 
 function mkAthlete(over: Partial<AthleteProfile> & { athleteId: string; displayName: string }): AthleteProfile {
@@ -70,4 +70,41 @@ test('groupSetsByExercise groups by exercise, preserving first-seen order (Phase
 
 test('groupSetsByExercise on an empty list yields an empty map (Phase B)', () => {
   assert.equal(groupSetsByExercise([]).size, 0);
+});
+
+// --- Track-workout default-day resolution (Step 3), pure. `sessions` are most-recent first. ---
+
+test('parseDayLabel reads the day number back from a session label', () => {
+  assert.equal(parseDayLabel('Day 1'), 1);
+  assert.equal(parseDayLabel('Day 4'), 4);
+  assert.equal(parseDayLabel('day 2'), 2); // case-insensitive
+  assert.equal(parseDayLabel('Rest'), null);
+});
+
+test('resolveTrackDay: no prior sessions defaults to the first day of the split', () => {
+  assert.equal(resolveTrackDay([1, 2, 3, 4], []), 1);
+  assert.equal(resolveTrackDay([1, 2, 4], []), 1);
+});
+
+test('resolveTrackDay advances past the most recent finished session, wrapping', () => {
+  const finished = (day: number): TrackSession => ({ day, inProgress: false });
+  assert.equal(resolveTrackDay([1, 2, 3, 4], [finished(1)]), 2, 'after Day 1 -> Day 2');
+  assert.equal(resolveTrackDay([1, 2, 3, 4], [finished(4)]), 1, 'after Day 4 wraps to Day 1');
+  assert.equal(resolveTrackDay([1, 2, 4], [finished(2)]), 4, '3-day split: after Day 2 -> Day 4');
+});
+
+test('resolveTrackDay opens an unfinished most-recent session on ITS day, not the next', () => {
+  assert.equal(resolveTrackDay([1, 2, 3, 4], [{ day: 2, inProgress: true }]), 2,
+    'you do not skip a workout you have not finished');
+});
+
+test('resolveTrackDay: a later finished session wins over an older abandoned in-progress one', () => {
+  // most-recent first: Day 3 finished, then an older Day 2 still open. Advance from Day 3.
+  const sessions: TrackSession[] = [{ day: 3, inProgress: false }, { day: 2, inProgress: true }];
+  assert.equal(resolveTrackDay([1, 2, 3, 4], sessions), 4);
+});
+
+test('resolveTrackDay clamps an in-progress day that fell out of the current split', () => {
+  // Session is open on Day 4, but the split shrank to 2-day [1,2]; clamp forward (wrap) to Day 1.
+  assert.equal(resolveTrackDay([1, 2], [{ day: 4, inProgress: true }]), 1);
 });
