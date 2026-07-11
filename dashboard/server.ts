@@ -16,13 +16,15 @@ import { computeMaturity } from '../engine/maturity.ts';
 import { checkVolumeGuardrails, type GuardrailStatus } from '../engine/guardrails.ts';
 import {
   allAthletes, assessmentsFor, latestAssessment, heightLogFor, workoutLogFor, wellnessLogFor,
-  setLogFor, setLogForExercise, groupSetsByExercise, blockStateFor, daysSince, dueForReassessment,
+  setLogFor, setLogForExercise, setLogForWorkout, groupSetsByExercise, blockStateFor,
+  daysSince, dueForReassessment, nextTrackDay, parseDayLabel,
 } from '../store/query.ts';
 import { ageFromDob, createAthlete, updateAthlete, findAthlete } from '../store/athletes.ts';
 import { readCollection } from '../store/json-store.ts';
 import { buildAssessmentRecord, saveAssessment } from '../store/ingest.ts';
 import { getOrCreateWorkout, setWorkoutCompleted } from '../store/workout.ts';
-import { saveSetLog, type NewSetLog } from '../store/setlog.ts';
+import { saveSetLog, upsertSet, removeSet, type NewSetLog } from '../store/setlog.ts';
+import { validateSetValues } from '../engine/metrics.ts';
 import {
   splitOf, SPLIT_DAYS, getOrInitBlockState, saveBlockState, switchSplit,
 } from '../store/blocks.ts';
@@ -41,7 +43,8 @@ import {
   SCORE_LABEL, SPLIT_LABEL, SPLIT_SHORT, splitSwitchForm, validateSplitSwitch,
   emptyAthleteValues, athleteValuesFromParams, athleteValuesFromProfile, validateAthleteForm, athleteFormPage,
   emptyAssessmentValues, assessmentValuesFromParams, validateAssessmentForm, assessmentFormPage, assessmentRevealPage,
-  emptyLogValues, logValuesFromParams, validateLogForm, logFormPage, resolveMetrics, type LogFormContext,
+  resolveMetrics, todayIso, trackPage, parseTrackSave,
+  type TrackContext, type TrackNode, type TrackBlockView,
 } from './forms.ts';
 
 const PORT = Number(process.env.CC_DASHBOARD_PORT ?? 5173);
@@ -215,6 +218,10 @@ async function planSection(athleteId: string, tier: Tier | null, valgusWatch: bo
         tier, day, exercises, template, valgusWatch, equipment,
         blockIndex: block?.blockIndex ?? 0, slotVariants: block?.slotVariants,
       });
+      // Plan view is READ-ONLY reference (PHASE_PLAN_track_workout_screen.md Step 1): no inline
+      // logging affordance. Field-logging lives on the dedicated Track-workout screen, so logging
+      // never lives in two places. Reviewing a prescription and logging a session are different
+      // jobs that want opposite designs — this view scans, the track screen inputs.
       const blocks = session.blocks.map((b) => ({
         title: b.title,
         items: b.items.map((it) => ({
@@ -226,11 +233,6 @@ async function planSection(athleteId: string, tier: Tier | null, valgusWatch: bo
             `d${it.exercise.difficulty}`,
           ].filter((x): x is string => x !== null),
           cue: it.exercise.cue,
-          // Loggable movements (those that declare metrics) get a per-exercise "Log" link;
-          // warm-up/funnel/cooldown/non-throw motor-skill declare none and get nothing.
-          ...(it.exercise.metrics.length > 0
-            ? { logHref: `/log/new?athleteId=${encodeURIComponent(athleteId)}&day=${day}&exerciseId=${encodeURIComponent(it.exercise.id)}` }
-            : {}),
         })),
       }));
       const note = `<p class="panel-note">${esc(session.label)} · sprint: ${esc(session.sprintEmphasis)}</p>`;
@@ -289,6 +291,7 @@ async function athletePage(id: string): Promise<string> {
   const setsByWorkout = new Map<string, number>();
   for (const s of setEntries) setsByWorkout.set(s.workoutId, (setsByWorkout.get(s.workoutId) ?? 0) + 1);
 
+  const today = todayIso();
   const workoutRows = workouts.map((w) => {
     const n = setsByWorkout.get(w.workoutId) ?? 0;
     const status = w.completed
@@ -296,12 +299,18 @@ async function athletePage(id: string): Promise<string> {
       : n > 0
         ? statusFlag('accent', 'in progress')
         : '<span class="muted">planned</span>';
+    // Step 6: an in-progress session picked up TODAY can be resumed in the track screen (it resumes
+    // by today's date). Older in-progress sessions stay visible but have no in-place resume.
+    const day = parseDayLabel(w.sessionLabel);
+    const resume = !w.completed && n > 0 && w.date === today && day !== null
+      ? `<a class="btn secondary mini" href="/athlete/track?id=${encodeURIComponent(id)}&day=${day}">Resume</a> `
+      : '';
     return [
       num(w.date), esc(w.sessionLabel), tierBadge(w.servedForTier),
       status,
       n > 0 ? num(String(n)) : '<span class="muted">—</span>',
       esc(w.coachNotes) || '<span class="muted">—</span>',
-      completeToggleForm(w.workoutId, w.completed),
+      resume + completeToggleForm(w.workoutId, w.completed),
     ];
   });
 
@@ -369,7 +378,8 @@ async function athletePage(id: string): Promise<string> {
       ${num(String(a.trainingMonths))} mo training
     </p>
     <div class="actions">
-      <a class="btn" href="/assessment/new?athleteId=${encodeURIComponent(a.athleteId)}">+ Enter assessment</a>
+      <a class="btn" href="/athlete/track?id=${encodeURIComponent(a.athleteId)}">Track workout</a>
+      <a class="btn secondary" href="/assessment/new?athleteId=${encodeURIComponent(a.athleteId)}">+ Enter assessment</a>
       <a class="btn secondary" href="/athlete/edit?id=${encodeURIComponent(a.athleteId)}">Edit athlete</a>
     </div>
 
@@ -554,36 +564,24 @@ async function handleSplitSwitch(id: string, params: URLSearchParams, res: Serve
   redirect(res, `/athlete?id=${encodeURIComponent(id)}`);
 }
 
-// --- per-set workout logging (Phase C) ---
+// --- Track-workout screen (PHASE_PLAN_track_workout_screen.md Steps 2–6) ---
 
-/** A helper page for the log-flow guard rails (no tier yet, unknown exercise, etc.). */
+/** A helper page for the track/log guard rails (no tier yet, unknown exercise, etc.). */
 function logGuardPage(athleteId: string, heading: string, msg: string): string {
   const back = athleteId ? `/athlete?id=${encodeURIComponent(athleteId)}` : '/';
-  return page('Log', `<p class="sub"><a href="${esc(back)}">← Back</a></p><h1>${esc(heading)}</h1><p>${esc(msg)}</p>`);
+  return page('Track', `<p class="sub"><a href="${esc(back)}">← Back</a></p><h1>${esc(heading)}</h1><p>${esc(msg)}</p>`);
 }
 
-/** Build the non-input context the log form needs (metrics, prescribed target, priors) — pure-ish. */
-function logContext(athleteId: string, day: number, exercise: Exercise, tier: Tier, priors: MetricProgress[]): LogFormContext {
-  const dose = tierDose(exercise, tier);
-  return {
-    athleteId, day, exerciseId: exercise.id, exerciseName: exercise.name,
-    targetText: doseLabel(exercise, tier),
-    ...(dose ? { prescribedReps: dose.reps } : {}),
-    metrics: resolveMetrics(exercise.metrics),
-    priors,
-  };
-}
-
-/** The athlete's prior progress for this exercise — feeds the "last time / PR" prompt. */
-async function priorsFor(athleteId: string, exercise: Exercise): Promise<MetricProgress[]> {
-  const sets = await setLogForExercise(athleteId, exercise.id);
-  return computeExerciseProgress(exercise.id, exercise.metrics, sets).metrics;
+function sendJson(res: ServerResponse, code: number, obj: unknown): void {
+  res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(obj));
 }
 
 /**
- * Resolve the shared pre-conditions for both the GET form and the POST handler: athlete exists,
- * has a tier, the exercise exists and is loggable, and `day` is an integer. Returns either a ready
- * bundle or an error page to send.
+ * Resolve the pre-conditions a single-set write shares: athlete exists, has a tier, the exercise
+ * exists, is individually loggable, and is prescribed at this tier. Reused by the autosave endpoint
+ * so a stale/hand-built request can't log a movement the athlete's tier doesn't run (mirrors
+ * `isAvailableAtTier`, the same gate the assembler uses).
  */
 async function resolveLogTarget(
   athleteId: string, dayStr: string, exerciseId: string,
@@ -594,54 +592,211 @@ async function resolveLogTarget(
   const day = Number(dayStr);
   if (!Number.isInteger(day)) return { ok: false, code: 404, html: notFoundPage() };
   const tier = await currentTierOf(athleteId);
-  if (!tier) return { ok: false, code: 400, html: logGuardPage(athleteId, 'No tier on file', 'Enter an assessment before logging a session — the prescribed target comes from the athlete’s tier.') };
+  if (!tier) return { ok: false, code: 400, html: logGuardPage(athleteId, 'No tier on file', 'Enter an assessment before tracking a session — the prescription comes from the athlete’s tier.') };
   const exercise = (await loadExercises()).find((e) => e.id === exerciseId);
   if (!exercise) return { ok: false, code: 404, html: notFoundPage() };
   if (exercise.metrics.length === 0) return { ok: false, code: 400, html: logGuardPage(athleteId, 'Not a logged movement', `${exercise.name} isn’t individually logged (warm-up / funnel / cooldown / motor-skill).`) };
-  // Gate at the FORM layer with the same rule the assembler uses (min_tier + the 0-set "not
-  // prescribed at this tier" convention). The Log link only appears on assembled — hence available —
-  // exercises, but a stale/hand-built URL (e.g. after the athlete re-tiers down) must not let a
-  // movement that isn't prescribed at this tier be logged. Mirror `isAvailableAtTier`, don't re-check.
   if (!isAvailableAtTier(exercise, tier)) {
     return { ok: false, code: 400, html: logGuardPage(athleteId, 'Not prescribed at this tier', `${exercise.name} isn’t in tier ${tier}’s program, so there’s no target to log against.`) };
   }
   return { ok: true, athlete, day, exercise, tier };
 }
 
-async function logNewFormPage(athleteId: string, dayStr: string, exerciseId: string): Promise<{ code: number; html: string }> {
-  const r = await resolveLogTarget(athleteId, dayStr, exerciseId);
-  if (!r.ok) return { code: r.code, html: r.html };
-  const dose = tierDose(r.exercise, r.tier);
-  const values = emptyLogValues(dose?.sets ?? 1, r.exercise.metrics);
-  const ctx = logContext(athleteId, r.day, r.exercise, r.tier, await priorsFor(athleteId, r.exercise));
-  return { code: 200, html: logFormPage(r.athlete, ctx, values, {}) };
+/**
+ * Assemble everything the Track-workout screen renders: the chosen day (an explicit valid `day`
+ * param wins, else the next-day default from `nextTrackDay`), its full assembled session split into
+ * read-only reference slots and trackable movement cards, each trackable movement pre-filled from
+ * PRIOR sessions (today's excluded, so "last time" means the previous session) and resumed with any
+ * sets already logged for this day today. No write happens here — the session record is created
+ * lazily on the first set save.
+ */
+async function buildTrackContext(
+  athleteId: string, dayStr: string,
+): Promise<{ ok: true; ctx: TrackContext } | { ok: false; code: number; html: string }> {
+  const athlete = await findAthlete(athleteId);
+  if (!athlete) return { ok: false, code: 404, html: notFoundPage() };
+  const tier = await currentTierOf(athleteId);
+  if (!tier) return { ok: false, code: 400, html: logGuardPage(athleteId, 'No tier on file', 'Enter an assessment before tracking a session — the prescription comes from the athlete’s tier.') };
+
+  const [templates, equipment, block, exercises, allSets, workouts] = await Promise.all([
+    loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId), loadExercises(),
+    setLogFor(athleteId), workoutLogFor(athleteId),
+  ]);
+  const split = splitOf(block);
+  const days = SPLIT_DAYS[split].filter((d) => templates.some((t) => t.day === d));
+  if (days.length === 0) return { ok: false, code: 400, html: logGuardPage(athleteId, 'No plan days', 'No authored day templates for this athlete’s split.') };
+
+  // Explicit valid day wins; otherwise the next-day default (which reads only real sessions).
+  let day = Number(dayStr);
+  if (!Number.isInteger(day) || !days.includes(day)) {
+    day = await nextTrackDay(athleteId);
+    if (!days.includes(day)) day = days[0]!;
+  }
+  const template = templates.find((t) => t.day === day)!;
+  const date = todayIso();
+
+  // Resume today's session for this day if it exists — WITHOUT creating one (lazy creation).
+  const workout = workouts.find((w) => w.date === date && w.sessionLabel === `Day ${day}`) ?? null;
+  const savedByExercise = workout ? await setLogForWorkout(workout.workoutId) : new Map<string, SetLogEntry[]>();
+  const loggedSetCount = [...savedByExercise.values()].reduce((n, a) => n + a.length, 0);
+
+  // Pre-fill source = history EXCLUDING today's session, so the "last time" hint is the prior session.
+  const priorByExercise = groupSetsByExercise(workout ? allSets.filter((s) => s.workoutId !== workout.workoutId) : allSets);
+
+  try {
+    const { session } = assembleSession({
+      tier, day, exercises, template, valgusWatch: athlete.valgusWatch, equipment,
+      blockIndex: block?.blockIndex ?? 0, slotVariants: block?.slotVariants,
+    });
+    const blocks: TrackBlockView[] = session.blocks.map((b) => ({
+      title: b.title,
+      nodes: b.items.map((it): TrackNode => {
+        const ex = it.exercise;
+        const tags = [
+          ex.laterality === 'unilateral' ? 'SL' : null,
+          ex.stick ? 'stick' : null,
+          `d${ex.difficulty}`,
+        ].filter((x): x is string => x !== null);
+        if (ex.metrics.length === 0) {
+          return { kind: 'reference', name: ex.name, doseText: it.doseText, tags, cue: ex.cue };
+        }
+        const dose = tierDose(ex, tier);
+        const saved = (savedByExercise.get(ex.id) ?? []).map((s) => ({
+          setIndex: s.setIndex, values: s.values, ...(s.note ? { note: s.note } : {}),
+        }));
+        return {
+          kind: 'track',
+          ex: {
+            exerciseId: ex.id, name: ex.name, targetText: doseLabel(ex, tier),
+            prescribedSets: dose?.sets ?? 1, ...(dose ? { prescribedReps: dose.reps } : {}),
+            metrics: resolveMetrics(ex.metrics),
+            priors: computeExerciseProgress(ex.id, ex.metrics, priorByExercise.get(ex.id) ?? []).metrics,
+            savedSets: saved,
+          },
+        };
+      }),
+    }));
+    const ctx: TrackContext = {
+      athleteId, athleteName: athlete.displayName, day, days, date, tier,
+      sessionSubtitle: `${session.label} · sprint: ${session.sprintEmphasis}`,
+      blocks, workoutId: workout?.workoutId ?? null, completed: workout?.completed ?? false, loggedSetCount,
+    };
+    return { ok: true, ctx };
+  } catch (err) {
+    return { ok: false, code: 500, html: logGuardPage(athleteId, 'Could not assemble session', (err as Error).message) };
+  }
 }
 
-async function handleLogNew(athleteId: string, dayStr: string, exerciseId: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
-  const r = await resolveLogTarget(athleteId, dayStr, exerciseId);
-  if (!r.ok) return sendHtml(res, r.code, r.html);
+async function trackScreen(athleteId: string, dayStr: string): Promise<{ code: number; html: string }> {
+  const r = await buildTrackContext(athleteId, dayStr);
+  if (!r.ok) return { code: r.code, html: r.html };
+  return { code: 200, html: trackPage(r.ctx) };
+}
 
-  const values = logValuesFromParams(params, r.exercise.metrics);
-  const { sets, errors } = validateLogForm(r.exercise.metrics, values);
-  if (!sets) {
-    const ctx = logContext(athleteId, r.day, r.exercise, r.tier, await priorsFor(athleteId, r.exercise));
-    return sendHtml(res, 400, logFormPage(r.athlete, ctx, values, errors));
+/** Read one set's typed values from the params (`val~<metricId>`), skipping blanks. */
+function readSetValues(metricIds: string[], params: URLSearchParams): { values: Record<string, number>; hasValue: boolean } {
+  const values: Record<string, number> = {};
+  let hasValue = false;
+  for (const mid of metricIds) {
+    const raw = (params.get(`val~${mid}`) ?? '').trim();
+    if (raw === '') continue;
+    hasValue = true;
+    values[mid] = Number(raw);
   }
+  return { values, hasValue };
+}
 
-  // Snapshot the prescription as it is NOW, so a later dose edit can't rewrite this history.
+/**
+ * Autosave ONE set (save-as-you-go). Lazily create-or-finds the session on the first real set, then
+ * upserts by (workout, exercise, setIndex) so a re-save corrects rather than duplicates. A cleared
+ * row (no values) removes any previously-saved set at that identity — the honest log holds an
+ * actual only while the coach keeps a value in it. JSON in, JSON out (the client shows "Logged").
+ */
+async function handleTrackSet(athleteId: string, dayStr: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  const r = await resolveLogTarget(athleteId, dayStr, params.get('exerciseId') ?? '');
+  if (!r.ok) return sendJson(res, r.code, { ok: false, error: 'This movement can’t be logged here.' });
+  const setIndex = Number(params.get('setIndex'));
+  if (!Number.isInteger(setIndex) || setIndex < 1 || setIndex > 50) return sendJson(res, 400, { ok: false, error: 'Bad set number.' });
+
+  const date = todayIso();
+  const { values, hasValue } = readSetValues(r.exercise.metrics, params);
+  if (!hasValue) {
+    // Emptied row → drop any set previously logged at this identity (find, don't create).
+    const workout = (await workoutLogFor(athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${r.day}`);
+    if (workout) await removeSet({ workoutId: workout.workoutId, exerciseId: r.exercise.id, setIndex });
+    return sendJson(res, 200, { ok: true, empty: true });
+  }
+  const errs = validateSetValues(r.exercise.metrics, values);
+  if (errs.length) return sendJson(res, 400, { ok: false, error: errs.join('; ') });
+
   const dose = tierDose(r.exercise, r.tier);
   const prescribed = dose ? { sets: dose.sets, reps: dose.reps, rest_sec: dose.rest_sec } : undefined;
+  const workout = await getOrCreateWorkout({ athleteId, date, sessionLabel: `Day ${r.day}` }, r.tier); // lazy create
+  const note = (params.get('note') ?? '').trim();
+  const saved = await upsertSet({
+    workoutId: workout.workoutId, athleteId, exerciseId: r.exercise.id, setIndex, values,
+    ...(prescribed ? { prescribed } : {}), ...(note ? { note } : {}),
+  });
+  return sendJson(res, 200, { ok: true, setLogId: saved.setLogId });
+}
 
-  // Atomic find-or-create of the session record (completed stays false — logging never marks done).
-  const workout = await getOrCreateWorkout({ athleteId, date: values.date, sessionLabel: `Day ${r.day}` }, r.tier);
+/** Remove one set (coach cut it, or unchecked its Log toggle). Finds the session, never creates. */
+async function handleTrackSetRemove(athleteId: string, dayStr: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  const day = Number(dayStr);
+  const exerciseId = params.get('exerciseId') ?? '';
+  const setIndex = Number(params.get('setIndex'));
+  if (!Number.isInteger(day) || !exerciseId || !Number.isInteger(setIndex)) return sendJson(res, 400, { ok: false });
+  const date = todayIso();
+  const workout = (await workoutLogFor(athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${day}`);
+  if (workout) await removeSet({ workoutId: workout.workoutId, exerciseId, setIndex });
+  return sendJson(res, 200, { ok: true });
+}
 
-  const inputs: NewSetLog[] = sets.map((s) => ({
-    workoutId: workout.workoutId, athleteId, exerciseId,
-    setIndex: s.setIndex, values: s.values,
-    ...(prescribed ? { prescribed } : {}),
-    ...(s.note ? { note: s.note } : {}),
-  }));
-  await saveSetLog(inputs);
+/**
+ * No-JS fallback: the whole-session submit. Writes every TICKED, valid set (untouched rows carry no
+ * "on" flag, so they're skipped — the honest-log rule without JS), then optionally finishes. With JS
+ * these sets were already autosaved; the upsert makes re-writing them idempotent.
+ */
+async function handleTrackSave(athleteId: string, dayStr: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
+  const r = await buildTrackContext(athleteId, dayStr);
+  if (!r.ok) return sendHtml(res, r.code, r.html);
+  const { ctx } = r;
+
+  const exercises = ctx.blocks
+    .flatMap((b) => b.nodes)
+    .filter((n): n is Extract<TrackNode, { kind: 'track' }> => n.kind === 'track')
+    .map((n) => ({ exerciseId: n.ex.exerciseId, metrics: n.ex.metrics }));
+  const { sets } = parseTrackSave(params, exercises);
+
+  if (sets.length > 0) {
+    const lib = await loadExercises();
+    const byId = new Map(lib.map((e) => [e.id, e]));
+    const workout = await getOrCreateWorkout({ athleteId, date: ctx.date, sessionLabel: `Day ${ctx.day}` }, ctx.tier);
+    for (const s of sets) {
+      const ex = byId.get(s.exerciseId);
+      const dose = ex ? tierDose(ex, ctx.tier) : undefined;
+      const prescribed = dose ? { sets: dose.sets, reps: dose.reps, rest_sec: dose.rest_sec } : undefined;
+      await upsertSet({
+        workoutId: workout.workoutId, athleteId, exerciseId: s.exerciseId, setIndex: s.setIndex, values: s.values,
+        ...(prescribed ? { prescribed } : {}), ...(s.note ? { note: s.note } : {}),
+      });
+    }
+    if (params.get('finish') === '1') await setWorkoutCompleted(workout.workoutId, true);
+  }
+  redirect(res, `/athlete?id=${encodeURIComponent(athleteId)}`);
+}
+
+/**
+ * Finish (or reopen) the session — the coach's explicit "done", never a side effect of logging
+ * (Step 6). Toggles `completed` on today's session for this day; a session with no logged sets has
+ * no record to finish, so it's a no-op.
+ */
+async function handleTrackFinish(athleteId: string, dayStr: string, res: ServerResponse): Promise<void> {
+  const day = Number(dayStr);
+  if (!Number.isInteger(day)) return sendHtml(res, 404, notFoundPage());
+  const date = todayIso();
+  const workout = (await workoutLogFor(athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${day}`);
+  if (workout) await setWorkoutCompleted(workout.workoutId, !workout.completed);
   redirect(res, `/athlete?id=${encodeURIComponent(athleteId)}`);
 }
 
@@ -666,7 +821,10 @@ const server = createServer(async (req, res) => {
       if (path === '/athlete/edit') return await handleAthleteEdit(url.searchParams.get('id') ?? '', params, res);
       if (path === '/athlete/split') return await handleSplitSwitch(url.searchParams.get('id') ?? '', params, res);
       if (path === '/assessment/new') return await handleAssessmentNew(url.searchParams.get('athleteId') ?? '', params, res);
-      if (path === '/log/new') return await handleLogNew(url.searchParams.get('athleteId') ?? '', url.searchParams.get('day') ?? '', url.searchParams.get('exerciseId') ?? '', params, res);
+      if (path === '/athlete/track/set') return await handleTrackSet(url.searchParams.get('id') ?? '', url.searchParams.get('day') ?? '', params, res);
+      if (path === '/athlete/track/set/remove') return await handleTrackSetRemove(url.searchParams.get('id') ?? '', url.searchParams.get('day') ?? '', params, res);
+      if (path === '/athlete/track/save') return await handleTrackSave(url.searchParams.get('id') ?? '', url.searchParams.get('day') ?? '', params, res);
+      if (path === '/athlete/track/finish') return await handleTrackFinish(url.searchParams.get('id') ?? '', url.searchParams.get('day') ?? '', res);
       if (path === '/workout/complete') return await handleWorkoutComplete(url.searchParams.get('workoutId') ?? '', params, res);
       return sendHtml(res, 404, notFoundPage());
     }
@@ -677,9 +835,9 @@ const server = createServer(async (req, res) => {
     else if (path === '/athlete/new') html = await athleteNewFormPage();
     else if (path === '/athlete/edit') html = await athleteEditFormPage(url.searchParams.get('id') ?? '');
     else if (path === '/assessment/new') html = await assessmentNewFormPage(url.searchParams.get('athleteId') ?? '');
-    else if (path === '/log/new') {
-      const { code, html: logHtml } = await logNewFormPage(url.searchParams.get('athleteId') ?? '', url.searchParams.get('day') ?? '', url.searchParams.get('exerciseId') ?? '');
-      return sendHtml(res, code, logHtml);
+    else if (path === '/athlete/track') {
+      const { code, html: trackHtml } = await trackScreen(url.searchParams.get('id') ?? '', url.searchParams.get('day') ?? '');
+      return sendHtml(res, code, trackHtml);
     }
     else if (path === '/validation') html = await validationPage();
     else return sendHtml(res, 404, notFoundPage());

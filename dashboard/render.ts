@@ -225,11 +225,6 @@ const CSS = `
   ul.ex li { padding: 8px 2px; border-bottom: 1px solid var(--cc-border-faint); }
   ul.ex li:last-child { border-bottom: 0; }
   ul.ex .cue { font-size: 12px; color: var(--cc-muted); }
-  /* "Log ›" affordance — quiet by default, warms to the accent on hover (it's an action). */
-  a.loglink { font: 600 11px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
-    color: var(--cc-muted); text-decoration: none; padding: 2px 7px; border: 1px solid var(--cc-border);
-    border-radius: var(--cc-r-badge); white-space: nowrap; }
-  a.loglink:hover { color: var(--cc-accent); border-color: var(--cc-accent); }
 
   /* — Per-set logging form (Phase C) — */
   form.log-form { max-width: 760px; }
@@ -272,6 +267,62 @@ const CSS = `
     letter-spacing: .05em; font-size: 10px; }
   .prior .prior-val { font-family: var(--cc-font-mono); color: var(--cc-ink); }
   .prior .prior-val b { color: var(--cc-accent); }
+
+  /* — Track-workout screen (the field tool) — */
+  .trk-days { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; }
+  .trk-day { font: 600 12px/1 var(--cc-font-body); color: var(--cc-muted); text-decoration: none;
+    padding: 7px 14px; border: 1px solid var(--cc-border); border-radius: var(--cc-r-btn); }
+  .trk-day:hover { border-color: var(--cc-ink); color: var(--cc-ink); }
+  .trk-day.active { background: var(--cc-ink); color: var(--cc-bg); border-color: var(--cc-ink); }
+  .trk-status { margin: 4px 0 18px; font-size: 13px; }
+  .trk-block { margin: 0 0 8px; }
+  .trk-block > h4 { margin: 20px 0 8px; }
+
+  .trk-ex { background: var(--cc-bg); border: 1px solid var(--cc-border); border-radius: var(--cc-r-card);
+    padding: 14px 16px; margin: 0 0 12px; }
+  .trk-ex-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .trk-ex-head b { font: 600 15px/1.2 var(--cc-font-body); }
+  .trk-target { color: var(--cc-muted); font-size: 13px; }
+  .trk-metrics { margin-left: auto; font-size: 11px; color: var(--cc-quiet);
+    text-transform: uppercase; letter-spacing: .05em; }
+  .trk-firsttime { margin: 6px 0 2px; font-size: 12px; color: var(--cc-maturity); font-weight: 600; }
+  .trk-prior { display: flex; gap: 18px; flex-wrap: wrap; margin: 6px 0 2px; }
+  .trk-prior-item { display: inline-flex; align-items: baseline; gap: 8px; }
+  .trk-prior-lab { font: 600 10px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
+    color: var(--cc-muted); }
+
+  .trk-rows { margin: 8px 0 4px; }
+  /* One set = one line: number, metric inputs (large tap targets), note, the Log toggle, state. */
+  .trkset { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px 12px; padding: 10px 0;
+    border-top: 1px solid var(--cc-border-faint); }
+  .trkset:first-child { border-top: 0; }
+  .trkcells { display: contents; }
+  .trknum { align-self: flex-end; padding-bottom: 11px; min-width: 44px;
+    font: 600 11px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--cc-muted); }
+  .trknum b { font-family: var(--cc-font-mono); color: var(--cc-ink); font-size: 14px; }
+  .trkcell { display: flex; flex-direction: column; gap: 4px; }
+  .trkcell-lab { font: 600 10px/1.2 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
+    color: var(--cc-muted); }
+  .trkcell-lab .unit { color: var(--cc-quiet); font-weight: 500; }
+  /* Field-tool inputs: bigger than the desk forms — thumb-sized on a phone at the track. */
+  .trkcell input { width: 104px; font-size: 16px; padding: 11px 12px; }
+  .trkcell.trknote { flex: 1; min-width: 130px; }
+  .trkcell.trknote input { width: 100%; }
+  /* The Log toggle: the confirm that a pre-filled row is real, and the saved-state control. */
+  .trktoggle { display: inline-flex; align-items: center; gap: 7px; align-self: flex-end; padding-bottom: 9px;
+    font: 600 12px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .04em; color: var(--cc-muted);
+    cursor: pointer; white-space: nowrap; }
+  .trktoggle input { width: 20px; height: 20px; accent-color: var(--cc-accent); cursor: pointer; }
+  .trksaved { align-self: flex-end; padding-bottom: 10px; font: 600 11px/1 var(--cc-font-body);
+    min-width: 52px; color: var(--cc-quiet); }
+  .trksaved[data-on="1"] { color: var(--cc-maturity); }
+  .trksaved.err { color: var(--cc-bad); }
+  .trkremove { align-self: flex-end; }
+  .trk-actions { margin-top: 20px; align-items: baseline; }
+  .trk-fallback { display: inline-flex; align-items: baseline; gap: 10px; }
+  .trk-fallback .hint { font-size: 12px; color: var(--cc-muted); }
+  /* With JS on, the whole-session backup submit steps back (autosave is the real path). */
+  .trk-fallback.trk-js button { background: transparent; color: var(--cc-muted); border-color: var(--cc-border); }
 
   /* — Buttons: primary is solid Gunmetal (accent stays reserved). One filled per screen. — */
   .btn { display: inline-block; background: var(--cc-ink); color: var(--cc-bg); border: 1px solid var(--cc-ink);
@@ -472,10 +523,11 @@ export function sparkline(values: number[], title = ''): string {
 }
 
 // One block (warm-up / jump / lift / …) of an assembled session — its title + exercise items.
-// `logHref` is present only on loggable exercises (those that declare metrics) → a "Log" link.
+// This renders the READ-ONLY plan view (no logging affordance) — field-logging lives on the
+// dedicated Track-workout screen (PHASE_PLAN_track_workout_screen.md Step 1).
 interface RenderBlock {
   title: string;
-  items: { name: string; doseText: string; tags: string[]; cue: string; logHref?: string }[];
+  items: { name: string; doseText: string; tags: string[]; cue: string }[];
 }
 
 /** Render one assembled session (its blocks + exercises) to HTML for a plan-day panel. */
@@ -486,8 +538,7 @@ export function sessionHtml(blocks: RenderBlock[]): string {
         .map((it) => {
           const tags = it.tags.length ? ` <span class="pill data">${esc(it.tags.join(' · '))}</span>` : '';
           const cue = it.cue ? `<br><span class="cue">${esc(it.cue)}</span>` : '';
-          const log = it.logHref ? ` <a class="loglink" href="${esc(it.logHref)}">Log ›</a>` : '';
-          return `<li><b>${esc(it.name)}</b> <span class="num muted">${esc(it.doseText)}</span>${tags}${log}${cue}</li>`;
+          return `<li><b>${esc(it.name)}</b> <span class="num muted">${esc(it.doseText)}</span>${tags}${cue}</li>`;
         })
         .join('');
       return `<div class="blk"><h4>${esc(b.title)}</h4><ul class="ex">${items}</ul></div>`;

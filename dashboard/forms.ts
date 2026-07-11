@@ -516,6 +516,290 @@ export function logFormPage(athlete: AthleteProfile, ctx: LogFormContext, v: Log
   return page(`Log — ${ctx.exerciseName}`, body);
 }
 
+// ---------------------------------------------------------------------------
+// Track-workout screen (PHASE_PLAN_track_workout_screen.md Step 5)
+//
+// The FIELD tool, opposite job to the read-only plan view: the whole session on one scroll (no
+// toggling mid-workout), each trackable movement a card of prescribed set-rows pre-filled with last
+// session's numbers. A set is written ONLY when the coach confirms it (the per-row "Log" toggle) —
+// an untouched pre-filled row is never persisted (the honest-log rule). With JS each confirm
+// autosaves that one set; with JS off the whole form posts and only ticked rows are written.
+// ---------------------------------------------------------------------------
+
+/** Field-name separator for per-set inputs — a char that never appears in an exercise/metric id. */
+const T = '~';
+
+/** One trackable movement on the track screen: its prescription, metrics, priors, and saved sets. */
+export interface TrackExercise {
+  exerciseId: string;
+  name: string;
+  /** Human target line, e.g. "3 × 8 (rest 90s)". */
+  targetText: string;
+  prescribedSets: number;
+  prescribedReps?: number | string;
+  metrics: Metric[];
+  /** Prior progress per metric from PRIOR sessions (current session excluded) — the pre-fill source. */
+  priors: MetricProgress[];
+  /** Already-logged sets for this exercise in today's (resumed) session, by set index. */
+  savedSets: { setIndex: number; values: Record<string, number>; note?: string }[];
+}
+
+/** A node in a track block: either a read-only reference slot or a trackable movement. */
+export type TrackNode =
+  | { kind: 'reference'; name: string; doseText: string; tags: string[]; cue: string }
+  | { kind: 'track'; ex: TrackExercise };
+
+export interface TrackBlockView {
+  title: string;
+  nodes: TrackNode[];
+}
+
+/** Everything the track screen renders — assembled server-side, no client computation. */
+export interface TrackContext {
+  athleteId: string;
+  athleteName: string;
+  day: number;
+  /** The days this athlete's split runs — the day switcher. */
+  days: number[];
+  date: string;
+  tier: Tier;
+  sessionSubtitle: string;
+  blocks: TrackBlockView[];
+  /** The resumed session id, or null when nothing's been logged for this day today yet. */
+  workoutId: string | null;
+  completed: boolean;
+  loggedSetCount: number;
+}
+
+/** The pre-fill for one metric on an unsaved row: last session's value, or blank on a first-ever log. */
+function prefillFor(m: Metric, priors: MetricProgress[]): string {
+  const p = priors.find((x) => x.metricId === m.id);
+  return p && p.last !== null ? String(p.last) : '';
+}
+
+/** True when this movement has never been logged before — drives the "first time" hint. */
+function isFirstTime(priors: MetricProgress[]): boolean {
+  return priors.every((p) => p.best === null);
+}
+
+/**
+ * One set row. `idx` is the stable 1-based set identity (field names key off it; it never
+ * renumbers, so a saved set keeps its identity when rows above it are removed). `saved` pre-checks
+ * the Log toggle and fills the actuals; otherwise the metric inputs carry last session's pre-fill
+ * (as a hint the coach confirms, never auto-logged). Rendered live and — with `__i__` tokens — as
+ * the "+ Add set" clone template.
+ */
+function trackSetRow(ex: TrackExercise, idx: string, displayNum: string, saved: TrackExercise['savedSets'][number] | undefined): string {
+  const cells = ex.metrics.map((m) => {
+    const prefill = prefillFor(m, ex.priors);
+    const value = saved ? (saved.values[m.id] !== undefined ? String(saved.values[m.id]) : '') : prefill;
+    const step = m.input === 'integer' ? '1' : 'any';
+    return `<label class="trkcell"><span class="trkcell-lab">${esc(m.label)} <span class="unit">${esc(m.unit)}</span></span>`
+      + `<input type="number" name="m${T}${esc(ex.exerciseId)}${T}${esc(idx)}${T}${esc(m.id)}" value="${esc(value)}"`
+      + ` data-prefill="${esc(prefill)}" min="0" step="${step}" inputmode="decimal"></label>`;
+  }).join('');
+  const noteVal = saved?.note ?? '';
+  const checked = saved ? ' checked' : '';
+  const savedTag = saved ? '<span class="trksaved" data-on="1">Logged</span>' : '<span class="trksaved">—</span>';
+  return `<div class="trkset" data-ex="${esc(ex.exerciseId)}" data-idx="${esc(idx)}">`
+    + `<span class="trknum">Set <b>${esc(displayNum)}</b></span>`
+    + `<div class="trkcells">${cells}</div>`
+    + `<label class="trkcell trknote"><span class="trkcell-lab">Note</span>`
+    + `<input type="text" name="n${T}${esc(ex.exerciseId)}${T}${esc(idx)}" value="${esc(noteVal)}" placeholder="optional"></label>`
+    + `<label class="trktoggle"><input type="checkbox" name="on${T}${esc(ex.exerciseId)}${T}${esc(idx)}" value="1"${checked}> Log</label>`
+    + savedTag
+    + `<button type="button" class="btn secondary mini trkremove" onclick="ccTrkRemove(this)">Remove</button>`
+    + `</div>`;
+}
+
+/** One trackable movement card: prescription header, the "beat last time" line, and its set rows. */
+function trackExerciseCard(ex: TrackExercise): string {
+  const metricList = ex.metrics.map((m) => `${m.label} (${m.unit})`).join(' · ');
+  const rowCount = Math.max(ex.prescribedSets, ...ex.savedSets.map((s) => s.setIndex), 1);
+  const rows: string[] = [];
+  for (let i = 1; i <= rowCount; i++) {
+    rows.push(trackSetRow(ex, String(i), String(i), ex.savedSets.find((s) => s.setIndex === i)));
+  }
+  const template = trackSetRow(ex, '__i__', '__n__', undefined);
+
+  const first = isFirstTime(ex.priors);
+  const priorLine = first
+    ? '<p class="trk-firsttime">First time logged — no prior data to beat yet.</p>'
+    : `<div class="trk-prior">${ex.priors.filter((p) => p.best !== null).map((p) =>
+        `<span class="trk-prior-item"><span class="trk-prior-lab">${esc(p.label)}</span>`
+        + `<span class="prior-val">last ${esc(String(p.last))} ${esc(p.unit)}</span>`
+        + `<span class="prior-val">PR <b>${esc(String(p.best))} ${esc(p.unit)}</b></span></span>`).join('')}</div>`;
+
+  return `<section class="trk-ex" data-ex="${esc(ex.exerciseId)}">
+    <div class="trk-ex-head">
+      <b>${esc(ex.name)}</b>
+      <span class="trk-target num">${esc(ex.targetText)}</span>
+      <span class="trk-metrics">${esc(metricList)}</span>
+    </div>
+    ${priorLine}
+    <div class="trk-rows" data-rows="${esc(String(rowCount))}">${rows.join('')}</div>
+    <div class="actions">
+      <button type="button" class="btn secondary mini" onclick="ccTrkAddSet(this)" data-ex="${esc(ex.exerciseId)}">+ Add set</button>
+    </div>
+    <template class="trk-rowtpl">${template}</template>
+  </section>`;
+}
+
+/** A read-only reference slot (warm-up / funnel / cooldown / non-logged drill) — no inputs. */
+function trackReferenceRow(n: Extract<TrackNode, { kind: 'reference' }>): string {
+  const tags = n.tags.length ? ` <span class="pill data">${esc(n.tags.join(' · '))}</span>` : '';
+  const cue = n.cue ? `<br><span class="cue">${esc(n.cue)}</span>` : '';
+  return `<li><b>${esc(n.name)}</b> <span class="num muted">${esc(n.doseText)}</span>${tags}${cue}</li>`;
+}
+
+/** Inline JS: per-set autosave on confirm/edit, add/remove set, "saved" feedback. Progressive — */
+/* with JS off the whole form still posts and writes the ticked rows. */
+function trackJs(): string {
+  return `<script>
+(function(){
+  var form=document.getElementById('trkform'); if(!form)return;
+  var id=form.getAttribute('data-athlete'), day=form.getAttribute('data-day');
+  function rowData(row){
+    var ex=row.getAttribute('data-ex'), idx=row.getAttribute('data-idx');
+    var body='exerciseId='+encodeURIComponent(ex)+'&setIndex='+encodeURIComponent(idx);
+    var empty=true;
+    row.querySelectorAll('input[type=number]').forEach(function(inp){
+      var mid=inp.name.split('~')[3];
+      body+='&val'+encodeURIComponent('~'+mid)+'='+encodeURIComponent(inp.value);
+      if(inp.value!=='')empty=false;
+    });
+    var note=row.querySelector('input[type=text]');
+    if(note)body+='&note='+encodeURIComponent(note.value);
+    return {ex:ex,idx:idx,body:body,empty:empty};
+  }
+  function setState(row,txt,cls){var s=row.querySelector('.trksaved');if(!s)return;s.textContent=txt;s.setAttribute('data-on',cls==='ok'?'1':'0');s.className='trksaved'+(cls?' '+cls:'');}
+  function save(row){
+    var d=rowData(row), box=row.querySelector('input[type=checkbox]');
+    if(d.empty){ if(box)box.checked=false; return remove(row,true); }
+    if(box)box.checked=true;
+    setState(row,'Saving…','');
+    fetch('/athlete/track/set?id='+encodeURIComponent(id)+'&day='+encodeURIComponent(day),
+      {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:d.body})
+      .then(function(r){return r.json();})
+      .then(function(j){ if(j.ok){setState(row,'Logged',' ');row.querySelector('.trksaved').setAttribute('data-on','1');ccBumpCount();}else{setState(row,j.error||'Error','err');} })
+      .catch(function(){setState(row,'Offline — retry','err');});
+  }
+  function remove(row,keepRow){
+    var ex=row.getAttribute('data-ex'), idx=row.getAttribute('data-idx');
+    fetch('/athlete/track/set/remove?id='+encodeURIComponent(id)+'&day='+encodeURIComponent(day),
+      {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+       body:'exerciseId='+encodeURIComponent(ex)+'&setIndex='+encodeURIComponent(idx)})
+      .then(function(r){return r.json();}).then(function(){ccBumpCount();}).catch(function(){});
+    if(keepRow){setState(row,'—','');}else{row.parentNode.removeChild(row);}
+  }
+  window.ccTrkRemove=function(btn){var row=btn.closest('.trkset');var box=row.querySelector('input[type=checkbox]');if(box)box.checked=false;remove(row,false);};
+  window.ccTrkAddSet=function(btn){
+    var sec=btn.closest('.trk-ex'), rows=sec.querySelector('.trk-rows');
+    var next=parseInt(rows.getAttribute('data-rows')||'0',10)+1;
+    var tpl=sec.querySelector('.trk-rowtpl').innerHTML.replace(/__i__/g,next).replace(/__n__/g,next);
+    var wrap=document.createElement('div');wrap.innerHTML=tpl.trim();var row=wrap.firstElementChild;
+    rows.appendChild(row);rows.setAttribute('data-rows',next);wire(row);
+  };
+  function wire(row){
+    row.querySelectorAll('input[type=number],input[type=text]').forEach(function(inp){
+      inp.addEventListener('change',function(){save(row);});
+    });
+    var box=row.querySelector('input[type=checkbox]');
+    if(box)box.addEventListener('change',function(){ if(box.checked)save(row); else remove(row,true); });
+  }
+  form.querySelectorAll('.trkset').forEach(wire);
+  window.ccBumpCount=function(){
+    var n=document.querySelectorAll('.trksaved[data-on="1"]').length;
+    var s=document.getElementById('trk-status'); if(!s)return;
+    s.innerHTML = n>0
+      ? '<span class="flag flag-accent">In progress — '+n+' set'+(n===1?'':'s')+' logged</span>'
+      : '<span class="muted">Nothing logged yet — enter a set and tap Log.</span>';
+  };
+  // JS is on: the whole-session submit is a redundant backup, so de-emphasise it.
+  var fb=document.getElementById('trk-fallback'); if(fb)fb.classList.add('trk-js');
+})();
+</script>`;
+}
+
+/** The Track-workout screen: day switcher, the full session on one scroll, save-as-you-go. */
+export function trackPage(ctx: TrackContext): string {
+  const back = `/athlete?id=${encodeURIComponent(ctx.athleteId)}`;
+  const dayNav = ctx.days.map((d) =>
+    `<a class="trk-day${d === ctx.day ? ' active' : ''}" href="/athlete/track?id=${encodeURIComponent(ctx.athleteId)}&day=${d}">Day ${d}</a>`,
+  ).join('');
+
+  const blocksHtml = ctx.blocks.map((b) => {
+    const refs = b.nodes.filter((n): n is Extract<TrackNode, { kind: 'reference' }> => n.kind === 'reference');
+    const tracks = b.nodes.filter((n): n is Extract<TrackNode, { kind: 'track' }> => n.kind === 'track');
+    const refList = refs.length ? `<ul class="ex">${refs.map(trackReferenceRow).join('')}</ul>` : '';
+    const trackList = tracks.map((n) => trackExerciseCard(n.ex)).join('');
+    return `<div class="trk-block"><h4>${esc(b.title)}</h4>${refList}${trackList}</div>`;
+  }).join('');
+
+  const statusLine = ctx.completed
+    ? statusFlag('quiet', 'Session finished')
+    : ctx.loggedSetCount > 0
+      ? statusFlag('accent', `In progress — ${ctx.loggedSetCount} set${ctx.loggedSetCount === 1 ? '' : 's'} logged`)
+      : '<span class="muted">Nothing logged yet — enter a set and tap Log.</span>';
+
+  const finishForm = `<form class="inlineform" method="post" action="/athlete/track/finish?id=${encodeURIComponent(ctx.athleteId)}&day=${ctx.day}">`
+    + `<button class="btn" type="submit">${ctx.completed ? 'Reopen session' : 'Finish session'}</button></form>`;
+
+  const body = `
+    <p class="sub"><a href="${esc(back)}">← ${esc(ctx.athleteName)}</a></p>
+    <h1>Track workout</h1>
+    <p class="sub">${esc(ctx.athleteName)} · ${esc(ctx.date)} · tier ${esc(ctx.tier)}</p>
+    <div class="trk-days">${dayNav}</div>
+    <p class="panel-note">${esc(ctx.sessionSubtitle)}</p>
+    <p class="trk-status" id="trk-status">${statusLine}</p>
+    <form id="trkform" class="log-form" method="post" data-athlete="${esc(ctx.athleteId)}" data-day="${esc(String(ctx.day))}"
+      action="/athlete/track/save?id=${encodeURIComponent(ctx.athleteId)}&day=${ctx.day}">
+      ${blocksHtml}
+      <div class="actions trk-actions">
+        ${finishForm}
+        <span id="trk-fallback" class="trk-fallback">
+          <button class="btn secondary" type="submit">Save session</button>
+          <span class="hint">Save-as-you-go is automatic. This button saves everything at once (needed only without JavaScript).</span>
+        </span>
+      </div>
+    </form>
+    ${trackJs()}`;
+  return page('Track workout', body);
+}
+
+/**
+ * Parse the no-JS whole-session submit: for each trackable exercise in the assembled day, read the
+ * rows the coach TICKED ("on~<ex>~<idx>") and validate their values. Untouched (unticked) rows are
+ * ignored — the honest-log rule holds without JS. Returns per-exercise parsed sets + field errors.
+ */
+export function parseTrackSave(
+  params: URLSearchParams,
+  exercises: { exerciseId: string; metrics: Metric[] }[],
+): { sets: { exerciseId: string; setIndex: number; values: Record<string, number>; note?: string }[]; errors: string[] } {
+  const sets: { exerciseId: string; setIndex: number; values: Record<string, number>; note?: string }[] = [];
+  const errors: string[] = [];
+  for (const ex of exercises) {
+    for (let idx = 1; idx <= MAX_SET_ROWS; idx++) {
+      if (params.get(`on${T}${ex.exerciseId}${T}${idx}`) !== '1') continue; // not confirmed → skip
+      const metricIds = ex.metrics.map((m) => m.id);
+      const values: Record<string, number> = {};
+      let hasValue = false;
+      for (const mid of metricIds) {
+        const raw = (params.get(`m${T}${ex.exerciseId}${T}${idx}${T}${mid}`) ?? '').trim();
+        if (raw === '') continue;
+        hasValue = true;
+        values[mid] = Number(raw);
+      }
+      if (!hasValue) continue; // ticked but empty → nothing to log
+      const rowErrs = validateSetValues(metricIds, values);
+      if (rowErrs.length) { errors.push(`${ex.exerciseId} set ${idx}: ${rowErrs.join('; ')}`); continue; }
+      const note = (params.get(`n${T}${ex.exerciseId}${T}${idx}`) ?? '').trim();
+      sets.push({ exerciseId: ex.exerciseId, setIndex: idx, values, ...(note ? { note } : {}) });
+    }
+  }
+  return { sets, errors };
+}
+
 /** The post-save reveal — the FIRST time the computed tier is shown for this entry (§3.7). */
 export function assessmentRevealPage(athlete: AthleteProfile, warnings: string[], a: Assessment): string {
   const back = `/athlete?id=${encodeURIComponent(athlete.athleteId)}`;
