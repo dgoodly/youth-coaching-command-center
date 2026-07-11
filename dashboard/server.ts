@@ -128,7 +128,7 @@ async function rosterPage(): Promise<string> {
     ${rosterTable(
       ['Athlete', 'Age', 'Tier', 'Last assessment', 'Re-assess', 'Height velocity', 'Load', 'Block'],
       rows,
-      'No athletes yet. Add one with `npm run enter`.',
+      'No athletes yet — add your first with “+ New athlete” above.',
     )}
     <p class="muted" style="margin-top:14px">Re-assess fires at ≥ 6 weeks (spec §6). Height velocity ≥ 7 cm/yr = near-PHV → dose pullback (dose only, not tier; shown in Midnight Green, a separate axis). Load = specialization/volume guardrails (weekly hours ≤ age · sport &lt; 16 h · ≥ 1–2 rest days).</p>`;
   return page('Roster', body, 'roster');
@@ -173,7 +173,7 @@ function progressExerciseHtml(name: string, prog: ExerciseProgress): string {
 /** "Progress & PRs" card body — one row per logged exercise, most recently trained first. */
 function progressCardBody(setEntries: SetLogEntry[], exercises: Exercise[]): string {
   const groups = groupSetsByExercise(setEntries);
-  if (groups.size === 0) return '<p class="empty">No sets logged yet — use “Log” on a plan exercise to start tracking PRs.</p>';
+  if (groups.size === 0) return '<p class="empty">No sets logged yet — use <b>Track workout</b> to log a session and start building PRs.</p>';
   const byId = new Map(exercises.map((e) => [e.id, e]));
   const rows: { html: string; lastAt: number }[] = [];
   for (const [exId, sets] of groups) {
@@ -396,7 +396,7 @@ async function athletePage(id: string): Promise<string> {
 
     ${card('Training-load guardrails — specialization / volume', table(['Status', 'Guardrail'], guardRows, 'No guardrail data.'))}
 
-    ${card('Wellness — weekly load / growth check', table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged. Add with `npm run wellness`.'))}
+    ${card('Wellness — weekly load / growth check', table(['Date', 'Sleep', 'Soreness (1–5)', 'Energy (1–5)', 'Notes'], wellnessRows, 'No wellness checks logged yet. Capture them with `npm run wellness`.'))}
 
     ${card('Progress & PRs — per exercise, coach-only', progressCardBody(setEntries, exerciseLib))}
 
