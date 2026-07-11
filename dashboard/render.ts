@@ -100,6 +100,7 @@ const CSS = `
   header.cc-head nav a {
     font: 600 12px/1 var(--cc-font-body); color: var(--cc-muted); text-decoration: none;
     padding-bottom: 2px; border-bottom: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease;
   }
   header.cc-head nav a:hover { color: var(--cc-ink); }
   header.cc-head nav a.active { color: var(--cc-ink); border-bottom-color: var(--cc-accent); }
@@ -215,7 +216,8 @@ const CSS = `
   /* — Plan day-tabs — */
   .tabs { display: flex; gap: 4px; margin: 10px 0 14px; flex-wrap: wrap; border-bottom: 1px solid var(--cc-border); }
   .tab { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--cc-muted);
-    padding: 8px 14px; font: 600 12px/1 var(--cc-font-body); cursor: pointer; margin-bottom: -1px; }
+    padding: 8px 14px; font: 600 12px/1 var(--cc-font-body); cursor: pointer; margin-bottom: -1px;
+    transition: color .15s ease, border-color .15s ease; }
   .tab:hover { color: var(--cc-ink); }
   .tab.active { color: var(--cc-ink); border-bottom-color: var(--cc-accent); }
   .hidden { display: none; }
@@ -240,7 +242,7 @@ const CSS = `
   .setcell { display: flex; flex-direction: column; gap: 4px; }
   .setcell-lab { font: 600 10px/1.2 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
     color: var(--cc-muted); }
-  .setcell-lab .unit { color: var(--cc-quiet); font-weight: 500; }
+  .setcell-lab .unit { color: var(--cc-muted); font-weight: 500; }
   .setcell input { width: 90px; }
   .setcell.setnote { flex: 1; min-width: 140px; }
   .setcell.setnote input { width: 100%; }
@@ -271,7 +273,8 @@ const CSS = `
   /* — Track-workout screen (the field tool) — */
   .trk-days { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; }
   .trk-day { font: 600 12px/1 var(--cc-font-body); color: var(--cc-muted); text-decoration: none;
-    padding: 7px 14px; border: 1px solid var(--cc-border); border-radius: var(--cc-r-btn); }
+    padding: 7px 14px; border: 1px solid var(--cc-border); border-radius: var(--cc-r-btn);
+    transition: background .15s ease, border-color .15s ease, color .15s ease; }
   .trk-day:hover { border-color: var(--cc-ink); color: var(--cc-ink); }
   .trk-day.active { background: var(--cc-ink); color: var(--cc-bg); border-color: var(--cc-ink); }
   .trk-status { margin: 4px 0 18px; font-size: 13px; }
@@ -303,18 +306,20 @@ const CSS = `
   .trkcell { display: flex; flex-direction: column; gap: 4px; }
   .trkcell-lab { font: 600 10px/1.2 var(--cc-font-body); text-transform: uppercase; letter-spacing: .05em;
     color: var(--cc-muted); }
-  .trkcell-lab .unit { color: var(--cc-quiet); font-weight: 500; }
+  .trkcell-lab .unit { color: var(--cc-muted); font-weight: 500; }
   /* Field-tool inputs: bigger than the desk forms — thumb-sized on a phone at the track. */
-  .trkcell input { width: 104px; font-size: 16px; padding: 11px 12px; }
+  /* Scoped under .trk-rows so these win over the base input[type=number] rule (equal specificity
+     otherwise). 16px keeps iOS from zooming the viewport on focus mid-session. */
+  .trk-rows .trkcell input { width: 104px; font-size: 16px; padding: 11px 12px; }
   .trkcell.trknote { flex: 1; min-width: 130px; }
-  .trkcell.trknote input { width: 100%; }
+  .trk-rows .trkcell.trknote input { width: 100%; }
   /* The Log toggle: the confirm that a pre-filled row is real, and the saved-state control. */
   .trktoggle { display: inline-flex; align-items: center; gap: 7px; align-self: flex-end; padding-bottom: 9px;
     font: 600 12px/1 var(--cc-font-body); text-transform: uppercase; letter-spacing: .04em; color: var(--cc-muted);
     cursor: pointer; white-space: nowrap; }
   .trktoggle input { width: 20px; height: 20px; accent-color: var(--cc-accent); cursor: pointer; }
   .trksaved { align-self: flex-end; padding-bottom: 10px; font: 600 11px/1 var(--cc-font-body);
-    min-width: 52px; color: var(--cc-quiet); }
+    min-width: 52px; color: var(--cc-quiet); transition: color .2s ease; }
   .trksaved[data-on="1"] { color: var(--cc-maturity); }
   .trksaved.err { color: var(--cc-bad); }
   .trkremove { align-self: flex-end; }
@@ -327,13 +332,24 @@ const CSS = `
   /* — Buttons: primary is solid Gunmetal (accent stays reserved). One filled per screen. — */
   .btn { display: inline-block; background: var(--cc-ink); color: var(--cc-bg); border: 1px solid var(--cc-ink);
     padding: 9px 18px; border-radius: var(--cc-r-btn); font: 600 13px/1 var(--cc-font-body);
-    cursor: pointer; text-decoration: none; }
+    cursor: pointer; text-decoration: none;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .06s ease; }
   .btn:hover { background: #1a242b; }
+  .btn:active { transform: translateY(1px); }
   .btn.secondary { background: transparent; color: var(--cc-ink); border-color: var(--cc-border); }
-  .btn.secondary:hover { border-color: var(--cc-ink); }
+  .btn.secondary:hover { border-color: var(--cc-ink); background: var(--cc-row-tint); }
   .btn.mini { padding: 5px 10px; font-size: 11px; }
+  .btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; transform: none; }
+  .btn:disabled:hover { background: var(--cc-ink); }
   .inlineform { display: inline; margin: 0; }
-  .actions { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+  .actions { display: flex; gap: 10px; align-items: center; margin: 8px 0 24px; flex-wrap: wrap; }
+
+  /* Keyboard focus — one accent ring across every interactive control (matches the input focus,
+     and only for keyboard nav via :focus-visible, so a mouse click never paints a ring). */
+  a:focus-visible, .btn:focus-visible, .triage-card:focus-visible, .tab:focus-visible,
+  .trk-day:focus-visible, input[type=checkbox]:focus-visible, button:focus-visible {
+    outline: 2px solid var(--cc-accent); outline-offset: 2px; border-radius: var(--cc-r-badge);
+  }
 
   /* — Forms — */
   form.cc { max-width: 640px; }
@@ -346,6 +362,8 @@ const CSS = `
     border-radius: var(--cc-r-btn); padding: 9px 11px; font: 400 13px/1.4 var(--cc-font-body); }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--cc-accent); outline-offset: 1px;
     border-color: var(--cc-accent); }
+  /* Placeholders read at the same 4.5:1 as body text — never the too-light default gray. */
+  input::placeholder, textarea::placeholder { color: var(--cc-muted); opacity: 1; }
   textarea { min-height: 64px; resize: vertical; }
   .field.bad input, .field.bad select, .field.bad textarea { border-color: var(--cc-bad); }
   .field .fieldErr { display: block; color: var(--cc-bad); font-size: 12px; margin: 5px 0 0; font-weight: 600; }
@@ -361,6 +379,33 @@ const CSS = `
   .banner.err { background: #FBECEA; border-color: #E7C3BE; color: #7A2E28; }
   .banner.ok { background: #FBEFE6; border-color: #F3C9A6; color: #7A3306; }
   .banner ul { margin: 6px 0 0; padding-left: 18px; }
+
+  /* — Responsive — a coach opens the roster at a desk but tracks a session on a phone at the track.
+     Dense tables scroll within their own region instead of forcing the whole page sideways; the
+     rest is structural (tighter gutters, wrapping header), never fluid type. — */
+  .tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  @media (max-width: 640px) {
+    header.cc-head { padding: 12px 16px; gap: 10px 16px; flex-wrap: wrap; }
+    header.cc-head .eyebrow { margin-left: auto; }
+    main { padding: 20px 16px 40px; }
+    h1 { font-size: 23px; }
+    h2 { margin-top: 24px; }
+    .stat .stat-value { font-size: 30px; }
+    .stats, .triage { gap: 10px; }
+    /* Let the horizontal-scrolling tables use the full width between the tightened gutters. */
+    .tablewrap { margin: 0 -16px; padding: 0 16px; }
+    .card { padding: 15px; }
+    .trk-ex { padding: 13px 14px; }
+    .trk-metrics { margin-left: 0; flex-basis: 100%; }
+  }
+  /* Touch devices get taller hit areas (~44px) without changing desktop density. */
+  @media (pointer: coarse) {
+    .btn { padding-top: 11px; padding-bottom: 11px; }
+    .btn.mini { padding-top: 9px; padding-bottom: 9px; }
+    header.cc-head nav a { padding: 8px 0; }
+    .tab, .trk-day { padding-top: 11px; padding-bottom: 11px; }
+    .trktoggle input { width: 24px; height: 24px; }
+  }
 `;
 
 /** Wrap page body in the shared shell with nav. `active` highlights the current top-level view. */
@@ -398,7 +443,7 @@ export function table(headers: string[], rows: string[][], emptyMsg = 'Nothing y
   if (rows.length === 0) return `<p class="empty">${esc(emptyMsg)}</p>`;
   const head = headers.map((h) => `<th>${esc(h)}</th>`).join('');
   const body = rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('');
-  return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  return `<div class="tablewrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 /** One roster row: pre-rendered cells + triage flags used for wash + click-to-filter. */
@@ -423,7 +468,7 @@ export function rosterTable(headers: string[], rows: RosterRow[], emptyMsg: stri
     const cells = r.cells.map((c) => `<td>${c}</td>`).join('');
     return `<tr class="roster-row${r.urgent ? ' urgent' : ''}" ${attrs}>${cells}</tr>`;
   }).join('');
-  return `<table id="roster"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  return `<div class="tablewrap"><table id="roster"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 /** A triage/filter card: a count + label that filters the roster table below when clicked. */
