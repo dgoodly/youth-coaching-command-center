@@ -82,8 +82,8 @@ These are behavioral requirements, not styling. Any redesign must preserve them:
 
 ## 5. Screen-by-screen spec
 
-The reference app has three read views + a set of forms. Routes are listed so you can open each in the
-running reference (§9).
+The reference app has three read views, a track-logging screen, and a set of forms. Routes are listed
+so you can open each in the running reference (§9).
 
 ### 5.1 Roster — `GET /`
 Purpose: the coach's at-a-glance list. One row per athlete.
@@ -100,7 +100,7 @@ Purpose: the coach's at-a-glance list. One row per athlete.
 Purpose: everything about one athlete. Currently a long vertical stack of sections — a prime candidate
 for real information hierarchy. Sections, in order:
 - **Header:** name, valgus-watch flag, age · sports · training months · **current tier**.
-- **Actions:** "＋ Enter assessment", "Edit athlete".
+- **Actions:** "Track workout" (primary), "＋ Enter assessment", "Edit athlete".
 - **Maturity (dose axis):** a plain-language note; a maturity-offset estimate line when computable
   (`PRE`/`CIRCA`/`POST`-PHV band, offset in years, est. age at PHV, method); the **height log** table
   (date, standing, sitting, source).
@@ -110,21 +110,63 @@ for real information hierarchy. Sections, in order:
 - **Score trends:** the six tests × assessment dates grid (low values flagged).
 - **Current plan:** the **split-switch form** + instant **day tabs** (Day 1 default). Day count comes
   from the athlete's split; each tab is a fully assembled session (warm-up → funnel → jump → sprint →
-  lift → trunk → motor-skill → cooldown, with dose + cues + tags like `SL`/`stick`/`d5`).
-- **Workout log:** served sessions (date, label, tier, status, notes).
+  lift → trunk → motor-skill → cooldown, with dose + cues + tags like `SL`/`stick`/`d5`). This view is
+  **read-only reference** — logging happens on the separate Track-workout screen (§5.3).
+- **Progress & PRs:** per-exercise, coach-only. From the logged set-log: each metric's **PR**, the
+  last-session value, and a per-session **trend sparkline** (needs ≥ 2 sessions). Most-recently-trained
+  exercise first. Empty until sets are logged.
+- **Workout log:** logged sessions (date, label, tier, **status**, set count, notes). Status is
+  **planned / in progress / done**, derived from set-count + the explicit `completed` flag; today's
+  in-progress session carries a **Resume** link into the Track-workout screen, and each row has a
+  mark-done / reopen toggle.
 
 Key states: **no assessment yet** (no tier → plan shows split only, prompts to assess); **no height**
 (maturity unavailable, with reason); **one height entry** (velocity needs two); a **day that fails to
 assemble** is contained to its own panel rather than breaking the page.
 
-### 5.3 Validation — `GET /validation`
+### 5.3 Track workout — `GET /athlete/track?id=&day=`
+Purpose: the coach's **field-logging** surface — the opposite job to the read-only plan view. The whole
+session on one scroll (no toggling between screens mid-workout), each trackable movement pre-filled with
+last session's numbers, saving as it goes. Launched from the athlete page's "Track workout" action; used
+one-handed on a phone at the track.
+
+- **Day resolution:** opens the **next day in the split** after the athlete's most recent logged session
+  (wrapping at the end; clamped if the split changed); an unfinished session opens on its own day; no
+  history → Day 1. A **day switcher** (the split's days) lets the coach pick any day; an explicit `day`
+  param wins.
+- **Layout:** the assembled session split into **read-only reference slots** (warm-up / funnel /
+  cooldown / non-logged motor-skill drills) and **trackable movement cards** (the metric-bearing
+  lifts / sprints / jumps / throws / trunk). Each trackable card shows the prescribed target, a
+  "last time · PR" line, and one input row per prescribed set (inputs are driven by the exercise's
+  declared metrics — a squat logs load + reps, a sprint logs time, a throw logs load).
+- **Pre-fill (a hint, never an assumption):** each set-row carries **last session's value** for that
+  exact exercise + metric — from history, not the prescription. First-ever log → blank + a "first time —
+  no prior data" hint.
+- **Honest-log rule (invariant):** a per-set **"Log" toggle** is the explicit confirm and the saved-state
+  indicator; a set is persisted **only when the coach confirms it**. An untouched pre-filled row is
+  **never written** — at both set and session level. With JS each confirm autosaves that one set; with
+  JS off the whole-session submit writes only the ticked rows.
+- **Save-as-you-go / resume:** the session record is created **lazily on the first set** (never on
+  screen open), so a mis-open logs nothing and can't pollute the next-day default. Reopening the screen
+  the same day **resumes** the logged sets in place. Add / remove set per exercise; each write snapshots
+  the prescription so a later library edit can't rewrite history.
+- **Finish:** an explicit **"Finish session"** marks it done (Reopen toggles back). `completed` is only
+  ever an explicit coach action, never a side effect of logging.
+- **Write routes:** `POST /athlete/track/set` (autosave one set) · `/athlete/track/set/remove` ·
+  `/athlete/track/save` (no-JS whole session) · `/athlete/track/finish`.
+
+Key states: **no tier** (must assess first — the prescription comes from the tier); **first-ever log**
+(blank + hint); **resumed session** (saved actuals shown, status "In progress — N sets logged");
+**finished** (reads done, still reopenable).
+
+### 5.4 Validation — `GET /validation`
 Purpose: threshold tuning. Computed tier vs coach gut-call across all assessments with a gut-call.
 - **Agreement summary:** N assessments · X match · Y differ · **% agreement**.
 - **Compare table:** date, athlete, raw, calculated tier, gut-call, verdict (match / **DIFFERS**), gate.
 - **Gate-firing tally:** how often each gate (`capC`/`capA`/`S->A`/none) fired.
 - Design note: this is an analysis screen — it wants charts/deltas more than tables.
 
-### 5.4 Forms
+### 5.5 Forms
 
 | Form | Route(s) | Notes |
 |---|---|---|
@@ -167,30 +209,61 @@ TypeScript. Enums: `Tier = 'C'|'B'|'A'|'S'` (ranked), `SplitChoice = '2day'|'3da
 
 ## 7. Current visual language (starting point, not a mandate)
 
-The reference uses an ad-hoc dark theme with **hardcoded hex** (no design tokens) in the `CSS` constant
-of [`dashboard/render.ts`](dashboard/render.ts). Carry forward or discard deliberately — but the
-**tier color semantics** are worth preserving as a recognizable language:
+The reference implements a deliberate, **fully-tokenized light theme — "Direction B / Field Notes"**: a
+sports-science field manual, not a wellness app. Off-white + ink, one warm accent spent sparingly, flat
+surfaces, hairline rules, **no drop shadows, no gradients**. Colors live **only** as `--cc-*` CSS custom
+properties in the `CSS` constant of [`dashboard/render.ts`](dashboard/render.ts) — no scattered literals
+— so the system retunes in one place and transfers into the app as a token set. Full rationale (palette
+provenance, the tier-ramp and maturity-hue invariants) is in
+[`direction-b-field-notes.md`](direction-b-field-notes.md); this is the summary. Carry it forward or
+discard deliberately — but the **tier + maturity color semantics are a product invariant** (§4,
+invariant 4), not just styling.
+
+**Surfaces & ink**
 
 | Token | Value | Use |
 |---|---|---|
-| bg / surface / input | `#0f1216` / `#151a21` / `#0b0e12` | page / header & cards / fields |
-| border | `#232a33` | dividers, inputs |
-| text / heading / muted | `#e6e9ee` / `#b9c2cf` / `#8b95a3` | body / labels / secondary |
-| link / focus | `#8ab4ff` | links, focus ring |
-| **tier S** | `#3b2a5c` bg / `#d7c3ff` fg | advanced (purple) |
-| **tier A** | `#12402f` bg / `#86efac` fg | proficient (green) |
-| **tier B** | `#3a3512` bg / `#fde68a` fg | developing (amber) |
-| **tier C** | `#3a2317` bg / `#fdba74` fg | foundational (orange) |
-| flag / ok / muted | `#fca5a5` / `#86efac` / `#8b95a3` | alert / good / n-a |
-| primary btn | `#12402f` / `#86efac` / border `#1c5a3f` | actions |
+| `--cc-canvas` / `--cc-bg` | `#ECE9E2` / `#F7F6F2` | outer wrapper / app background + card fills |
+| `--cc-row-tint` | `#F2F0EA` | table header, row hover |
+| `--cc-ink` / `--cc-muted` | `#233038` (Gunmetal) / `#5C666D` | primary text, primary buttons, nav / secondary labels |
+| `--cc-border` / `--cc-border-faint` | `#D3DBDD` (Light Silver) / `#EAE7DF` | hairline dividers, inputs / dense-table rules |
+| `--cc-accent` | `#FF5B04` (Orange Pantone) | the one saturated color — spent deliberately for "this matters most" |
+| `--cc-maturity` | `#075056` (Midnight Green) | the maturity / PHV axis ONLY — a separate hue from the tier family (invariant 4) |
 
-Type: `14px/1.5 ui-sans-serif, system-ui`. Radii: 5px badges · 8px inputs/buttons · 9px pills.
+**Tier ramp — one hue, rising saturation** (not four unrelated colors; the letter stays as a redundant, colorblind-safe signal):
 
-**Known gaps to fix in the real app** (don't inherit these):
-- No tokens — colors are scattered literals.
-- **Status is color-only** (`flag`/`ok`) — contrast/colorblind risk; add text/icon affordances.
-- **Table-heavy**, minimal information hierarchy on the athlete page.
-- **Barely responsive** — viewport meta + a max-width, but not designed for mobile.
+| Tier | bg / fg |
+|---|---|
+| C Foundational | `#FCE0CC` / `#8A3B0A` |
+| B Developing | `#FAB37D` / `#7A3306` |
+| A Proficient | `#FF8B45` / `#4A1F02` |
+| S Advanced | `#FF5B04` / `#F7F6F2` |
+| none | `#EDE9DC` / `#A6A39A` (a distinct "no assessment" state, not a blank cell) |
+
+**Status** — `load: over` `#FF5B04` (shares the accent with tier S = "maximum signal"), `load: watch`
+`#FBEFCF` / `#6B4E12` (Sand Yellow), `ok / n-a` quiet `#B7B3A8`. Flags are **dot + text**, never a bare
+color swatch; the **primary button is solid Gunmetal** so the accent never dilutes into a default UI color.
+
+**Type — three families, each with one job** (never mix a role across families): **Archivo** (600/700/800)
+for display, page titles, hero numerals, tier-badge letters; **Inter** (400–700) for body, labels,
+buttons, nav; **IBM Plex Mono** (400/500/600) for measured data (times, dates, cm/yr) so digits align.
+Body is `400 13px/1.55 Inter`; sentence case throughout except small uppercase-tracked eyebrow labels.
+
+**Shape** — flat, 1px solid borders only. Radii: cards `12px` (`--cc-r-card`), buttons/inputs `8px`
+(`--cc-r-btn`), tier badges `6px` (`--cc-r-badge`), pills `20px` (`--cc-r-pill`). Interactive controls
+carry full default / hover / `:active` / `:focus-visible` states (a shared accent focus ring), and
+`prefers-reduced-motion` is respected.
+
+**Deliberately NOT here** (by design — don't add them): decorative color, gradients, drop shadows, icons
+without a functional purpose, any color used for mood rather than meaning.
+
+**Still open for the real app** (deliberate scope for you, not inherited defects):
+- **Information hierarchy** on the athlete page — a long vertical stack of sections; a prime candidate
+  for real hierarchy / progressive disclosure.
+- **Mobile-first IA** — a structural responsive baseline exists (tightened gutters, dense tables that
+  scroll within their own region, ~44px touch targets on the track screen), but not a designed mobile
+  layout.
+- **Motion** — minimal and functional today; a considered motion system is green-field.
 
 ---
 
@@ -202,7 +275,9 @@ Type: `14px/1.5 ui-sans-serif, system-ui`. Radii: 5px badges · 8px inputs/butto
   reopens data-privacy questions (roster data is private, currently git-ignored).
 - **Stack & tokens.** The reference is dependency-free by philosophy; the real app can choose
   otherwise — decide the framework and a real token system up front.
-- **Motion / real-time.** None today; the day-tab toggle is the only interaction.
+- **Motion / real-time.** Minimal and functional today — state transitions (hover/focus/active),
+  per-set **autosave** on the track screen, and client toggles (day tabs, roster triage filter). A
+  considered motion system is still green-field.
 
 ---
 
@@ -211,7 +286,7 @@ Type: `14px/1.5 ui-sans-serif, system-ui`. Radii: 5px badges · 8px inputs/butto
 ```
 npm run dashboard        # → http://localhost:5173  (no build step)
 ```
-Routes to walk through: `/` · `/athlete?id=<id>` · `/validation` · `/athlete/new` ·
-`/athlete/edit?id=<id>` · `/assessment/new?athleteId=<id>`. To get data on screen, add an athlete and
+Routes to walk through: `/` · `/athlete?id=<id>` · `/athlete/track?id=<id>` · `/validation` ·
+`/athlete/new` · `/athlete/edit?id=<id>` · `/assessment/new?athleteId=<id>`. To get data on screen, add an athlete and
 enter an assessment (or ask the team for a sample data dir). Everything is server-rendered HTML read
 live from JSON files under `/data`.
