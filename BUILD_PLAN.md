@@ -36,6 +36,52 @@
 
 > This is the highest-value two hours in the entire project. It's also the one step you'll be most tempted to skip, because writing code feels like progress and standing in a garage with a clipboard doesn't.
 
+**Phase 0 result (July 2026):** run. Novices scored. The finding was a question, not a divergence: *"is it ok that the knees fall inward a little bit — is there room to still score higher?"* See Phase 0.5.
+
+---
+
+## Phase 0.5 — Shoot the boundaries (half a day, no code)
+
+**Goal:** answer the question Phase 0 surfaced. By demonstration, not by sentence.
+
+**Why this runs before S3.** *"How much inward knee travel is too much"* is a quantity. Prose is bad at quantities — that's why the question came up, and no rewording fully fixes it. But you can point at it. **The shoot is how you decide the line. The §3 wording is the transcript.** So it happens before the rubric gets transcribed into `library/`, not after.
+
+**The question generalizes — it isn't just drop-stick.** Both gated tests have the same hole in the same place:
+
+| | Score 1 | Score 2 | Score 3 |
+|---|---|---|---|
+| **Test 1 · Squat** | "slight knee cave" | "only minor faults" | "knees track perfectly" |
+| **Test 2 · Drop-stick** | "slight knee cave" | "two-foot stick clean" | "knees out" |
+
+Knee position is named at 0, 1, and 3. **Score 2 is the only level that's silent on it — in both tests. And score 2 is the gate** (`squat < 2 || dropStick < 2 → C`). Your novice would have asked the same question at Test 1. Whatever line you draw, draw it in both places or you'll get the question again.
+
+**Why the format invites it.** The engine treats these as **gates** — binary, disqualifying, no weighing. The rubric presents them as **scales** — four prose descriptions where the reader's job is to find the best match, with knee cave sitting inline next to "wobble" as though a stability fault and an injury-risk fault were comparable. A kid who sticks it two-foot with slight cave matches *part* of 1 and *part* of 2, so the novice asks you to adjudicate. **The content already answers it. The format invited a weighing where the engine permits none.** Consider whether the criteria should read as a check before a scale ("any inward travel → max 1") rather than four descriptions to choose between. That's a format decision, and it's yours.
+
+**And watch the direction of the ask.** They didn't ask *"should this be a 1?"* They asked *"is there room to score higher?"* Someone with a kid in front of them — maybe their own — wants to be generous. If that's the population and not just this person, every fuzzy call rounds up, the C gate under-fires exactly when it matters, and a kid with valgus gets reactive work. That's the failure the product exists to prevent, arriving on day one. It's the argument for a tiebreaker instruction — *when torn between two scores, give the lower one* — as error correction, not philosophy.
+
+**Scope: not 24 clips.** Four of the six tests barely need them:
+
+| Test | Judgment? | Clips |
+|---|---|---|
+| **1 · Squat** | high — **gated** | **4** |
+| **2 · Drop-stick** | high — **gated** | **4** |
+| 3 · Balance | none — it's a stopwatch | 0 |
+| 4 · Push-ups | "quality rep" is undefined | 1–2 |
+| 5 · Broad jump | distance is measured; landing isn't | 2 |
+| 6 · Pogo | "stiff," "crisp" — hard in words | 4 |
+
+**Four clips do most of the work:** Test 1 and Test 2, each at the **1↔2 boundary**. Both gates. Not "what a 2 looks like" — *what the line looks like.* Shoot those first and you could stop there and still have answered the question you got.
+
+**Consent is a different animal here, and I missed it earlier.** Every other film in this product stays on the coach's phone. **Exemplars ship** — they're distributed to every install. That's a model release, not a checkbox, and *"we don't keep your kid's video"* doesn't cover a clip of your kid that lives in everyone's app. Use volunteers who consented to that specific use, or your own kids. **Do not harvest them from real assessments**, however tempting once you've filmed forty.
+
+**Two outputs, one shoot.** Clips for the review screen (S12). Stills for the live form (S7) — the field wants glanceable, the desk wants scrubable. Same rhythm as everything else in this product.
+
+**Done:**
+- The line is decided, and it's decided in both Test 1 and Test 2
+- Your wording is added to `Youth_Tiering_Assessment_Spec.md §3` — **before S3 transcribes it**
+- Boundary clips shot and labeled, with releases
+- Stills pulled from the clips
+
 ---
 
 ## Phase 1 — Foundations (4 sessions, no UI)
@@ -53,8 +99,9 @@ Second implementation of the S1 interface. Test with `fake-indexeddb` (dev dep o
 
 ### S3 · Rubric → `library/assessment_rubric.json`
 Six tests × setup, watch-for, four score criteria, CAP flags. Same pattern as `exercise_library.json` — versioned, validated at load, tested.
-**⚠️ Verbatim transcription.** The content exists and is safety-critical. The model will want to tighten the wording and harmonize the bands. Don't let it. Diff the output against the spec yourself, by eye.
-**Done:** loader + validation + test, and a manual read-through confirming every string matches §3.
+**⚠️ Blocked on Phase 0.5.** Do not transcribe a rubric with a known hole in it. The score-2 knee-position gap in Tests 1 and 2 must be resolved in `Youth_Tiering_Assessment_Spec.md §3` first — otherwise you're about to ship the ambiguity into the app and every future coach hits it.
+**⚠️ Verbatim transcription.** The content is safety-critical. The model will want to tighten the wording and harmonize the bands. Don't let it. Diff the output against the spec yourself, by eye.
+**Done:** loader + validation + test, and a manual read-through confirming every string matches §3 — including the new wording.
 
 ### S4 · Schema migration
 `Assessment`: `scoresLive` / `scoresReviewed` / `reviewedAt` / `reviewedBy` / `provisional`, `films` keyed by test (replacing `videoRefs: string[]`), `filmsPurgeAt`. `computeTier` gains prior-tier context for can-lower-never-raise. Migration for existing `data/`.
@@ -80,8 +127,8 @@ List, add, edit. `AthleteProfile` as-is.
 **Done:** you can add a real kid.
 
 ### S7 · Assessment form — with criteria on screen
-**The most important screen in the app.** Not six number spinners. Each test shows setup, what to watch for, and all four score criteria — from `library/assessment_rubric.json`, on screen, at the moment of judgment. Gut-call before reveal (keep the invariant). Tier computes, provisional flag sets.
-**Done:** a person who's never seen the app can score a test without asking you a question. *Test this against a human, not a checklist.*
+**The most important screen in the app.** Not six number spinners. Each test shows setup, what to watch for, and all four score criteria — from `library/assessment_rubric.json`, on screen, at the moment of judgment. **Plus the Phase 0.5 boundary stills** on Tests 1 and 2, where words demonstrably aren't enough. Gut-call before reveal (keep the invariant). Tier computes, provisional flag sets.
+**Done:** a person who's never seen the app can score a test without asking you a question. *Test this against a human, not a checklist* — and specifically against the question Phase 0 produced. If they still ask it, you haven't fixed it.
 
 ### S8 · Athlete page + plan
 Tier (with provisional state and its copy), the assembled plan read-only, history. Desk-leaning. The record.
@@ -108,7 +155,7 @@ Log sets. IDB write queue. The seven sync states from brief §8 — `Queued` is 
 **Done:** refuses to capture uninstalled with honest copy; `navigator.storage.persist()` granted; storage estimate visible somewhere.
 
 ### S12 · Review screen
-Clip + exemplar side by side, criteria on screen, live score revealed *after* the criteria. Confirm-is-one-tap. Releases provisional.
+Clip + exemplar side by side (**exemplars from Phase 0.5**), criteria on screen, live score revealed *after* the criteria. Confirm-is-one-tap. Releases provisional.
 **Done:** review changes a score → tier recomputes → cap releases. All four §4.4 rules exercised end-to-end.
 
 ### S13 · Review queue + deletion + retention
@@ -178,17 +225,20 @@ Delete `dashboard/`. Fix `npm test`'s glob (it still targets `dashboard/**/*.tes
 
 **Why do the tokens land in S5 and not later?** Retrofitting contrast is miserable and you already know the answer. Do it once, at the start, and never think about it again.
 
-**What can move:** Phases 4, 5, and 6 are reorderable. Phase 0 → 1 → 2 → 3 is not — each genuinely blocks the next.
+**Why does a film shoot come before any code?** Because Phase 0 asked a question that words can't answer. *How much* is a quantity; you can point at a quantity but you can't reliably write one down. The clip is the definition and the sentence is the transcript — so the clip has to exist before the sentence gets frozen into `library/`.
+
+**What can move:** Phases 4, 5, and 6 are reorderable. Phase 0 → 0.5 → 1 → 2 → 3 is not — each genuinely blocks the next.
 
 ---
 
 ## The stop-and-look moments
 
-Three of them, and they're where the plan earns out:
+Four of them, and they're where the plan earns out:
 
-1. **After Phase 0.** Does the rubric work in a stranger's hands?
-2. **After Phase 2.** Two weeks of real use before you build anything else.
-3. **After Phase 3.** Hand it to a novice and watch without helping.
+1. **After Phase 0.** Does the rubric work in a stranger's hands? *(Done — it produced a real finding.)*
+2. **After Phase 0.5.** Re-run the boundary question past the same people, with the clips. If they still have to ask, the line isn't drawn yet.
+3. **After Phase 2.** Two weeks of real use before you build anything else.
+4. **After Phase 3.** Hand it to a novice and watch without helping.
 
 Each one is a chance to discover you're wrong while it's cheap. Skip them and you'll discover it anyway, later, expensively.
 
