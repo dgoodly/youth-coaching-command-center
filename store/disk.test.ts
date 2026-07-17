@@ -41,7 +41,7 @@ test('saveAssessment persists the assessment and its dual-written height entry t
   const built = buildAssessmentRecord({
     athleteId: 'ath-2', date: '2026-07-02', tester: 'Coach',
     scores: { squat: 2, dropStick: 3, balance: 2, pushup: 3, broad: 2, pogo: 2 },
-    coachGutCall: 'A', heightCm: 152, sittingHeightCm: 80,
+    coachGutCall: 'A', priorTier: null, heightCm: 152, sittingHeightCm: 80,
   });
   await saveAssessment(store, built);
 
@@ -60,7 +60,7 @@ test('saveAssessment with no height entry writes only the assessment', async () 
   const built = buildAssessmentRecord({
     athleteId: 'ath-3', date: '2026-07-03', tester: 'Coach',
     scores: { squat: 2, dropStick: 3, balance: 2, pushup: 3, broad: 2, pogo: 2 },
-    coachGutCall: null, heightCm: null,
+    coachGutCall: null, priorTier: null, heightCm: null,
   });
   await saveAssessment(store, built);
   assert.equal((await store.read('assessments')).length, 1);

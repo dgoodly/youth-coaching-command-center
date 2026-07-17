@@ -21,12 +21,12 @@
  * readwrite transactions on the same store run in creation order, each atomic — so unlike
  * disk there is no promise-chain mutex here.
  *
- * ⚠ SCHEMA VERSIONING IS NOT COVERED — the contract has no versioning clause and this file
- * pins version 1 with a create-only `onupgradeneeded`. S4 changes the Assessment schema, so
- * S4 owns: the migration path in `onupgradeneeded`, plus `blocked`/`versionchange` handling
- * (the PWA can be open in a browser tab AND installed on the home screen while one of them
- * upgrades — the other connection must close or the upgrade hangs). Flagged here so it
- * doesn't fall between the two sessions.
+ * SCHEMA VERSIONING (S4): `DB_VERSION` gates record-shape migrations. `onupgradeneeded`
+ * creates stores on a fresh database and runs the pure migrations from
+ * `store/migrations.ts` on an existing one. Because the PWA can be open in a browser tab
+ * AND installed on the home screen while one of them upgrades, every connection handles
+ * `versionchange` by closing itself (the next operation reopens at the new version), and
+ * an upgrade held open by a connection that won't close surfaces through `onBlocked`.
  */
 
 import {
@@ -42,8 +42,17 @@ import {
   type RecordOf,
   type RecordStore,
 } from './record-store.ts';
+import { isLegacyAssessment, migrateAssessmentRecord } from './migrations.ts';
 
 const ALL_COLLECTIONS = Object.keys(SCHEMA) as CollectionName[];
+
+/**
+ * Database schema version. Bump when a record shape changes, and add the migration to
+ * `runUpgrade` below (pure transform in `store/migrations.ts`, applied here via cursor).
+ *   v1 — S2: stores + indexes created from SCHEMA.
+ *   v2 — S4: assessment reshape (scoresLive/scoresReviewed, films, provisional).
+ */
+export const DB_VERSION = 2;
 
 /** A {@link RecordStore} over IndexedDB, plus lifecycle hooks the app shell needs. */
 export interface IdbStore extends RecordStore {
@@ -56,6 +65,12 @@ export interface IdbStoreOptions {
   name?: string;
   /** Injectable factory — tests pass `fake-indexeddb`'s; the app defaults to the global. */
   indexedDB?: IDBFactory;
+  /**
+   * Another connection (tab vs. home-screen app) won't close, so this connection's
+   * upgrade is stalled. The app shell decides what to tell the coach; default is IDB's
+   * native behavior — wait until the other side goes away.
+   */
+  onBlocked?: () => void;
 }
 
 export function createIdbStore(options: IdbStoreOptions = {}): IdbStore {
@@ -71,21 +86,49 @@ export function createIdbStore(options: IdbStoreOptions = {}): IdbStore {
 
   let dbPromise: Promise<IDBDatabase> | null = null;
 
+  /** Create stores on a fresh database; run record migrations on an old one. */
+  function runUpgrade(request: IDBOpenDBRequest, oldVersion: number): void {
+    const db = request.result;
+    if (oldVersion < 1) {
+      for (const name of ALL_COLLECTIONS) {
+        const spec = SCHEMA[name];
+        const objectStore =
+          spec.key === null
+            ? db.createObjectStore(name, { autoIncrement: true })
+            : db.createObjectStore(name, { keyPath: spec.key as string | string[] });
+        for (const index of spec.indexes) objectStore.createIndex(index, index);
+      }
+      return; // fresh database is created at the current shape — nothing to migrate
+    }
+    if (oldVersion < 2) {
+      // v2 (S4): assessment reshape, via the same pure function the disk CLI runs. A
+      // throw here (non-empty videoRefs) aborts the whole versionchange transaction —
+      // the database stays at v1 rather than half-migrating.
+      const assessments = request.transaction!.objectStore('assessments');
+      assessments.openCursor().onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue | null>).result;
+        if (!cursor) return;
+        if (isLegacyAssessment(cursor.value)) cursor.update(migrateAssessmentRecord(cursor.value));
+        cursor.continue();
+      };
+    }
+  }
+
   function openDb(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = factory.open(dbName, 1);
-      request.onupgradeneeded = () => {
+      const request = factory.open(dbName, DB_VERSION);
+      request.onupgradeneeded = (event) => runUpgrade(request, event.oldVersion);
+      request.onblocked = () => options.onBlocked?.();
+      request.onsuccess = () => {
         const db = request.result;
-        for (const name of ALL_COLLECTIONS) {
-          const spec = SCHEMA[name];
-          const objectStore =
-            spec.key === null
-              ? db.createObjectStore(name, { autoIncrement: true })
-              : db.createObjectStore(name, { keyPath: spec.key as string | string[] });
-          for (const index of spec.indexes) objectStore.createIndex(index, index);
-        }
+        // Another context (tab vs. home-screen) wants to upgrade: yield. Close this
+        // connection and forget it — the next operation reopens at the new version.
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
       };
-      request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error ?? new Error(`idb: failed to open "${dbName}"`));
     });
   }

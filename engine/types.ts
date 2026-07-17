@@ -89,6 +89,9 @@ export const SCORE_KEYS = [
   'pogo',
 ] as const satisfies readonly (keyof Scores)[];
 
+/** One of the six test keys — `Assessment.films` is keyed by it (brief §5.1). */
+export type ScoreKey = (typeof SCORE_KEYS)[number];
+
 /**
  * Which hard gate (spec §4) lowered the tier on this assessment, if any.
  * Stored for validation (§3.7) — tells the coach whether gates are too aggressive/lenient.
@@ -111,23 +114,91 @@ export interface ScoringResult {
   gateFired: GateFired;
 }
 
+/** Provenance context for the §4.4 provisional rules (brief §5.2). */
+export interface TierContext {
+  /** Film review has landed (`scoresReviewed` present). Film is truth — no holds apply. */
+  reviewed: boolean;
+  /**
+   * The athlete's current ROUTING tier before this assessment (latest `finalTier`), or
+   * null on a first-ever assessment. Note this means holds CHAIN: an athlete held at B
+   * stays held at B across every subsequent unreviewed assessment, because each hold
+   * becomes the next assessment's prior. Correct — the risky direction keeps costing a
+   * measurement — and it self-heals via the 42-day re-assess clock once S11/S12 land.
+   */
+  priorTier: Tier | null;
+}
+
+/** {@link ScoringResult} plus what the §4.4 provisional rules did to it. */
+export interface ProvisionalScoringResult extends ScoringResult {
+  /** True when unreviewed — `finalTier` may be held below the gates' own result. */
+  provisional: boolean;
+  /**
+   * What `finalTier` would be once reviewed (the gates' own result on the real scores).
+   * Feeds the "Provisional — A (capped from S)" copy. NOT persisted — recomputable.
+   */
+  unrestrictedTier: Tier;
+}
+
+/**
+ * A film CAPTURED during an assessment: a blob in device-local storage (OPFS once S11
+ * exists) on ONE device, purged at the athlete's next assessment (brief §4.6, §4.7).
+ *
+ * NOT an exemplar. Exemplars (the reference clips the review screen shows next to a
+ * capture, S3/S12) are app assets shipped to EVERY install with model-release consent
+ * behind them. Opposite lifecycles — a captured film must never be promoted into an
+ * exemplar, and the types are kept separate so the confusion can't compile.
+ *
+ * Deliberately minimal: S11 (capture) owns enriching this shape when it knows what
+ * capture actually needs.
+ */
+export interface CapturedFilmRef {
+  /** Device-local identity of the clip (OPFS path once S11 exists). */
+  ref: string;
+}
+
 /**
  * One assessment record (spec §8 "Minimum fields to persist per assessment",
- * contract §"Scoring outputs" + §"Coach gut-call").
+ * contract §"Scoring outputs" + §"Coach gut-call"; live/reviewed split per brief §5.1).
  */
 export interface Assessment {
   assessmentId: string; // uuid
   athleteId: string; // uuid — links to AthleteProfile
   date: string; // ISO date (YYYY-MM-DD). Drives the 4–6 week re-assessment prompt.
-  tester: string; // who administered (parent/guardian); contract page-1 header
+  tester: string; // who scored LIVE at the field (brief §4.2 — provenance, not permissions)
 
-  scores: Scores;
+  /** Scores as judged live, kid in front of you (brief §4.3). Never overwritten by review. */
+  scoresLive: Scores;
+  /** Scores as revised from film, or null until reviewed. Film is truth (brief §4.4 rule 4). */
+  scoresReviewed: Scores | null;
+  reviewedAt: string | null; // ISO datetime of the film review
+  /** Who reviewed. The live→reviewed calibration delta only counts rows where this matches `tester`. */
+  reviewedBy: string | null;
+  // Canonical scores = scoresReviewed ?? scoresLive — use {@link canonicalScores}.
 
-  // --- scoring outputs (recomputed from scores; spec §4, contract ingestion rule 2) ---
-  rawTotal: number; // 0–18
-  baseTier: Tier; // before gates
-  finalTier: Tier; // after gates — the routing value
-  gateFired: GateFired; // which gate fired (validation)
+  // --- scoring outputs (recomputed from canonical scores; spec §4, contract rule 2) ---
+  rawTotal: number; // 0–18 — a MEASUREMENT: always the sum of the real canonical scores
+  baseTier: Tier; // before gates — also a measurement (band lookup on rawTotal)
+  /**
+   * The ROUTING value: after gates AND the §4.4 provisional rules. On a provisional
+   * record this can sit below what the gates alone produce (a held promotion / the
+   * first-assessment cap) — `provisional: true` is what explains that gap.
+   */
+  finalTier: Tier;
+  /**
+   * Which gate fired — a pure function of the real canonical scores (validation, §3.7).
+   * NEVER reflects the provisional rules: every provisional hold reads the same way in
+   * the record (base X · gate <real> · final Y · provisional true) no matter which §4.4
+   * rule produced it.
+   */
+  gateFired: GateFired;
+  /**
+   * True until a film review lands (brief §4.4). While true, `finalTier` may be held
+   * below the gates' own result and promotion waits for film. NOTE: an assessment with
+   * no films (everything entered before S11 exists) can never be reviewed — those
+   * athletes stay provisional until their next FILMED assessment. Deliberate: the safe
+   * direction, and it self-heals via the re-assess clock.
+   */
+  provisional: boolean;
 
   /**
    * §3.7 / §8 — the coach's INDEPENDENT gut-call tier, captured BEFORE the calculated
@@ -139,8 +210,8 @@ export interface Assessment {
   /** Height at time of assessment; dual-written to the height log (contract rule 4). */
   heightCm: number | null;
 
-  /** Optional clips for tests 1, 2, 5 (local file paths / uris). */
-  videoRefs: string[];
+  /** Captured clips keyed by the test they film (spec films tests 1, 2, 5). */
+  films: Partial<Record<ScoreKey, CapturedFilmRef>>;
 
   /** Free-text observations (contract §Optional). */
   notes: string;
@@ -152,6 +223,17 @@ export interface Assessment {
    * overwritten.
    */
   paperMismatch?: PaperMismatch;
+
+  /**
+   * When this assessment's films are purged (brief §4.7: at the athlete's next
+   * assessment). `null` = pinned via "Keep longer". Absent when there are no films.
+   */
+  filmsPurgeAt?: string | null;
+}
+
+/** Canonical scores: reviewed wins (film is truth), live until then (brief §5.1). */
+export function canonicalScores(a: Pick<Assessment, 'scoresLive' | 'scoresReviewed'>): Scores {
+  return a.scoresReviewed ?? a.scoresLive;
 }
 
 /** Recorded when paper-written outputs disagree with the engine's recomputation. */
