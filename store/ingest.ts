@@ -29,7 +29,7 @@ import type {
 } from '../engine/types.ts';
 import { SCORE_KEYS, isTestScore, isTier } from '../engine/types.ts';
 import { assignTier } from '../engine/scoring.ts';
-import { append, appendAll, readCollection, writeCollection, type PendingAppend } from './json-store.ts';
+import type { PendingAppend, RecordStore } from './record-store.ts';
 
 /** The raw input a completed paper field form provides (contract page-1 + scores + outputs). */
 export interface FieldFormInput {
@@ -167,12 +167,12 @@ export function buildAssessmentRecord(input: FieldFormInput): BuiltAssessment {
  * reachable partial state is the doctor-recoverable "assessment saved, height not yet".
  * Returns the stored assessment.
  */
-export async function saveAssessment(built: BuiltAssessment): Promise<Assessment> {
+export async function saveAssessment(store: RecordStore, built: BuiltAssessment): Promise<Assessment> {
   const appends: PendingAppend[] = [{ collection: 'assessments', record: built.assessment }];
   if (built.heightEntry) {
     appends.push({ collection: 'height_log', record: built.heightEntry });
   }
-  await appendAll(appends);
+  await store.appendAll(appends);
   return built.assessment;
 }
 
@@ -184,11 +184,8 @@ export function nextAssessmentDate(date: string, weeks = 5): string {
 }
 
 /** Look up an athlete's display name, or fall back to the id, for CLI/echo output. */
-export async function athleteLabel(athleteId: string): Promise<string> {
-  const athletes = await readCollection('athletes');
+export async function athleteLabel(store: RecordStore, athleteId: string): Promise<string> {
+  const athletes = await store.read('athletes');
   const a = athletes.find((x) => x.athleteId === athleteId);
   return a ? a.displayName : athleteId;
 }
-
-/** Re-export for the CLI so it has one import surface. */
-export { readCollection, writeCollection, append };

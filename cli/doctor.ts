@@ -11,15 +11,16 @@
 
 import { stdout, argv } from 'node:process';
 
-import { readCollection, writeCollection } from '../store/json-store.ts';
+import { createDiskStore } from '../store/disk.ts';
 import { findHeightLogGaps, backfillEntriesFor } from '../store/doctor.ts';
 
 const line = (s = ''): void => void stdout.write(s + '\n');
 const fix = argv.includes('--fix');
+const store = createDiskStore();
 
 async function main(): Promise<void> {
-  const assessments = await readCollection('assessments');
-  const heightLog = await readCollection('height_log');
+  const assessments = await store.read('assessments');
+  const heightLog = await store.read('height_log');
   const gaps = findHeightLogGaps(assessments, heightLog);
 
   line('\n=== Data doctor ===\n');
@@ -39,7 +40,7 @@ async function main(): Promise<void> {
   }
 
   const entries = backfillEntriesFor(gaps);
-  await writeCollection('height_log', [...heightLog, ...entries]);
+  await store.write('height_log', [...heightLog, ...entries]);
   line(`\n✓ Backfilled ${entries.length} height-log entr${entries.length === 1 ? 'y' : 'ies'} (source: assessment).\n`);
 }
 

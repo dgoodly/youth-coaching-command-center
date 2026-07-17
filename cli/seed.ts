@@ -18,7 +18,11 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stdout, argv, exit } from 'node:process';
 
-import { DATA_DIR } from '../store/json-store.ts';
+import { createDiskStore } from '../store/disk.ts';
+
+// Seeding copies raw files, deliberately bypassing the store API (disk-only dev tool);
+// the store instance is only how it learns where the data dir lives.
+const DATA_DIR = createDiskStore().dir;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SEED_DIR = resolve(HERE, '..', 'data', 'seed');
