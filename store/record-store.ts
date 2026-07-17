@@ -134,6 +134,33 @@ export function sameKey(a: unknown, b: unknown): boolean {
   return a === b;
 }
 
+/** Contract #5 violation — shared so every implementation throws the identical error. */
+export function duplicateKeyError(name: CollectionName, key: unknown): Error {
+  return new Error(`store: duplicate primary key ${JSON.stringify(key)} in "${name}".`);
+}
+
+/** `updateRecord` mutate returned a record that doesn't live at the addressed key. */
+export function keyMismatchError(name: CollectionName, actual: unknown, expected: unknown): Error {
+  return new Error(
+    `store: updateRecord("${name}") mutate returned a record whose key ` +
+      `${JSON.stringify(actual)} differs from ${JSON.stringify(expected)}.`,
+  );
+}
+
+/**
+ * Contract #5: a keyed collection may never persist two records with one key. Pure — shared
+ * by implementations validating whole arrays (`write`/`update`) or staged batches.
+ */
+export function assertUniqueKeys<K extends CollectionName>(name: K, records: Collections[K]): void {
+  if (SCHEMA[name].key === null) return;
+  const seen = new Set<string>();
+  for (const r of records) {
+    const key = JSON.stringify(keyOf(name as KeyedName, r as RecordOf<KeyedName>));
+    if (seen.has(key)) throw duplicateKeyError(name, JSON.parse(key));
+    seen.add(key);
+  }
+}
+
 /** The persistence seam. See the module doc for the cross-implementation contract. */
 export interface RecordStore {
   // ---- collection-level — whole-array semantics, for small collections and resets ----

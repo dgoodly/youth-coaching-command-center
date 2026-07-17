@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "fake-indexeddb": "^6.2.5",
     "typescript": "^5.7.0"
   }
 }
