@@ -26,6 +26,7 @@ import {
   type FieldFormInput,
 } from '../store/ingest.ts';
 import { listAthletes, createAthlete, ageFromDob } from '../store/athletes.ts';
+import { createDiskStore } from '../store/disk.ts';
 import {
   makeRl,
   ask,
@@ -59,13 +60,15 @@ function line(s = ''): void {
   stdout.write(s + '\n');
 }
 
+const store = createDiskStore();
+
 async function main(): Promise<void> {
   const rl = makeRl();
   try {
     line('\n=== Enter Assessment (from paper field form) ===\n');
 
     // --- 1. Select or create athlete ---
-    const athletes = await listAthletes();
+    const athletes = await listAthletes(store);
     let athleteId: string;
     let athleteName: string;
 
@@ -165,7 +168,7 @@ async function main(): Promise<void> {
       return;
     }
 
-    await saveAssessment(built);
+    await saveAssessment(store, built);
     line(`\n✓ Saved. Re-assess around ${nextAssessmentDate(date)} (spec §6: 4–6 weeks).`);
     if (built.heightEntry) line(`✓ Height ${built.heightEntry.heightCm} cm logged to the maturity height-log.`);
     line(`\nReminder (§3.3): tier and scores are coach-only — never shown to the athlete/parent.\n`);
@@ -187,7 +190,7 @@ async function runBatch(jsonPath: string): Promise<void> {
 
   // Resolve / create the athlete.
   let athleteId = parsed.athleteId;
-  const athletes = await listAthletes();
+  const athletes = await listAthletes(store);
   if (athleteId) {
     // An explicit athleteId MUST resolve. A typo'd id must not silently create a new athlete —
     // that forks the real athlete's history into a phantom record. Drop athleteId to create one.
@@ -199,7 +202,7 @@ async function runBatch(jsonPath: string): Promise<void> {
     }
   } else {
     const name = parsed.displayName ?? 'Unnamed athlete';
-    const created = await createAthlete({
+    const created = await createAthlete(store, {
       displayName: name, valgusWatch: parsed.valgusWatch, sex: parsed.sex ?? null, dob: parsed.dob ?? null,
       weeklySportHours: parsed.weeklySportHours ?? null,
       weeklyTrainingHours: parsed.weeklyTrainingHours ?? null,
@@ -211,7 +214,7 @@ async function runBatch(jsonPath: string): Promise<void> {
 
   const input: FieldFormInput = { ...parsed, athleteId };
   const built = buildAssessmentRecord(input);
-  await saveAssessment(built);
+  await saveAssessment(store, built);
 
   const a = built.assessment;
   line(`Saved assessment ${a.assessmentId}:`);
@@ -239,7 +242,7 @@ async function newAthlete(
   const weeklySportHours = await askOptionalNumber(rl, 'Weekly organized-sport hours (guardrail)');
   const weeklyTrainingHours = await askOptionalNumber(rl, 'Weekly training hours (guardrail)');
   const restDaysPerWeek = await askOptionalNumber(rl, 'Rest days per week (guardrail)');
-  const profile = await createAthlete({
+  const profile = await createAthlete(store, {
     displayName,
     dob: dobRaw || null,
     sex,

@@ -7,14 +7,14 @@
 import { randomUUID } from 'node:crypto';
 
 import type { AthleteProfile } from '../engine/types.ts';
-import { append, readCollection, updateCollection } from './json-store.ts';
+import type { RecordStore } from './record-store.ts';
 
-export async function listAthletes(): Promise<AthleteProfile[]> {
-  return readCollection('athletes');
+export async function listAthletes(store: RecordStore): Promise<AthleteProfile[]> {
+  return store.read('athletes');
 }
 
-export async function findAthlete(athleteId: string): Promise<AthleteProfile | undefined> {
-  const all = await readCollection('athletes');
+export async function findAthlete(store: RecordStore, athleteId: string): Promise<AthleteProfile | undefined> {
+  const all = await store.read('athletes');
   return all.find((a) => a.athleteId === athleteId);
 }
 
@@ -32,6 +32,7 @@ export interface NewAthleteInput {
 }
 
 export async function createAthlete(
+  store: RecordStore,
   input: NewAthleteInput,
   now: Date = new Date(),
 ): Promise<AthleteProfile> {
@@ -49,7 +50,7 @@ export async function createAthlete(
     createdAt: now.toISOString(),
     notes: input.notes ?? '',
   };
-  await append('athletes', profile);
+  await store.append('athletes', profile);
   return profile;
 }
 
@@ -59,14 +60,15 @@ export type AthleteEdits = NewAthleteInput;
 /**
  * Update an existing athlete's editable fields in place, preserving `athleteId` and `createdAt`.
  * Returns the updated profile, or null if no athlete has that id. Goes through the serialized
- * store write (`writeCollection`), so it can't interleave with a concurrent mutation.
+ * store write (`store.update`), so it can't interleave with a concurrent mutation.
  */
 export async function updateAthlete(
+  store: RecordStore,
   athleteId: string,
   edits: AthleteEdits,
 ): Promise<AthleteProfile | null> {
   let updated: AthleteProfile | null = null;
-  await updateCollection('athletes', (all) => {
+  await store.update('athletes', (all) => {
     const idx = all.findIndex((a) => a.athleteId === athleteId);
     if (idx < 0) return all; // no such athlete — leave the collection untouched
     updated = {

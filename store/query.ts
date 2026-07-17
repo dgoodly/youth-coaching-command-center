@@ -6,26 +6,26 @@
 import type {
   Assessment, AthleteProfile, HeightLogEntry, SetLogEntry, WellnessLogEntry, WorkoutLogEntry, BlockState, Tier,
 } from '../engine/types.ts';
-import { readCollection } from './json-store.ts';
+import type { RecordStore } from './record-store.ts';
 import { splitDays, nextDayInSplit } from './blocks.ts';
 
 /** All assessments for an athlete, oldest → newest. */
-export async function assessmentsFor(athleteId: string): Promise<Assessment[]> {
-  const all = await readCollection('assessments');
+export async function assessmentsFor(store: RecordStore, athleteId: string): Promise<Assessment[]> {
+  const all = await store.read('assessments');
   return all
     .filter((a) => a.athleteId === athleteId)
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /** The most recent assessment for an athlete, or null. */
-export async function latestAssessment(athleteId: string): Promise<Assessment | null> {
-  const list = await assessmentsFor(athleteId);
+export async function latestAssessment(store: RecordStore, athleteId: string): Promise<Assessment | null> {
+  const list = await assessmentsFor(store, athleteId);
   return list.length ? list[list.length - 1]! : null;
 }
 
 /** The athlete's current routing tier (latest assessment's finalTier), or null if unassessed. */
-export async function currentTier(athleteId: string): Promise<Tier | null> {
-  const latest = await latestAssessment(athleteId);
+export async function currentTier(store: RecordStore, athleteId: string): Promise<Tier | null> {
+  const latest = await latestAssessment(store, athleteId);
   return latest ? latest.finalTier : null;
 }
 
@@ -58,25 +58,25 @@ export function resolveAthleteIn(all: AthleteProfile[], idOrName: string): Athle
 }
 
 /** Find an athlete by id or a case-insensitive display-name match (reads the store). */
-export async function resolveAthlete(idOrName: string): Promise<AthleteResolution> {
-  return resolveAthleteIn(await readCollection('athletes'), idOrName);
+export async function resolveAthlete(store: RecordStore, idOrName: string): Promise<AthleteResolution> {
+  return resolveAthleteIn(await store.read('athletes'), idOrName);
 }
 
 /** Height log for an athlete, oldest → newest. */
-export async function heightLogFor(athleteId: string): Promise<HeightLogEntry[]> {
-  const all = await readCollection('height_log');
+export async function heightLogFor(store: RecordStore, athleteId: string): Promise<HeightLogEntry[]> {
+  const all = await store.read('height_log');
   return all.filter((h) => h.athleteId === athleteId).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /** Workout log for an athlete, newest → oldest. */
-export async function workoutLogFor(athleteId: string): Promise<WorkoutLogEntry[]> {
-  const all = await readCollection('workout_log');
+export async function workoutLogFor(store: RecordStore, athleteId: string): Promise<WorkoutLogEntry[]> {
+  const all = await store.read('workout_log');
   return all.filter((w) => w.athleteId === athleteId).sort((a, b) => b.date.localeCompare(a.date));
 }
 
 /** Wellness log for an athlete, newest → oldest. */
-export async function wellnessLogFor(athleteId: string): Promise<WellnessLogEntry[]> {
-  const all = await readCollection('wellness_log');
+export async function wellnessLogFor(store: RecordStore, athleteId: string): Promise<WellnessLogEntry[]> {
+  const all = await store.read('wellness_log');
   return all.filter((w) => w.athleteId === athleteId).sort((a, b) => b.date.localeCompare(a.date));
 }
 
@@ -100,39 +100,41 @@ export function groupSetsByExercise(sets: SetLogEntry[]): Map<string, SetLogEntr
   return map;
 }
 
-/** All logged sets for an athlete, oldest → newest (chronological). */
-export async function setLogFor(athleteId: string): Promise<SetLogEntry[]> {
-  const all = await readCollection('set_log');
-  return all.filter((s) => s.athleteId === athleteId).sort(bySetChronology);
+/** All logged sets for an athlete, oldest → newest (chronological). Indexed — never a full scan. */
+export async function setLogFor(store: RecordStore, athleteId: string): Promise<SetLogEntry[]> {
+  return (await store.queryBy('set_log', 'athleteId', athleteId)).sort(bySetChronology);
 }
 
 /**
  * An athlete's logged sets for ONE exercise, oldest → newest — the input to per-exercise trends
  * and PRs (Phase D).
  */
-export async function setLogForExercise(athleteId: string, exerciseId: string): Promise<SetLogEntry[]> {
-  return (await setLogFor(athleteId)).filter((s) => s.exerciseId === exerciseId);
+export async function setLogForExercise(
+  store: RecordStore,
+  athleteId: string,
+  exerciseId: string,
+): Promise<SetLogEntry[]> {
+  return (await setLogFor(store, athleteId)).filter((s) => s.exerciseId === exerciseId);
 }
 
 /**
  * All sets logged in one session (workout), grouped by exercise id — how the session review /
- * "what did we actually do today" surface reads the log back.
+ * "what did we actually do today" surface reads the log back. Indexed — never a full scan.
  */
-export async function setLogForWorkout(workoutId: string): Promise<Map<string, SetLogEntry[]>> {
-  const all = await readCollection('set_log');
-  const sets = all.filter((s) => s.workoutId === workoutId).sort(bySetChronology);
+export async function setLogForWorkout(store: RecordStore, workoutId: string): Promise<Map<string, SetLogEntry[]>> {
+  const sets = (await store.queryBy('set_log', 'workoutId', workoutId)).sort(bySetChronology);
   return groupSetsByExercise(sets);
 }
 
 /** Current block state for an athlete, or null. */
-export async function blockStateFor(athleteId: string): Promise<BlockState | null> {
-  const all = await readCollection('block_state');
+export async function blockStateFor(store: RecordStore, athleteId: string): Promise<BlockState | null> {
+  const all = await store.read('block_state');
   return all.find((b) => b.athleteId === athleteId) ?? null;
 }
 
 /** All athletes. */
-export async function allAthletes(): Promise<AthleteProfile[]> {
-  return readCollection('athletes');
+export async function allAthletes(store: RecordStore): Promise<AthleteProfile[]> {
+  return store.read('athletes');
 }
 
 // ---------------------------------------------------------------------------
@@ -181,9 +183,9 @@ export function resolveTrackDay(days: number[], sessions: readonly TrackSession[
  * share a calendar day. A screen that was opened but never logged has no sets, so it can't exist
  * here and can't advance the default.
  */
-export async function nextTrackDay(athleteId: string): Promise<number> {
+export async function nextTrackDay(store: RecordStore, athleteId: string): Promise<number> {
   const [block, workouts, sets] = await Promise.all([
-    blockStateFor(athleteId), workoutLogFor(athleteId), setLogFor(athleteId),
+    blockStateFor(store, athleteId), workoutLogFor(store, athleteId), setLogFor(store, athleteId),
   ]);
   const days = splitDays(block);
 

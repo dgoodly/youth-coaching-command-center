@@ -20,7 +20,7 @@ import {
   daysSince, dueForReassessment, nextTrackDay, parseDayLabel,
 } from '../store/query.ts';
 import { ageFromDob, createAthlete, updateAthlete, findAthlete } from '../store/athletes.ts';
-import { readCollection } from '../store/json-store.ts';
+import { createDiskStore } from '../store/disk.ts';
 import { buildAssessmentRecord, saveAssessment } from '../store/ingest.ts';
 import { getOrCreateWorkout, setWorkoutCompleted } from '../store/workout.ts';
 import { saveSetLog, upsertSet, removeSet, type NewSetLog } from '../store/setlog.ts';
@@ -49,6 +49,10 @@ import {
 
 const PORT = Number(process.env.CC_DASHBOARD_PORT ?? 5173);
 
+// Module-local store, closed over by every handler below. The dashboard dies at S23; it gets
+// the seam's disk end and nothing fancier.
+const store = createDiskStore();
+
 /** Re-assess cell: accent dot+text when due/never, quiet when recent. */
 function reassessCell(latest: Assessment | null): string {
   if (!latest) return statusFlag('accent', 'no assessment');
@@ -63,17 +67,17 @@ function reassessCell(latest: Assessment | null): string {
 // ---------------------------------------------------------------------------
 
 async function rosterPage(): Promise<string> {
-  const athletes = await allAthletes();
+  const athletes = await allAthletes(store);
   const rows: RosterRow[] = [];
   let needReassess = 0;
   let nearPHVCount = 0;
   let overLoad = 0;
 
   for (const a of athletes) {
-    const latest = await latestAssessment(a.athleteId);
-    const heights = await heightLogFor(a.athleteId);
+    const latest = await latestAssessment(store,a.athleteId);
+    const heights = await heightLogFor(store,a.athleteId);
     const maturity = computeMaturity(heights, { dob: a.dob, sex: a.sex });
-    const block = await blockStateFor(a.athleteId);
+    const block = await blockStateFor(store, a.athleteId);
     const age = ageFromDob(a.dob);
     const guard = checkVolumeGuardrails({
       age, weeklySportHours: a.weeklySportHours,
@@ -195,7 +199,7 @@ function progressCardBody(setEntries: SetLogEntry[], exercises: Exercise[]): str
  */
 async function planSection(athleteId: string, tier: Tier | null, valgusWatch: boolean, exercises: Exercise[]): Promise<string> {
   const [templates, equipment, block] = await Promise.all([
-    loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId),
+    loadDayTemplates(), loadAvailableEquipment(), blockStateFor(store, athleteId),
   ]);
   const split = splitOf(block);
   const switchForm = splitSwitchForm(athleteId, split);
@@ -248,15 +252,15 @@ async function planSection(athleteId: string, tier: Tier | null, valgusWatch: bo
 }
 
 async function athletePage(id: string): Promise<string> {
-  const athletes = await allAthletes();
+  const athletes = await allAthletes(store);
   const a = athletes.find((x) => x.athleteId === id);
   if (!a) return page('Not found', '<h1>Athlete not found</h1><p><a href="/">← Roster</a></p>');
 
-  const assessments = await assessmentsFor(id); // oldest → newest
-  const heights = await heightLogFor(id);
-  const workouts = await workoutLogFor(id);
-  const wellness = await wellnessLogFor(id);
-  const setEntries = await setLogFor(id);
+  const assessments = await assessmentsFor(store,id); // oldest → newest
+  const heights = await heightLogFor(store,id);
+  const workouts = await workoutLogFor(store,id);
+  const wellness = await wellnessLogFor(store,id);
+  const setEntries = await setLogFor(store, id);
   const exerciseLib = await loadExercises();
   const maturity = computeMaturity(heights, { dob: a.dob, sex: a.sex });
   const age = ageFromDob(a.dob);
@@ -407,7 +411,7 @@ async function athletePage(id: string): Promise<string> {
 }
 
 async function currentTierOf(id: string): Promise<Tier | null> {
-  const latest = await latestAssessment(id);
+  const latest = await latestAssessment(store,id);
   return latest?.finalTier ?? null;
 }
 
@@ -416,8 +420,8 @@ async function currentTierOf(id: string): Promise<Tier | null> {
 // ---------------------------------------------------------------------------
 
 async function validationPage(): Promise<string> {
-  const assessments = await readCollection('assessments');
-  const athletes = await allAthletes();
+  const assessments = await store.read('assessments');
+  const athletes = await allAthletes(store);
   const nameOf = (aid: string) => athletes.find((x) => x.athleteId === aid)?.displayName ?? aid;
 
   const withGut = assessments.filter((a) => a.coachGutCall !== null);
@@ -514,7 +518,7 @@ async function athleteNewFormPage(): Promise<string> {
   return athleteFormPage('new', emptyAthleteValues(), {});
 }
 async function athleteEditFormPage(id: string): Promise<string> {
-  const a = await findAthlete(id);
+  const a = await findAthlete(store, id);
   if (!a) return notFoundPage();
   return athleteFormPage('edit', athleteValuesFromProfile(a), {}, id);
 }
@@ -522,45 +526,45 @@ async function handleAthleteNew(params: URLSearchParams, res: ServerResponse): P
   const values = athleteValuesFromParams(params);
   const { input, errors } = validateAthleteForm(values);
   if (!input) return sendHtml(res, 400, athleteFormPage('new', values, errors));
-  const created = await createAthlete(input);
+  const created = await createAthlete(store, input);
   redirect(res, `/athlete?id=${encodeURIComponent(created.athleteId)}`);
 }
 async function handleAthleteEdit(id: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
-  if (!(await findAthlete(id))) return sendHtml(res, 404, notFoundPage());
+  if (!(await findAthlete(store, id))) return sendHtml(res, 404, notFoundPage());
   const values = athleteValuesFromParams(params);
   const { input, errors } = validateAthleteForm(values);
   if (!input) return sendHtml(res, 400, athleteFormPage('edit', values, errors, id));
-  await updateAthlete(id, input);
+  await updateAthlete(store, id, input);
   redirect(res, `/athlete?id=${encodeURIComponent(id)}`);
 }
 
 // --- assessment entry (gut-call BEFORE reveal, §3.7) ---
 
 async function assessmentNewFormPage(athleteId: string): Promise<string> {
-  const a = await findAthlete(athleteId);
+  const a = await findAthlete(store, athleteId);
   if (!a) return notFoundPage();
   return assessmentFormPage(a, emptyAssessmentValues(), {});
 }
 async function handleAssessmentNew(athleteId: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
-  const athlete = await findAthlete(athleteId);
+  const athlete = await findAthlete(store, athleteId);
   if (!athlete) return sendHtml(res, 404, notFoundPage());
   const values = assessmentValuesFromParams(params);
   const { input, errors } = validateAssessmentForm(athleteId, values);
   if (!input) return sendHtml(res, 400, assessmentFormPage(athlete, values, errors));
   const built = buildAssessmentRecord(input); // engine recomputes tier — never done inline here
-  const saved = await saveAssessment(built);
+  const saved = await saveAssessment(store, built);
   sendHtml(res, 200, assessmentRevealPage(athlete, built.warnings, saved));
 }
 
 // --- split switch (Phase 3) ---
 
 async function handleSplitSwitch(id: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
-  if (!(await findAthlete(id))) return sendHtml(res, 404, notFoundPage());
+  if (!(await findAthlete(store, id))) return sendHtml(res, 404, notFoundPage());
   const parsed = validateSplitSwitch(params);
   if (!parsed) return sendHtml(res, 400, page('Bad request', '<h1>Invalid split choice</h1><p><a href="/">← Roster</a></p>'));
   // getOrInit → apply the switch (fresh resets rotation, carry keeps it) → persist as one write.
-  const next = switchSplit(await getOrInitBlockState(id), parsed.split, parsed.mode);
-  await saveBlockState(next);
+  const next = switchSplit(await getOrInitBlockState(store, id), parsed.split, parsed.mode);
+  await saveBlockState(store, next);
   redirect(res, `/athlete?id=${encodeURIComponent(id)}`);
 }
 
@@ -587,7 +591,7 @@ async function resolveLogTarget(
   athleteId: string, dayStr: string, exerciseId: string,
 ): Promise<{ ok: true; athlete: AthleteProfile; day: number; exercise: Exercise; tier: Tier }
   | { ok: false; code: number; html: string }> {
-  const athlete = await findAthlete(athleteId);
+  const athlete = await findAthlete(store, athleteId);
   if (!athlete) return { ok: false, code: 404, html: notFoundPage() };
   const day = Number(dayStr);
   if (!Number.isInteger(day)) return { ok: false, code: 404, html: notFoundPage() };
@@ -613,14 +617,14 @@ async function resolveLogTarget(
 async function buildTrackContext(
   athleteId: string, dayStr: string,
 ): Promise<{ ok: true; ctx: TrackContext } | { ok: false; code: number; html: string }> {
-  const athlete = await findAthlete(athleteId);
+  const athlete = await findAthlete(store, athleteId);
   if (!athlete) return { ok: false, code: 404, html: notFoundPage() };
   const tier = await currentTierOf(athleteId);
   if (!tier) return { ok: false, code: 400, html: logGuardPage(athleteId, 'No tier on file', 'Enter an assessment before tracking a session — the prescription comes from the athlete’s tier.') };
 
   const [templates, equipment, block, exercises, allSets, workouts] = await Promise.all([
-    loadDayTemplates(), loadAvailableEquipment(), blockStateFor(athleteId), loadExercises(),
-    setLogFor(athleteId), workoutLogFor(athleteId),
+    loadDayTemplates(), loadAvailableEquipment(), blockStateFor(store, athleteId), loadExercises(),
+    setLogFor(store, athleteId), workoutLogFor(store, athleteId),
   ]);
   const split = splitOf(block);
   const days = SPLIT_DAYS[split].filter((d) => templates.some((t) => t.day === d));
@@ -629,7 +633,7 @@ async function buildTrackContext(
   // Explicit valid day wins; otherwise the next-day default (which reads only real sessions).
   let day = Number(dayStr);
   if (!Number.isInteger(day) || !days.includes(day)) {
-    day = await nextTrackDay(athleteId);
+    day = await nextTrackDay(store, athleteId);
     if (!days.includes(day)) day = days[0]!;
   }
   const template = templates.find((t) => t.day === day)!;
@@ -637,7 +641,7 @@ async function buildTrackContext(
 
   // Resume today's session for this day if it exists — WITHOUT creating one (lazy creation).
   const workout = workouts.find((w) => w.date === date && w.sessionLabel === `Day ${day}`) ?? null;
-  const savedByExercise = workout ? await setLogForWorkout(workout.workoutId) : new Map<string, SetLogEntry[]>();
+  const savedByExercise = workout ? await setLogForWorkout(store,workout.workoutId) : new Map<string, SetLogEntry[]>();
   const loggedSetCount = [...savedByExercise.values()].reduce((n, a) => n + a.length, 0);
 
   // Pre-fill source = history EXCLUDING today's session, so the "last time" hint is the prior session.
@@ -722,8 +726,8 @@ async function handleTrackSet(athleteId: string, dayStr: string, params: URLSear
   const { values, hasValue } = readSetValues(r.exercise.metrics, params);
   if (!hasValue) {
     // Emptied row → drop any set previously logged at this identity (find, don't create).
-    const workout = (await workoutLogFor(athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${r.day}`);
-    if (workout) await removeSet({ workoutId: workout.workoutId, exerciseId: r.exercise.id, setIndex });
+    const workout = (await workoutLogFor(store,athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${r.day}`);
+    if (workout) await removeSet(store, { workoutId: workout.workoutId, exerciseId: r.exercise.id, setIndex });
     return sendJson(res, 200, { ok: true, empty: true });
   }
   const errs = validateSetValues(r.exercise.metrics, values);
@@ -731,9 +735,9 @@ async function handleTrackSet(athleteId: string, dayStr: string, params: URLSear
 
   const dose = tierDose(r.exercise, r.tier);
   const prescribed = dose ? { sets: dose.sets, reps: dose.reps, rest_sec: dose.rest_sec } : undefined;
-  const workout = await getOrCreateWorkout({ athleteId, date, sessionLabel: `Day ${r.day}` }, r.tier); // lazy create
+  const workout = await getOrCreateWorkout(store, { athleteId, date, sessionLabel: `Day ${r.day}` }, r.tier); // lazy create
   const note = (params.get('note') ?? '').trim();
-  const saved = await upsertSet({
+  const saved = await upsertSet(store, {
     workoutId: workout.workoutId, athleteId, exerciseId: r.exercise.id, setIndex, values,
     ...(prescribed ? { prescribed } : {}), ...(note ? { note } : {}),
   });
@@ -747,8 +751,8 @@ async function handleTrackSetRemove(athleteId: string, dayStr: string, params: U
   const setIndex = Number(params.get('setIndex'));
   if (!Number.isInteger(day) || !exerciseId || !Number.isInteger(setIndex)) return sendJson(res, 400, { ok: false });
   const date = todayIso();
-  const workout = (await workoutLogFor(athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${day}`);
-  if (workout) await removeSet({ workoutId: workout.workoutId, exerciseId, setIndex });
+  const workout = (await workoutLogFor(store,athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${day}`);
+  if (workout) await removeSet(store, { workoutId: workout.workoutId, exerciseId, setIndex });
   return sendJson(res, 200, { ok: true });
 }
 
@@ -771,17 +775,17 @@ async function handleTrackSave(athleteId: string, dayStr: string, params: URLSea
   if (sets.length > 0) {
     const lib = await loadExercises();
     const byId = new Map(lib.map((e) => [e.id, e]));
-    const workout = await getOrCreateWorkout({ athleteId, date: ctx.date, sessionLabel: `Day ${ctx.day}` }, ctx.tier);
+    const workout = await getOrCreateWorkout(store, { athleteId, date: ctx.date, sessionLabel: `Day ${ctx.day}` }, ctx.tier);
     for (const s of sets) {
       const ex = byId.get(s.exerciseId);
       const dose = ex ? tierDose(ex, ctx.tier) : undefined;
       const prescribed = dose ? { sets: dose.sets, reps: dose.reps, rest_sec: dose.rest_sec } : undefined;
-      await upsertSet({
+      await upsertSet(store, {
         workoutId: workout.workoutId, athleteId, exerciseId: s.exerciseId, setIndex: s.setIndex, values: s.values,
         ...(prescribed ? { prescribed } : {}), ...(s.note ? { note: s.note } : {}),
       });
     }
-    if (params.get('finish') === '1') await setWorkoutCompleted(workout.workoutId, true);
+    if (params.get('finish') === '1') await setWorkoutCompleted(store,workout.workoutId, true);
   }
   redirect(res, `/athlete?id=${encodeURIComponent(athleteId)}`);
 }
@@ -795,13 +799,13 @@ async function handleTrackFinish(athleteId: string, dayStr: string, res: ServerR
   const day = Number(dayStr);
   if (!Number.isInteger(day)) return sendHtml(res, 404, notFoundPage());
   const date = todayIso();
-  const workout = (await workoutLogFor(athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${day}`);
-  if (workout) await setWorkoutCompleted(workout.workoutId, !workout.completed);
+  const workout = (await workoutLogFor(store,athleteId)).find((w) => w.date === date && w.sessionLabel === `Day ${day}`);
+  if (workout) await setWorkoutCompleted(store,workout.workoutId, !workout.completed);
   redirect(res, `/athlete?id=${encodeURIComponent(athleteId)}`);
 }
 
 async function handleWorkoutComplete(workoutId: string, params: URLSearchParams, res: ServerResponse): Promise<void> {
-  const updated = await setWorkoutCompleted(workoutId, params.get('completed') === '1');
+  const updated = await setWorkoutCompleted(store,workoutId, params.get('completed') === '1');
   if (!updated) return sendHtml(res, 404, notFoundPage());
   redirect(res, `/athlete?id=${encodeURIComponent(updated.athleteId)}`);
 }

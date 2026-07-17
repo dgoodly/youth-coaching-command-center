@@ -12,7 +12,7 @@
 import type { BlockState, SplitChoice, Tier } from '../engine/types.ts';
 import type { Exercise, DayTemplate } from '../engine/program.ts';
 import { slotKey, isAvailableAtTier } from '../engine/program.ts';
-import { readCollection, writeCollection } from './json-store.ts';
+import type { RecordStore } from './record-store.ts';
 
 /** Recommended block length before rotating (weeks). Tunable (see FEATURE_IDEAS.md). */
 export const BLOCK_WEEKS = 9;
@@ -93,17 +93,18 @@ export function switchSplit(
   return { ...state, activeSplit: newSplit };
 }
 
-export async function getBlockState(athleteId: string): Promise<BlockState | null> {
-  const all = await readCollection('block_state');
+export async function getBlockState(store: RecordStore, athleteId: string): Promise<BlockState | null> {
+  const all = await store.read('block_state');
   return all.find((b) => b.athleteId === athleteId) ?? null;
 }
 
 /** Get existing block state or a fresh block-0 state (not yet persisted). */
 export async function getOrInitBlockState(
+  store: RecordStore,
   athleteId: string,
   now: Date = new Date(),
 ): Promise<BlockState> {
-  const existing = await getBlockState(athleteId);
+  const existing = await getBlockState(store, athleteId);
   if (existing) return existing;
   return {
     athleteId,
@@ -114,12 +115,12 @@ export async function getOrInitBlockState(
 }
 
 /** Upsert block state. */
-export async function saveBlockState(state: BlockState): Promise<void> {
-  const all = await readCollection('block_state');
+export async function saveBlockState(store: RecordStore, state: BlockState): Promise<void> {
+  const all = await store.read('block_state');
   const idx = all.findIndex((b) => b.athleteId === state.athleteId);
   if (idx === -1) all.push(state);
   else all[idx] = state;
-  await writeCollection('block_state', all);
+  await store.write('block_state', all);
 }
 
 /** Days elapsed in the current block. */

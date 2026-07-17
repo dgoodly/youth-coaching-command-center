@@ -20,7 +20,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { Tier, WorkoutLogEntry } from '../engine/types.ts';
-import { updateCollection } from './json-store.ts';
+import type { RecordStore } from './record-store.ts';
 
 /** Identity of a session record: an athlete's dated run of one day's session. */
 export interface WorkoutKey {
@@ -34,9 +34,13 @@ export interface WorkoutKey {
  * create happen inside a single serialized read-modify-write, so concurrent first-logs of the same
  * session converge on ONE record instead of racing to create two.
  */
-export async function getOrCreateWorkout(key: WorkoutKey, servedForTier: Tier): Promise<WorkoutLogEntry> {
+export async function getOrCreateWorkout(
+  store: RecordStore,
+  key: WorkoutKey,
+  servedForTier: Tier,
+): Promise<WorkoutLogEntry> {
   let result: WorkoutLogEntry | undefined;
-  await updateCollection('workout_log', (all) => {
+  await store.update('workout_log', (all) => {
     const existing = all.find(
       (w) => w.athleteId === key.athleteId && w.date === key.date && w.sessionLabel === key.sessionLabel,
     );
@@ -62,9 +66,13 @@ export async function getOrCreateWorkout(key: WorkoutKey, servedForTier: Tier): 
  * Set a session's `completed` flag — the coach's explicit "this session is done" (or a reopen).
  * Returns the updated record, or `null` if no session has that id. Atomic.
  */
-export async function setWorkoutCompleted(workoutId: string, completed: boolean): Promise<WorkoutLogEntry | null> {
+export async function setWorkoutCompleted(
+  store: RecordStore,
+  workoutId: string,
+  completed: boolean,
+): Promise<WorkoutLogEntry | null> {
   let found: WorkoutLogEntry | null = null;
-  await updateCollection('workout_log', (all) =>
+  await store.update('workout_log', (all) =>
     all.map((w) => {
       if (w.workoutId !== workoutId) return w;
       found = { ...w, completed };

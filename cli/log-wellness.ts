@@ -12,22 +12,23 @@ import { stdout, argv } from 'node:process';
 import { readFile } from 'node:fs/promises';
 
 import type { WellnessLogEntry } from '../engine/types.ts';
-import { append } from '../store/json-store.ts';
+import { createDiskStore } from '../store/disk.ts';
 import { listAthletes, ageFromDob } from '../store/athletes.ts';
 import { resolveAthleteIn } from '../store/query.ts';
 import { makeRl, ask, askOptionalNumber } from './prompt.ts';
 
 const line = (s = ''): void => void stdout.write(s + '\n');
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
+const store = createDiskStore();
 
 async function saveEntry(entry: WellnessLogEntry): Promise<void> {
-  await append('wellness_log', entry);
+  await store.append('wellness_log', entry);
   line(`\n✓ Wellness check saved for ${entry.athleteId} on ${entry.date}.`);
 }
 
 async function runBatch(jsonPath: string): Promise<void> {
   const parsed = JSON.parse(await readFile(jsonPath, 'utf8')) as WellnessLogEntry & { displayName?: string };
-  const athletes = await listAthletes();
+  const athletes = await listAthletes(store);
   let athleteId = parsed.athleteId;
   if (!athleteId || !athletes.some((a) => a.athleteId === athleteId)) {
     const needle = parsed.displayName ?? athleteId ?? '';
@@ -53,7 +54,7 @@ async function main(): Promise<void> {
   const rl = makeRl();
   try {
     line('\n=== Weekly wellness check ===\n');
-    const athletes = await listAthletes();
+    const athletes = await listAthletes(store);
     if (athletes.length === 0) return void line('No athletes yet — add one with `npm run enter`.');
 
     athletes.forEach((a, i) => {

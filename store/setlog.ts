@@ -14,7 +14,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { PrescribedSnapshot, SetLogEntry } from '../engine/types.ts';
-import { appendAll, updateCollection, type PendingAppend } from './json-store.ts';
+import type { PendingAppend, RecordStore } from './record-store.ts';
 
 /** Fields a caller supplies for one set; `setLogId`/`loggedAt` are filled if omitted. */
 export type NewSetLog = Omit<SetLogEntry, 'setLogId' | 'loggedAt'> &
@@ -40,11 +40,11 @@ export function toSetLogEntry(input: NewSetLog, now: Date = new Date()): SetLogE
  * Persist a batch of sets (typically all sets of one exercise) as one serialized unit. Returns
  * the stored entries (with generated ids/timestamps). An empty batch is a no-op.
  */
-export async function saveSetLog(inputs: readonly NewSetLog[]): Promise<SetLogEntry[]> {
+export async function saveSetLog(store: RecordStore, inputs: readonly NewSetLog[]): Promise<SetLogEntry[]> {
   if (inputs.length === 0) return [];
   const entries = inputs.map((i) => toSetLogEntry(i));
   const appends: PendingAppend[] = entries.map((record) => ({ collection: 'set_log', record }));
-  await appendAll(appends);
+  await store.appendAll(appends);
   return entries;
 }
 
@@ -63,26 +63,20 @@ export interface SetKey {
  * re-save would inflate the set count and silently corrupt the PR/trend math, which walks every
  * stored set. On create, id + `loggedAt` are generated; on replace, the original `setLogId` AND
  * `loggedAt` are preserved, so correcting a number never moves the set's place in history. Atomic:
- * the find + write is one serialized read-modify-write (`updateCollection` → the in-process mutex).
+ * one per-record read-modify-write (`store.updateRecord`) keyed on the set's identity — the
+ * autosave path never materializes the rest of the set log.
  */
-export async function upsertSet(input: NewSetLog): Promise<SetLogEntry> {
-  let result!: SetLogEntry;
-  await updateCollection('set_log', (all) => {
-    const idx = all.findIndex(
-      (s) => s.workoutId === input.workoutId && s.exerciseId === input.exerciseId && s.setIndex === input.setIndex,
-    );
-    if (idx === -1) {
-      result = toSetLogEntry(input);
-      return [...all, result];
-    }
-    const existing = all[idx]!;
-    // Preserve identity + original timestamp; replace the actuals/prescription/note.
-    result = toSetLogEntry({ ...input, setLogId: existing.setLogId, loggedAt: existing.loggedAt });
-    const next = all.slice();
-    next[idx] = result;
-    return next;
-  });
-  return result;
+export async function upsertSet(store: RecordStore, input: NewSetLog): Promise<SetLogEntry> {
+  const result = await store.updateRecord(
+    'set_log',
+    [input.workoutId, input.exerciseId, input.setIndex],
+    (existing) =>
+      existing
+        ? // Preserve identity + original timestamp; replace the actuals/prescription/note.
+          toSetLogEntry({ ...input, setLogId: existing.setLogId, loggedAt: existing.loggedAt })
+        : toSetLogEntry(input),
+  );
+  return result!; // mutate never returns null, so neither does updateRecord
 }
 
 /**
@@ -90,12 +84,8 @@ export async function upsertSet(input: NewSetLog): Promise<SetLogEntry> {
  * set that was never logged (an untouched pre-filled row) is a no-op, which is exactly the
  * honest-log rule — nothing is written for a row the coach never confirmed. Atomic.
  */
-export async function removeSet(key: SetKey): Promise<void> {
-  await updateCollection('set_log', (all) =>
-    all.filter(
-      (s) => !(s.workoutId === key.workoutId && s.exerciseId === key.exerciseId && s.setIndex === key.setIndex),
-    ),
-  );
+export async function removeSet(store: RecordStore, key: SetKey): Promise<void> {
+  await store.remove('set_log', [key.workoutId, key.exerciseId, key.setIndex]);
 }
 
 export type { PrescribedSnapshot };

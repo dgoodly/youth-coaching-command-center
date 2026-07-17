@@ -23,11 +23,13 @@ import type { AssembledSession } from '../engine/assembler.ts';
 import { assembleSession } from '../engine/assembler.ts';
 import { loadExercises, loadDayTemplate, loadDayTemplates, loadAvailableEquipment } from '../store/library.ts';
 import { resolveAthlete, currentTier } from '../store/query.ts';
-import { append } from '../store/json-store.ts';
+import { createDiskStore } from '../store/disk.ts';
 import {
   getOrInitBlockState, saveBlockState, rotateBlockState, dueForRotation, blockAgeDays,
   splitOf, SPLIT_DAYS,
 } from '../store/blocks.ts';
+
+const store = createDiskStore();
 
 function arg(name: string): string | undefined {
   const i = argv.indexOf(`--${name}`);
@@ -81,7 +83,7 @@ async function main(): Promise<void> {
 
   const athleteArg = arg('athlete');
   if (athleteArg) {
-    const resolution = await resolveAthlete(athleteArg);
+    const resolution = await resolveAthlete(store, athleteArg);
     if (resolution.status === 'not_found') return void line(`No athlete matched "${athleteArg}".`);
     if (resolution.status === 'ambiguous') {
       return void line(
@@ -93,15 +95,15 @@ async function main(): Promise<void> {
     athleteId = athlete.athleteId;
     athleteName = athlete.displayName;
     valgusWatch = athlete.valgusWatch;
-    tier = await currentTier(athlete.athleteId);
+    tier = await currentTier(store, athlete.athleteId);
 
     // --rotate: advance the training block, then exit.
     if (has('rotate')) {
       if (!tier) return void line(`${athleteName} has no assessment yet — can't rotate without a tier.`);
       const templates = await loadDayTemplates();
-      const state = await getOrInitBlockState(athleteId);
+      const state = await getOrInitBlockState(store, athleteId);
       const rotated = rotateBlockState(state, exercises, templates, tier);
-      await saveBlockState(rotated);
+      await saveBlockState(store, rotated);
       return void line(`✓ ${athleteName} rotated to block ${rotated.blockIndex} (started ${rotated.blockStartDate}).`);
     }
     if (!tier) return void line(`${athleteName} has no assessment yet — enter one first, or pass --tier.`);
@@ -121,7 +123,7 @@ async function main(): Promise<void> {
   let blockIndex = 0;
   let slotVariants: Record<string, string> | undefined;
   if (athleteId) {
-    const state = await getOrInitBlockState(athleteId);
+    const state = await getOrInitBlockState(store, athleteId);
     blockIndex = state.blockIndex;
     slotVariants = state.slotVariants;
     if (dueForRotation(state)) {
@@ -152,14 +154,14 @@ async function main(): Promise<void> {
 
   // Persist any newly-chosen variants so the block stays stable (never on a --equip preview).
   if (athleteId && !equipOverride) {
-    const state = await getOrInitBlockState(athleteId);
-    await saveBlockState({ ...state, slotVariants: updated });
+    const state = await getOrInitBlockState(store, athleteId);
+    await saveBlockState(store, { ...state, slotVariants: updated });
   }
 
   if (has('log') && !equipOverride) {
     if (!athleteId) line('⚠ --log requires --athlete. Not logged.');
     else {
-      await append('workout_log', {
+      await store.append('workout_log', {
         workoutId: randomUUID(),
         athleteId,
         date: new Date().toISOString().slice(0, 10),
