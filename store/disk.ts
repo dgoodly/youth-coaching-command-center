@@ -32,15 +32,13 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  SCHEMA,
+  assertUniqueKeys,
+  keyMismatchError,
   keyOf,
   sameKey,
   type CollectionName,
   type Collections,
-  type IndexFor,
-  type KeyFor,
   type KeyedName,
-  type PendingAppend,
   type RecordOf,
   type RecordStore,
 } from './record-store.ts';
@@ -98,19 +96,6 @@ export function createDiskStore(dataDir: string = defaultDataDir()): DiskStore {
       throw new Error(`Data file ${FILES[name]} is not a JSON array.`);
     }
     return parsed as Collections[K];
-  }
-
-  /** Contract #5: a keyed collection may never persist two records with one key. */
-  function assertUniqueKeys<K extends CollectionName>(name: K, records: Collections[K]): void {
-    if (SCHEMA[name].key === null) return;
-    const seen = new Set<string>();
-    for (const r of records) {
-      const key = JSON.stringify(keyOf(name as KeyedName, r as RecordOf<KeyedName>));
-      if (seen.has(key)) {
-        throw new Error(`store: duplicate primary key ${key} in "${name}".`);
-      }
-      seen.add(key);
-    }
   }
 
   /** Write one collection's array to its temp file, pretty-printed for hand-readability. */
@@ -238,10 +223,7 @@ export function createDiskStore(dataDir: string = defaultDataDir()): DiskStore {
           return all;
         }
         if (!sameKey(keyOf(name, next), key)) {
-          throw new Error(
-            `store: updateRecord("${name}") mutate returned a record whose key ` +
-              `${JSON.stringify(keyOf(name, next))} differs from ${JSON.stringify(key)}.`,
-          );
+          throw keyMismatchError(name, keyOf(name, next), key);
         }
         result = next;
         if (idx === -1) rows.push(next);
