@@ -11,7 +11,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
 import type { Assessment, AthleteProfile, SetLogEntry, Tier } from '../engine/types.ts';
-import { SCORE_KEYS, TIER_STAGE } from '../engine/types.ts';
+import { SCORE_KEYS, TIER_STAGE, canonicalScores } from '../engine/types.ts';
+import { gutCallVerdict } from '../engine/scoring.ts';
 import { computeMaturity } from '../engine/maturity.ts';
 import { checkVolumeGuardrails, type GuardrailStatus } from '../engine/guardrails.ts';
 import {
@@ -144,7 +145,7 @@ async function rosterPage(): Promise<string> {
 
 function gutCell(a: Assessment): string {
   if (!a.coachGutCall) return '<span class="muted">—</span>';
-  const match = a.coachGutCall === a.finalTier;
+  const match = gutCallVerdict(a) === 'match'; // vs unrestrictedTier — the eye can't predict provenance
   const verdict = match
     ? '<span class="flag flag-quiet">match</span>'
     : '<span class="flag flag-accent">differs</span>';
@@ -282,7 +283,7 @@ async function athletePage(id: string): Promise<string> {
     const rows = SCORE_KEYS.map((k) => [
       SCORE_LABEL[k]!,
       ...assessments.map((as) => {
-        const v = as.scores[k];
+        const v = canonicalScores(as)[k];
         const cls = v <= 1 ? 'num score-low' : v >= 3 ? 'num score-high' : 'num';
         return `<span class="${cls}">${v}</span>`;
       }),
@@ -425,11 +426,11 @@ async function validationPage(): Promise<string> {
   const nameOf = (aid: string) => athletes.find((x) => x.athleteId === aid)?.displayName ?? aid;
 
   const withGut = assessments.filter((a) => a.coachGutCall !== null);
-  const matches = withGut.filter((a) => a.coachGutCall === a.finalTier).length;
+  const matches = withGut.filter((a) => gutCallVerdict(a) === 'match').length;
   const differs = withGut.length - matches;
 
   const compareRows = withGut.map((a) => {
-    const match = a.coachGutCall === a.finalTier;
+    const match = gutCallVerdict(a) === 'match';
     return [
       num(a.date), esc(nameOf(a.athleteId)), num(`${a.rawTotal}/18`),
       tierBadge(a.finalTier), tierBadge(a.coachGutCall),
@@ -551,7 +552,9 @@ async function handleAssessmentNew(athleteId: string, params: URLSearchParams, r
   const values = assessmentValuesFromParams(params);
   const { input, errors } = validateAssessmentForm(athleteId, values);
   if (!input) return sendHtml(res, 400, assessmentFormPage(athlete, values, errors));
-  const built = buildAssessmentRecord(input); // engine recomputes tier — never done inline here
+  // Prior routing tier feeds the §4.4 provisional rules; the form can't know it.
+  const priorTier = await currentTierOf(athleteId);
+  const built = buildAssessmentRecord({ ...input, priorTier }); // engine recomputes tier — never done inline here
   const saved = await saveAssessment(store, built);
   sendHtml(res, 200, assessmentRevealPage(athlete, built.warnings, saved));
 }

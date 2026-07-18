@@ -18,6 +18,7 @@ function form(over: Partial<FieldFormInput> = {}): FieldFormInput {
     tester: 'Parent',
     scores,
     coachGutCall: null,
+    priorTier: null,
     heightCm: 140,
     ...over,
   };
@@ -35,7 +36,7 @@ test('CAP RULE: broadLandingFailed caps broad at 1 and warns', () => {
   const { assessment, warnings } = buildAssessmentRecord(
     form({ scores: { squat: 3, dropStick: 3, balance: 3, pushup: 3, broad: 3, pogo: 3 }, broadLandingFailed: true }),
   );
-  assert.equal(assessment.scores.broad, 1, 'broad capped to 1');
+  assert.equal(assessment.scoresLive.broad, 1, 'broad capped to 1');
   assert.equal(assessment.rawTotal, 16, 'raw reflects the capped broad (18-2)');
   assert.ok(warnings.some((w) => w.includes('CAP RULE')), 'warns about the cap');
 });
@@ -44,7 +45,7 @@ test('CAP RULE does not raise a broad already <= 1', () => {
   const { assessment } = buildAssessmentRecord(
     form({ scores: { squat: 3, dropStick: 3, balance: 3, pushup: 3, broad: 0, pogo: 3 }, broadLandingFailed: true }),
   );
-  assert.equal(assessment.scores.broad, 0);
+  assert.equal(assessment.scoresLive.broad, 0);
 });
 
 test('paper mismatch is surfaced and the computed value wins', () => {

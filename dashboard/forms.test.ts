@@ -120,16 +120,17 @@ test('assessment: the form path produces exactly the FieldFormInput + record the
   assert.ok(input);
 
   const scores: Scores = { squat: 2, dropStick: 3, balance: 2, pushup: 3, broad: 2, pogo: 2 };
-  const cliInput: FieldFormInput = {
+  const cliInput: Omit<FieldFormInput, 'priorTier'> = {
     athleteId: 'ath-1', date: '2026-07-01', tester: 'Coach', scores,
     broadLandingFailed: false, coachGutCall: 'A', heightCm: 150, sittingHeightCm: 80,
-    videoRefs: [], notes: '',
+    notes: '',
   };
   assert.deepEqual(input, cliInput, 'form yields the same input a CLI transcription would');
 
-  // And through the trusted ingest path, the same stored record (tier recomputed by the engine).
-  const fromForm = buildAssessmentRecord(input!);
-  const fromCli = buildAssessmentRecord(cliInput);
+  // And through the trusted ingest path, the same stored record (tier recomputed by the
+  // engine). priorTier is the server's to add — supplied here as the server would.
+  const fromForm = buildAssessmentRecord({ ...input!, priorTier: null });
+  const fromCli = buildAssessmentRecord({ ...cliInput, priorTier: null });
   const { assessmentId: _a, ...formRec } = fromForm.assessment;
   const { assessmentId: _b, ...cliRec } = fromCli.assessment;
   assert.deepEqual(formRec, cliRec);
@@ -149,7 +150,7 @@ test('XSS: a malicious notes value in the reveal page is escaped', () => {
   const built = buildAssessmentRecord({
     athleteId: 'ath-1', date: '2026-07-01', tester: 'Coach',
     scores: { squat: 2, dropStick: 3, balance: 2, pushup: 3, broad: 2, pogo: 2 },
-    coachGutCall: 'A', heightCm: 150,
+    coachGutCall: 'A', priorTier: null, heightCm: 150,
   });
   const html = assessmentRevealPage(athlete, built.warnings, built.assessment);
   assert.ok(!html.includes('<img src=x onerror=alert(1)>'));
@@ -192,7 +193,7 @@ test('reveal page shows the computed tier (the reveal happens only after save)',
   const built = buildAssessmentRecord({
     athleteId: 'ath-1', date: '2026-07-01', tester: 'Coach',
     scores: { squat: 2, dropStick: 3, balance: 2, pushup: 3, broad: 2, pogo: 2 },
-    coachGutCall: 'A', heightCm: 150,
+    coachGutCall: 'A', priorTier: null, heightCm: 150,
   });
   const html = assessmentRevealPage(mkAthlete(), built.warnings, built.assessment);
   assert.ok(/Computed tier/i.test(html));

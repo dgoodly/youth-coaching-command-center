@@ -19,6 +19,7 @@ import { readFile } from 'node:fs/promises';
 
 import { SCORE_KEYS, type Scores, type Tier } from '../engine/types.ts';
 import { TIER_STAGE } from '../engine/types.ts';
+import { gutCallVerdict } from '../engine/scoring.ts';
 import {
   buildAssessmentRecord,
   saveAssessment,
@@ -26,6 +27,7 @@ import {
   type FieldFormInput,
 } from '../store/ingest.ts';
 import { listAthletes, createAthlete, ageFromDob } from '../store/athletes.ts';
+import { currentTier } from '../store/query.ts';
 import { createDiskStore } from '../store/disk.ts';
 import {
   makeRl,
@@ -94,6 +96,9 @@ async function main(): Promise<void> {
 
     line(`\nAthlete: ${athleteName}\n`);
 
+    // Current routing tier before this assessment — feeds the §4.4 provisional rules.
+    const priorTier = await currentTier(store, athleteId);
+
     // --- 2. Session header (contract page-1) ---
     const date = await ask(rl, 'Assessment date (YYYY-MM-DD)', todayIso());
     const tester = await ask(rl, 'Tester (parent/guardian)', 'Parent');
@@ -139,6 +144,7 @@ async function main(): Promise<void> {
       scores,
       broadLandingFailed,
       coachGutCall,
+      priorTier,
       heightCm,
       sittingHeightCm,
       notes,
@@ -155,8 +161,15 @@ async function main(): Promise<void> {
     line(`  Base tier : ${a.baseTier}  (${TIER_STAGE[a.baseTier]})`);
     line(`  FINAL tier: ${a.finalTier}  (${TIER_STAGE[a.finalTier]})   ← routes the workout`);
     line(`  Gate fired: ${a.gateFired}`);
+    if (a.provisional) {
+      line(
+        a.finalTier !== built.unrestrictedTier
+          ? `  PROVISIONAL — held from ${built.unrestrictedTier} (§4.4: promotion waits for film review)`
+          : `  PROVISIONAL — unreviewed; a higher tier would wait for film review`,
+      );
+    }
     if (coachGutCall) {
-      const match = coachGutCall === a.finalTier;
+      const match = gutCallVerdict(a) === 'match';
       line(`  Gut-call  : ${coachGutCall}  ${match ? '✓ matches' : '✗ DIFFERS — validation signal'}`);
     }
     for (const w of built.warnings) line(`  ⚠ ${w}`);
@@ -212,14 +225,21 @@ async function runBatch(jsonPath: string): Promise<void> {
     line(`Created athlete "${created.displayName}" (${athleteId}).`);
   }
 
-  const input: FieldFormInput = { ...parsed, athleteId };
+  // Current routing tier before this assessment — feeds the §4.4 provisional rules.
+  const priorTier = await currentTier(store, athleteId);
+  const input: FieldFormInput = { ...parsed, athleteId, priorTier };
   const built = buildAssessmentRecord(input);
   await saveAssessment(store, built);
 
   const a = built.assessment;
+  const provisionalNote = a.provisional
+    ? a.finalTier !== built.unrestrictedTier
+      ? ` · PROVISIONAL (held from ${built.unrestrictedTier})`
+      : ' · PROVISIONAL'
+    : '';
   line(`Saved assessment ${a.assessmentId}:`);
-  line(`  RAW ${a.rawTotal}/18 · base ${a.baseTier} · FINAL ${a.finalTier} · gate ${a.gateFired}` +
-    (a.coachGutCall ? ` · gut-call ${a.coachGutCall}${a.coachGutCall === a.finalTier ? ' (match)' : ' (DIFFERS)'}` : ''));
+  line(`  RAW ${a.rawTotal}/18 · base ${a.baseTier} · FINAL ${a.finalTier} · gate ${a.gateFired}${provisionalNote}` +
+    (a.coachGutCall ? ` · gut-call ${a.coachGutCall}${gutCallVerdict(a) === 'match' ? ' (match)' : ' (DIFFERS)'}` : ''));
   for (const w of built.warnings) line(`  ⚠ ${w}`);
   line(`  Re-assess ~${nextAssessmentDate(a.date)} (spec §6).`);
 }

@@ -14,8 +14,9 @@ function mkAssessment(over: Partial<Assessment> = {}): Assessment {
   const scores: Scores = { squat: 2, dropStick: 3, balance: 2, pushup: 3, broad: 2, pogo: 2 };
   return {
     assessmentId: 'a1', athleteId: 'ath-1', date: '2026-06-30', tester: 'Parent',
-    scores, rawTotal: 14, baseTier: 'A', finalTier: 'A', gateFired: 'none',
-    coachGutCall: null, heightCm: 140, videoRefs: [], notes: '', ...over,
+    scoresLive: scores, scoresReviewed: null, reviewedAt: null, reviewedBy: null,
+    rawTotal: 14, baseTier: 'A', finalTier: 'A', gateFired: 'none', provisional: false,
+    coachGutCall: null, heightCm: 140, films: {}, notes: '', ...over,
   };
 }
 function mkHeight(over: Partial<HeightLogEntry> = {}): HeightLogEntry {
@@ -55,7 +56,7 @@ test('a freshly-built assessment + its heightEntry has no gap (ties ingest to th
   const form: FieldFormInput = {
     athleteId: 'ath-9', date: '2026-07-01', tester: 'Parent',
     scores: { squat: 2, dropStick: 3, balance: 2, pushup: 3, broad: 2, pogo: 2 },
-    coachGutCall: null, heightCm: 150,
+    coachGutCall: null, priorTier: null, heightCm: 150,
   };
   const built = buildAssessmentRecord(form);
   assert.ok(built.heightEntry, 'ingest prepped a height entry for a non-null heightCm');

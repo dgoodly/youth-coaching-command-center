@@ -15,6 +15,7 @@
     "session": "node --experimental-strip-types --no-warnings cli/build-session.ts",
     "wellness": "node --experimental-strip-types --no-warnings cli/log-wellness.ts",
     "doctor": "node --experimental-strip-types --no-warnings cli/doctor.ts",
+    "migrate": "node --experimental-strip-types --no-warnings cli/migrate.ts",
     "dashboard": "node --experimental-strip-types --no-warnings dashboard/server.ts"
   },
   "devDependencies": {

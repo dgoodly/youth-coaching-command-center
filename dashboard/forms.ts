@@ -14,6 +14,7 @@
 
 import type { AthleteProfile, Assessment, Scores, SplitChoice, TestScore, Tier } from '../engine/types.ts';
 import { SCORE_KEYS, SPLIT_CHOICES, TIER_STAGE, isSplitChoice, isTier } from '../engine/types.ts';
+import { gutCallVerdict } from '../engine/scoring.ts';
 import { type Metric, metricById, validateSetValues } from '../engine/metrics.ts';
 import { type MetricProgress } from '../engine/progress.ts';
 import type { NewAthleteInput } from '../store/athletes.ts';
@@ -182,14 +183,14 @@ type ScoreKey = (typeof SCORE_KEYS)[number];
 export interface AssessmentFormValues {
   date: string; tester: string; scores: Record<ScoreKey, string>;
   broadLandingFailed: boolean; coachGutCall: string;
-  heightCm: string; sittingHeightCm: string; videoRefs: string; notes: string;
+  heightCm: string; sittingHeightCm: string; notes: string;
 }
 
 export function emptyAssessmentValues(): AssessmentFormValues {
   const scores = Object.fromEntries(SCORE_KEYS.map((k) => [k, ''])) as Record<ScoreKey, string>;
   return {
     date: todayIso(), tester: '', scores, broadLandingFailed: false, coachGutCall: '',
-    heightCm: '', sittingHeightCm: '', videoRefs: '', notes: '',
+    heightCm: '', sittingHeightCm: '', notes: '',
   };
 }
 
@@ -199,13 +200,14 @@ export function assessmentValuesFromParams(p: URLSearchParams): AssessmentFormVa
   return {
     date: g('date'), tester: g('tester'), scores,
     broadLandingFailed: p.get('broadLandingFailed') === '1', coachGutCall: g('coachGutCall'),
-    heightCm: g('heightCm'), sittingHeightCm: g('sittingHeightCm'), videoRefs: g('videoRefs'), notes: g('notes'),
+    heightCm: g('heightCm'), sittingHeightCm: g('sittingHeightCm'), notes: g('notes'),
   };
 }
 
+/** `priorTier` is the server's to supply (it has the store); the form can't know it. */
 export function validateAssessmentForm(
   athleteId: string, v: AssessmentFormValues,
-): { input: FieldFormInput | null; errors: FieldErrors } {
+): { input: Omit<FieldFormInput, 'priorTier'> | null; errors: FieldErrors } {
   const errors: FieldErrors = {};
 
   if (!isIsoDate(v.date)) errors.date = 'Use a valid date (YYYY-MM-DD).';
@@ -229,14 +231,13 @@ export function validateAssessmentForm(
 
   const heightCm = parseOptNum(v.heightCm, 'heightCm', 'Standing height (cm)', 260, errors);
   const sittingHeightCm = parseOptNum(v.sittingHeightCm, 'sittingHeightCm', 'Sitting height (cm)', 200, errors);
-  const videoRefs = v.videoRefs ? v.videoRefs.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : [];
 
   if (Object.keys(errors).length > 0) return { input: null, errors };
   return {
     input: {
       athleteId, date: v.date, tester: v.tester, scores,
       broadLandingFailed: v.broadLandingFailed, coachGutCall, heightCm,
-      sittingHeightCm, videoRefs, notes: v.notes,
+      sittingHeightCm, notes: v.notes,
     },
     errors,
   };
@@ -270,8 +271,7 @@ export function assessmentFormPage(athlete: AthleteProfile, v: AssessmentFormVal
           ${textField('sittingHeightCm', 'Sitting height (cm)', v.sittingHeightCm, errors, { type: 'number', min: 0, step: '0.1' })}
         </div>
       `)}
-      ${card('Notes & video', `
-        ${textAreaField('videoRefs', 'Video refs', v.videoRefs, errors, 'One per line or comma-separated.')}
+      ${card('Notes', `
         ${textAreaField('notes', 'Notes', v.notes, errors)}
       `)}
       <div class="actions">
@@ -804,7 +804,7 @@ export function parseTrackSave(
 export function assessmentRevealPage(athlete: AthleteProfile, warnings: string[], a: Assessment): string {
   const back = `/athlete?id=${encodeURIComponent(athlete.athleteId)}`;
   const gut = a.coachGutCall;
-  const match = gut !== null && gut === a.finalTier;
+  const match = gutCallVerdict(a) === 'match'; // vs unrestrictedTier — the eye can't predict provenance
   const gateHtml = a.gateFired === 'none' ? '<span class="muted">none</span>' : `<code>${esc(a.gateFired)}</code>`;
   const warnHtml = warnings.length
     ? `<div class="banner err"><b>Warnings:</b><ul>${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>`

@@ -28,7 +28,7 @@ import type {
   Tier,
 } from '../engine/types.ts';
 import { SCORE_KEYS, isTestScore, isTier } from '../engine/types.ts';
-import { assignTier } from '../engine/scoring.ts';
+import { assignTierWithContext } from '../engine/scoring.ts';
 import type { PendingAppend, RecordStore } from './record-store.ts';
 
 /** The raw input a completed paper field form provides (contract page-1 + scores + outputs). */
@@ -44,10 +44,15 @@ export interface FieldFormInput {
   broadLandingFailed?: boolean;
   /** §3.7 — coach's independent gut-call tier, ideally entered BEFORE the reveal. */
   coachGutCall: Tier | null;
+  /**
+   * The athlete's current routing tier BEFORE this assessment (latest finalTier), or
+   * null on a first-ever assessment. Feeds the §4.4 provisional rules — the caller
+   * looks it up (`latestAssessment`) because this builder is pure.
+   */
+  priorTier: Tier | null;
   heightCm: number | null;
   /** Optional sitting height (cm) captured with standing height — feeds the maturity estimate. */
   sittingHeightCm?: number | null;
-  videoRefs?: string[];
   notes?: string;
   /** Optional paper-written outputs, for the cross-check (contract rule 2). */
   paper?: {
@@ -63,6 +68,11 @@ export interface BuiltAssessment {
   heightEntry: HeightLogEntry | null;
   /** Human-readable warnings (CAP-rule cap applied, paper mismatch, etc.). */
   warnings: string[];
+  /**
+   * What finalTier would be once reviewed (the gates' own result) — for display
+   * ("PROVISIONAL, held from A"). Not persisted; recomputable from the record.
+   */
+  unrestrictedTier: Tier;
 }
 
 /** Validate the six scores are present and each an integer 0–3 (contract rule 1). */
@@ -101,11 +111,20 @@ export function buildAssessmentRecord(input: FieldFormInput): BuiltAssessment {
   if (input.coachGutCall !== null && !isTier(input.coachGutCall)) {
     throw new Error(`coachGutCall must be S/A/B/C or null (got ${JSON.stringify(input.coachGutCall)}).`);
   }
+  if (input.priorTier !== null && !isTier(input.priorTier)) {
+    throw new Error(`priorTier must be S/A/B/C or null (got ${JSON.stringify(input.priorTier)}).`);
+  }
 
-  // Rule 2: recompute from scores; this is the source of truth.
-  const result = assignTier(scores);
+  // Rule 2: recompute from scores; this is the source of truth. A paper form is LIVE
+  // scoring (§4.2–4.3), so the §4.4 provisional rules apply: unreviewed, against the
+  // athlete's current tier. No harness escape hatch — deliberately. Under-training is
+  // the safe direction, and a fake review would put a false reviewedBy in the data.
+  const result = assignTierWithContext(scores, { reviewed: false, priorTier: input.priorTier });
 
-  // Cross-check against any paper-written values.
+  // Cross-check against any paper-written values. The paper coach ran spec §4 by hand —
+  // gates only, no provisional concept exists on paper — so the finalTier cross-check
+  // compares against the gates' own result (unrestrictedTier), not the held routing
+  // value. Otherwise every §4.4 hold would read as a paper arithmetic slip.
   const paperMismatch: PaperMismatch = {};
   const p = input.paper;
   if (p) {
@@ -121,10 +140,10 @@ export function buildAssessmentRecord(input: FieldFormInput): BuiltAssessment {
         `Paper base tier (${p.baseTier}) ≠ computed (${result.baseTier}); computed value used.`,
       );
     }
-    if (p.finalTier && p.finalTier !== result.finalTier) {
-      paperMismatch.finalTier = { paper: p.finalTier, computed: result.finalTier };
+    if (p.finalTier && p.finalTier !== result.unrestrictedTier) {
+      paperMismatch.finalTier = { paper: p.finalTier, computed: result.unrestrictedTier };
       warnings.push(
-        `Paper final tier (${p.finalTier}) ≠ computed (${result.finalTier}); computed value used.`,
+        `Paper final tier (${p.finalTier}) ≠ computed (${result.unrestrictedTier}); computed value used.`,
       );
     }
   }
@@ -134,14 +153,21 @@ export function buildAssessmentRecord(input: FieldFormInput): BuiltAssessment {
     athleteId: input.athleteId,
     date: input.date,
     tester: input.tester,
-    scores,
+    scoresLive: scores,
+    scoresReviewed: null,
+    reviewedAt: null,
+    reviewedBy: null,
     rawTotal: result.rawTotal,
     baseTier: result.baseTier,
     finalTier: result.finalTier,
     gateFired: result.gateFired,
+    provisional: result.provisional,
     coachGutCall: input.coachGutCall,
     heightCm: input.heightCm,
-    videoRefs: input.videoRefs ?? [],
+    // No films yet: capture is S11. A record without films can never be reviewed, so
+    // everything entered before S11 stays provisional until the athlete's next FILMED
+    // assessment. Deliberate — see Assessment.provisional.
+    films: {},
     notes: input.notes ?? '',
     ...(Object.keys(paperMismatch).length > 0 ? { paperMismatch } : {}),
   };
@@ -157,7 +183,7 @@ export function buildAssessmentRecord(input: FieldFormInput): BuiltAssessment {
         }
       : null;
 
-  return { assessment, heightEntry, warnings };
+  return { assessment, heightEntry, warnings, unrestrictedTier: result.unrestrictedTier };
 }
 
 /**

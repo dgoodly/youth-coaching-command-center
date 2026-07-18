@@ -14,8 +14,16 @@
  * No I/O, no dates, no randomness.
  */
 
-import type { Scores, Tier, GateFired, ScoringResult } from './types.ts';
-import { TIER_RANK, SCORE_KEYS } from './types.ts';
+import type {
+  Assessment,
+  GateFired,
+  ProvisionalScoringResult,
+  Scores,
+  ScoringResult,
+  Tier,
+  TierContext,
+} from './types.ts';
+import { TIER_RANK, SCORE_KEYS, canonicalScores } from './types.ts';
 
 /** Spec §4 step-1 raw-total bands (max raw = 18). Listed high → low. */
 const BANDS: ReadonlyArray<{ min: number; tier: Tier }> = [
@@ -97,4 +105,71 @@ export function assignTier(scores: Scores): ScoringResult {
   }
 
   return { rawTotal: raw, baseTier, finalTier: tier, gateFired };
+}
+
+/**
+ * Brief §4.4 — assign a tier WITH provenance context: the provisional rules, which are
+ * "gates only lower" applied to provenance instead of movement quality. {@link assignTier}
+ * stays byte-identical (it IS spec §4); this wraps it.
+ *
+ * | # | Rule | Here |
+ * |---|------|------|
+ * | 1 | Unreviewed can LOWER a tier immediately        | `minTier(gates, prior)` keeps a drop |
+ * | 2 | Unreviewed can never RAISE — promotion waits   | `minTier(gates, prior)` holds a rise |
+ * | 3 | First assessment: dropStick treated as `min(scored, 2)` | nobody trains at S on an unreviewed eye |
+ * | 4 | On review: recompute — film is truth           | plain {@link assignTier}, no holds |
+ *
+ * PROVENANCE SPLIT (signed off in the S4 review): `rawTotal`, `baseTier`, and `gateFired`
+ * are MEASUREMENTS — pure functions of the real canonical scores, never of clamped or
+ * held values. Only `finalTier` (routing) absorbs the provisional rules. So every
+ * provisional hold reads the same way in a record — base X · gate <real> · final Y ·
+ * provisional true — whichever rule produced it, and a record can never contradict
+ * itself (e.g. `dropStick: 3` alongside `gateFired: 'capA'`).
+ */
+export function assignTierWithContext(scores: Scores, ctx: TierContext): ProvisionalScoringResult {
+  // The measurement: gates on the real scores. Everything except finalTier comes from here.
+  const real = assignTier(scores);
+
+  if (ctx.reviewed) {
+    // Rule 4 — film is truth. Promotion lands now; demotion lands now. No holds.
+    return { ...real, provisional: false, unrestrictedTier: real.finalTier };
+  }
+
+  let finalTier: Tier;
+  if (ctx.priorTier === null) {
+    // Rule 3 — first assessment, nothing to lower from: route as if dropStick were at
+    // most 2, so the existing cap-at-A geometry lands the tier at A or below. Only the
+    // routing value: the clamped run's rawTotal/baseTier/gateFired are discarded.
+    finalTier = assignTier({ ...scores, dropStick: Math.min(scores.dropStick, 2) as Scores['dropStick'] }).finalTier;
+  } else {
+    // Rules 1–2 — against the athlete's current routing tier: a drop lands today (the
+    // safe direction should be fast); a rise waits for film (the risky direction costs
+    // a measurement). See TierContext.priorTier for why holds chain across unreviewed
+    // assessments.
+    finalTier = minTier(real.finalTier, ctx.priorTier);
+  }
+
+  return { ...real, finalTier, provisional: true, unrestrictedTier: real.finalTier };
+}
+
+export type GutCallVerdict = 'match' | 'differs' | 'no_call';
+
+/**
+ * The gut-call verdict (§3.7 / brief §4.4) — THE single derivation. The CLI reveal, the
+ * dashboard, and the Lab (S15) all call this; do not re-derive it inline anywhere.
+ *
+ * The coach is predicting WHAT THE SCORES SAY — gates included, provenance excluded. So
+ * the comparison is against the gates' own result on the canonical scores
+ * (unrestrictedTier), NEVER the held/provisional `finalTier`: a coach can't predict
+ * whether the film's been watched, and must not read DIFFERS for being right on the one
+ * occasion the eye-training loop exists to confirm (a kid getting better, held by rule 2).
+ * Same principle as the paper cross-check in store/ingest.ts — no human in this loop has
+ * a provisional concept.
+ */
+export function gutCallVerdict(
+  a: Pick<Assessment, 'coachGutCall' | 'scoresLive' | 'scoresReviewed'>,
+): GutCallVerdict {
+  if (a.coachGutCall === null) return 'no_call';
+  const unrestricted = assignTier(canonicalScores(a)).finalTier;
+  return a.coachGutCall === unrestricted ? 'match' : 'differs';
 }
